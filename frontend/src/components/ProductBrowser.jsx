@@ -8,6 +8,8 @@ export function ProductBrowser({ assets, commerce, disabled }) {
   const [category, setCategory] = useState('');
   const selected = useEditorStore((state) => state.selectedAssetId);
   const query = commerce.products;
+  const cart = commerce.cart;
+  const failedQuery = cart.isError ? cart : query.isError ? query : null;
   const products = query.data ?? [];
   const categories = [...new Set(products.map((product) => product.category))];
   return <section className="product-browser" aria-label="ECの商品一覧">
@@ -15,9 +17,9 @@ export function ProductBrowser({ assets, commerce, disabled }) {
     <label>商品を検索<input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="商品名・学名"/></label>
     <label>商品カテゴリ<select value={category} onChange={(event) => setCategory(event.target.value)}>
       <option value="">すべて</option>{categories.map((name) => <option key={name}>{name}</option>)}</select></label>
-    {query.isPending && <p role="status">商品を読み込んでいます…</p>}
-    {query.isError && <p role="alert">{query.error.message}<button onClick={() => query.refetch()}>商品を再取得</button></p>}
-    {!query.isPending && !query.isError && products.length === 0 && <p>商品はありません。</p>}
+    {!failedQuery && (cart.isPending || query.isPending) && <p role="status">商品を読み込んでいます…</p>}
+    {failedQuery && <p role="alert">{failedQuery.error.message}<button type="button" onClick={() => failedQuery.refetch()}>商品を再取得</button></p>}
+    {!failedQuery && !query.isPending && products.length === 0 && <p>商品はありません。</p>}
     {products.filter((product) => (!category || product.category === category)
       && `${product.name} ${product.latinName}`.toLocaleLowerCase().includes(search.toLocaleLowerCase())).map((product) => {
       const asset = productAsset(product, assets);
