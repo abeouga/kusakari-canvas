@@ -50,7 +50,12 @@ function runPlaywright(ports) {
     KUSAKARI_EC_E2E_WEB_PORT: String(ports.ecWebPort),
     KUSAKARI_EC_E2E_WEB_URL: `http://127.0.0.1:${ports.ecWebPort}`,
   };
-  const child = spawn(process.execPath, [playwrightCli, 'test', ...process.argv.slice(2)], {
+  const args = process.argv.slice(2);
+  const explicitConfig = args.some((arg) => arg === '--config' || arg.startsWith('--config=')
+    || arg === '-c' || arg.startsWith('-c='));
+  // Normal UI tests use real EC products, so their default needs all four services.
+  const config = explicitConfig ? [] : ['--config', 'playwright.full.config.ts'];
+  const child = spawn(process.execPath, [playwrightCli, 'test', ...config, ...args], {
     cwd: root,
     env,
     stdio: 'inherit',

@@ -107,22 +107,35 @@ npx playwright install chromium
 # 実MySQLの独立検証（専用E2E資格情報と一時テストDBの作成権限が必要）
 npm run verify:api
 
-# 全E2E。利用可能なローカルポートでAPI(e2e profile)とViteを起動し、kusakari_canvas_e2e DBを使用
+# 全E2E。既定の playwright.full.config.ts でCanvas/ECのAPIとWebを起動
 npm run test:e2e
 
 # 対象シナリオだけ実行
 npm run test:e2e -- --grep 'A\. 庭作成'
 npm run test:e2e -- --grep 'D\. 保存失敗'
 npm run test:e2e -- --grep 'H\. 回転リング'
+
+# 商品fixture・EC接続を含む対象テストだけ実行（全件は実行しない）
+npm run test:e2e -- e2e/editor-toolbar.spec.ts
+
+# テスト一覧のみ確認（サーバー・ブラウザーは起動しない）
+npm run test:e2e -- --list
+
+# 設定を明示する場合は指定を優先（--config=... / -c も使用可能）
+npm run test:e2e -- --config playwright.full.config.ts e2e/editor-toolbar.spec.ts
 ```
+
+標準コマンドと対象指定は、どちらもCanvas API/WebとEC API/Webの4サービスに別々の空きポートを割り当てます。画面・テスト・APIの商品連携で同じ接続先を使います。ECリポジトリを隣接する `../kusakari-mvp` に配置し、両リポジトリの依存関係とJava/Python/MySQLの実行環境を用意してください。EC側にも専用DB `kusakari_e2e` の接続設定が必要です（ECのREADMEと `.env.example` を参照）。既存の開発プロセスは停止・再利用しません。
+
+通常検証では有料AI生成キーを無効にし、有料AI・DB障害注入の専用ケースはスキップします。`--config` を明示するとその設定を優先しますが、従来の `playwright.config.ts` はCanvasのみを起動するため、ECの商品fixtureを使うテストには使用しないでください。
 
 E2Eの前に同じPowerShellで`KUSAKARI_CANVAS_E2E_DB_USER`と`KUSAKARI_CANVAS_E2E_DB_PASSWORD`を設定してください。Git無視対象の`.env.e2e`にこれらのキーを設定することもできます。`KUSAKARI_CANVAS_E2E_DB_URL`で接続先を変更できますが、DB名は`kusakari_canvas_e2e`から始まる専用DBに限定します。dev用`.env`からE2E資格情報を流用しません。E2E成功系は実フロント、実FastAPI、専用MySQL DBを使います。正常系APIはモックしていません。障害系だけ、Playwright routeで保存通信を遮断します。
 
 `verify:api`はブラウザーE2Eで再現しにくい同時PUT、途中の整合性違反によるrollback、owner分離、旧DB引き継ぎを検証します。移行検証では固有名の`kusakari_canvas_e2e_migration_*` DBを作成し、自身が作成したDBだけを削除します。テスト用接続ユーザーにそのDBの作成・操作・削除権限を設定してください。実行記録は`artifacts/fastapi/backend-verification.json`へ保存します。
 
-既存MySQLに一時DB作成権限を与えず検証する場合は、`backend`で`uv run --locked python -m verification.run_isolated_mysql`を実行できます。インストール済みの実MySQL Serverを固有のデータディレクトリと空きポートで起動し、API独立検証と全E2Eを実行後、そのMySQLだけを停止します。既存MySQLサービスは変更しません。データ・ログ・バックアップはGit外に残し、結果を`artifacts/fastapi/isolated-mysql-verification.json`へ保存します。
+既存MySQLに一時DB作成権限を与えずCanvas APIを検証する場合は、`backend`で`uv run --locked python -m verification.run_isolated_mysql --tasks verify:api`を実行できます。インストール済みの実MySQL Serverを固有のデータディレクトリと空きポートで起動し、検証後はそのMySQLだけを停止します。引数を省略すると全E2Eも実行しますが、一時DBの用意はCanvas側のみです。EC側の専用MySQLと隣接リポジトリは別途必要です。既存MySQLサービスは変更しません。データ・ログ・バックアップはGit外に残し、結果を`artifacts/fastapi/isolated-mysql-verification.json`へ保存します。
 
-Playwrightは起動時に空きローカルポートを取得し、APIとWebを分離して起動します。各シナリオで作成した庭だけを削除し、開発用DBへは接続しません。実行記録、APIで取得したJSON、再読み込み後のスクリーンショットは`artifacts/e2e/`に置きます。HTMLレポート、trace、失敗時スクリーンショットは`artifacts/playwright-report/`と`artifacts/playwright-results/`です。
+各シナリオは独立した庭・商品を作り、開発用DBへは接続しません。後処理で削除する場合も、そのテストが作成したデータだけを対象とします。実行記録、APIで取得したJSON、再読み込み後のスクリーンショットは`artifacts/e2e/`に置きます。標準設定のHTMLレポートは`artifacts/e2e/full-suite/report/`、trace・失敗時スクリーンショットは`artifacts/e2e/full-suite/test-results/`、JSON結果は`artifacts/e2e/full-suite/results.json`です。成果物はGit管理対象外です。必要な過去結果は次回実行前に別のディレクトリへ保管してください。詳細は[検証成果物の管理方針](docs/artifact-tracking.md)を参照してください。
 
 ## APIと責務
 
