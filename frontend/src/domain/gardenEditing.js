@@ -1,12 +1,19 @@
 import { MAX_PLACED_OBJECTS, MAX_OBJECT_SCALE, MIN_OBJECT_SCALE } from './limits';
 export function createPlacedObject(asset, x, z) {
-    return {
+    const object = {
         id: crypto.randomUUID(),
-        assetId: asset.id,
+        assetId: asset.placedAssetId ?? asset.id,
         position: { x, y: 0, z },
         rotation: { x: 0, y: 0, z: 0 },
         scale: { x: 1, y: 1, z: 1 },
     };
+    if (asset.modelComposition) {
+        object.productId = asset.productId;
+        object.productName = asset.name;
+        object.materialCode = asset.materialCode;
+        object.modelComposition = structuredClone(asset.modelComposition);
+    }
+    return object;
 }
 export function addObject(document, object) {
     if (document.objects.length >= MAX_PLACED_OBJECTS || object.position.y !== 0)

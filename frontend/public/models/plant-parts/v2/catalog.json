@@ -1,0 +1,919 @@
+{
+  "version": 2,
+  "units": "m",
+  "upAxis": "Y",
+  "parts": [
+    {
+      "id": "stem-wood",
+      "role": "stem",
+      "modelUrl": "/models/plant-parts/v2/stem-wood.glb",
+      "baseDimensions": {
+        "width": 0.9510565400123596,
+        "height": 1,
+        "depth": 1
+      },
+      "bounds": {
+        "min": [
+          -0.4755282700061798,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.4755282700061798,
+          1,
+          0.5
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "stem-herb",
+      "role": "stem",
+      "modelUrl": "/models/plant-parts/v2/stem-herb.glb",
+      "baseDimensions": {
+        "width": 0.9510565400123596,
+        "height": 1,
+        "depth": 1
+      },
+      "bounds": {
+        "min": [
+          -0.4755282700061798,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.4755282700061798,
+          1,
+          0.5
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "stem-cane",
+      "role": "stem",
+      "modelUrl": "/models/plant-parts/v2/stem-cane.glb",
+      "baseDimensions": {
+        "width": 0.9510565400123596,
+        "height": 1,
+        "depth": 1
+      },
+      "bounds": {
+        "min": [
+          -0.4755282700061798,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.4755282700061798,
+          1,
+          0.5
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "stem-palm",
+      "role": "stem",
+      "modelUrl": "/models/plant-parts/v2/stem-palm.glb",
+      "baseDimensions": {
+        "width": 0.9510565400123596,
+        "height": 1,
+        "depth": 1
+      },
+      "bounds": {
+        "min": [
+          -0.4755282700061798,
+          0,
+          -0.5
+        ],
+        "max": [
+          0.4755282700061798,
+          1,
+          0.5
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "leaf-oval",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v2/leaf-oval.glb",
+      "baseDimensions": {
+        "width": 0.5199999809265137,
+        "height": 1,
+        "depth": 0.10499999672174454
+      },
+      "bounds": {
+        "min": [
+          -0.25999999046325684,
+          0,
+          0
+        ],
+        "max": [
+          0.25999999046325684,
+          1,
+          0.10499999672174454
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "leaf-narrow",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v2/leaf-narrow.glb",
+      "baseDimensions": {
+        "width": 0.1664000004529953,
+        "height": 1,
+        "depth": 0.10499999672174454
+      },
+      "bounds": {
+        "min": [
+          -0.08320000022649765,
+          0,
+          0
+        ],
+        "max": [
+          0.08320000022649765,
+          1,
+          0.10499999672174454
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "leaf-needle",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v2/leaf-needle.glb",
+      "baseDimensions": {
+        "width": 0.041600000113248825,
+        "height": 1,
+        "depth": 0.10499999672174454
+      },
+      "bounds": {
+        "min": [
+          -0.020800000056624413,
+          0,
+          0
+        ],
+        "max": [
+          0.020800000056624413,
+          1,
+          0.10499999672174454
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "leaf-round",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v2/leaf-round.glb",
+      "baseDimensions": {
+        "width": 0.8600000143051147,
+        "height": 1,
+        "depth": 0.10499999672174454
+      },
+      "bounds": {
+        "min": [
+          -0.4300000071525574,
+          0,
+          0
+        ],
+        "max": [
+          0.4300000071525574,
+          1,
+          0.10499999672174454
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "leaf-heart",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v2/leaf-heart.glb",
+      "baseDimensions": {
+        "width": 0.6845394372940063,
+        "height": 1,
+        "depth": 0.10499999672174454
+      },
+      "bounds": {
+        "min": [
+          -0.3422697186470032,
+          0,
+          0
+        ],
+        "max": [
+          0.3422697186470032,
+          1,
+          0.10499999672174454
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "leaf-palmate",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v2/leaf-palmate.glb",
+      "baseDimensions": {
+        "width": 1.1077404022216797,
+        "height": 1,
+        "depth": 0.07795820478349924
+      },
+      "bounds": {
+        "min": [
+          -0.5538702011108398,
+          0,
+          -0.009708204306662083
+        ],
+        "max": [
+          0.5538702011108398,
+          1,
+          0.06825000047683716
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "leaf-split",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v2/leaf-split.glb",
+      "baseDimensions": {
+        "width": 0.8840000033378601,
+        "height": 1,
+        "depth": 0.10499999672174454
+      },
+      "bounds": {
+        "min": [
+          -0.44200000166893005,
+          0,
+          0
+        ],
+        "max": [
+          0.44200000166893005,
+          1,
+          0.10499999672174454
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "leaf-compound",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v2/leaf-compound.glb",
+      "baseDimensions": {
+        "width": 0.563995361328125,
+        "height": 1.0037795305252075,
+        "depth": 0.04750820342451334
+      },
+      "bounds": {
+        "min": [
+          -0.2819976806640625,
+          0,
+          -0.009708204306662083
+        ],
+        "max": [
+          0.2819976806640625,
+          1.0037795305252075,
+          0.03779999911785126
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "leaf-succulent",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v2/leaf-succulent.glb",
+      "baseDimensions": {
+        "width": 0.5979999899864197,
+        "height": 1,
+        "depth": 0.2282535657286644
+      },
+      "bounds": {
+        "min": [
+          -0.29899999499320984,
+          0,
+          -0.07912678271532059
+        ],
+        "max": [
+          0.29899999499320984,
+          1,
+          0.1491267830133438
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "leaf-grass",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v2/leaf-grass.glb",
+      "baseDimensions": {
+        "width": 0.07000000029802322,
+        "height": 1,
+        "depth": 0.5149999856948853
+      },
+      "bounds": {
+        "min": [
+          -0.03500000014901161,
+          0,
+          0
+        ],
+        "max": [
+          0.03500000014901161,
+          1,
+          0.5149999856948853
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "flower-five",
+      "role": "flower",
+      "modelUrl": "/models/plant-parts/v2/flower-five.glb",
+      "baseDimensions": {
+        "width": 0.933987945318222,
+        "height": 0.15500000212341547,
+        "depth": 0.9820530414581299
+      },
+      "bounds": {
+        "min": [
+          -0.417692095041275,
+          0.014999999664723873,
+          -0.49102652072906494
+        ],
+        "max": [
+          0.516295850276947,
+          0.17000000178813934,
+          0.49102652072906494
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "flower-eight",
+      "role": "flower",
+      "modelUrl": "/models/plant-parts/v2/flower-eight.glb",
+      "baseDimensions": {
+        "width": 1.032591700553894,
+        "height": 0.15500000212341547,
+        "depth": 1.032591700553894
+      },
+      "bounds": {
+        "min": [
+          -0.516295850276947,
+          0.014999999664723873,
+          -0.516295850276947
+        ],
+        "max": [
+          0.516295850276947,
+          0.17000000178813934,
+          0.516295850276947
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "flower-spike",
+      "role": "flower",
+      "modelUrl": "/models/plant-parts/v2/flower-spike.glb",
+      "baseDimensions": {
+        "width": 0.28901803493499756,
+        "height": 0.9496428826823831,
+        "depth": 0.2729903310537338
+      },
+      "bounds": {
+        "min": [
+          -0.13670992851257324,
+          0.014999999664723873,
+          -0.14480911195278168
+        ],
+        "max": [
+          0.15230810642242432,
+          0.9646428823471069,
+          0.12818121910095215
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "flower-cluster",
+      "role": "flower",
+      "modelUrl": "/models/plant-parts/v2/flower-cluster.glb",
+      "baseDimensions": {
+        "width": 1.0842055082321167,
+        "height": 0.48499997705221176,
+        "depth": 1.0879852175712585
+      },
+      "bounds": {
+        "min": [
+          -0.5371160507202148,
+          0.03750000149011612,
+          -0.5427399277687073
+        ],
+        "max": [
+          0.5470894575119019,
+          0.5224999785423279,
+          0.5452452898025513
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "flower-daisy",
+      "role": "flower",
+      "modelUrl": "/models/plant-parts/v2/flower-daisy.glb",
+      "baseDimensions": {
+        "width": 1.032591700553894,
+        "height": 0.15500000212341547,
+        "depth": 1.032591700553894
+      },
+      "bounds": {
+        "min": [
+          -0.516295850276947,
+          0.014999999664723873,
+          -0.516295850276947
+        ],
+        "max": [
+          0.516295850276947,
+          0.17000000178813934,
+          0.516295850276947
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "flower-bell",
+      "role": "flower",
+      "modelUrl": "/models/plant-parts/v2/flower-bell.glb",
+      "baseDimensions": {
+        "width": 0.7200000286102295,
+        "height": 0.600000035762787,
+        "depth": 0.7200000286102295
+      },
+      "bounds": {
+        "min": [
+          -0.36000001430511475,
+          -1.1920929132713809e-8,
+          -0.36000001430511475
+        ],
+        "max": [
+          0.36000001430511475,
+          0.6000000238418579,
+          0.36000001430511475
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "flower-plume",
+      "role": "flower",
+      "modelUrl": "/models/plant-parts/v2/flower-plume.glb",
+      "baseDimensions": {
+        "width": 0.42708389461040497,
+        "height": 1.0911111123859882,
+        "depth": 0.4075780063867569
+      },
+      "bounds": {
+        "min": [
+          -0.2042863517999649,
+          -0.05000000074505806,
+          -0.21413785219192505
+        ],
+        "max": [
+          0.22279754281044006,
+          1.0411111116409302,
+          0.19344015419483185
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "stem-vine",
+      "role": "stem",
+      "modelUrl": "/models/plant-parts/v2/stem-vine.glb",
+      "baseDimensions": {
+        "width": 0.18846306949853897,
+        "height": 1.0121211893856525,
+        "depth": 0.18683511763811111
+      },
+      "bounds": {
+        "min": [
+          -0.09516637027263641,
+          -0.0063569433987140656,
+          -0.09099990129470825
+        ],
+        "max": [
+          0.09329669922590256,
+          1.0057642459869385,
+          0.09583521634340286
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "stem-arching",
+      "role": "stem",
+      "modelUrl": "/models/plant-parts/v2/stem-arching.glb",
+      "baseDimensions": {
+        "width": 0.24600763246417046,
+        "height": 1.0057216668501496,
+        "depth": 0.02894427254796028
+      },
+      "bounds": {
+        "min": [
+          -0.01486150547862053,
+          -0.003269531764090061,
+          -0.01294427178800106
+        ],
+        "max": [
+          0.23114612698554993,
+          1.0024521350860596,
+          0.01600000075995922
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "leaf-frond",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v2/leaf-frond.glb",
+      "baseDimensions": {
+        "width": 0.3665969967842102,
+        "height": 1.6060473918914795,
+        "depth": 0.04750820342451334
+      },
+      "bounds": {
+        "min": [
+          -0.1832984983921051,
+          0,
+          -0.009708204306662083
+        ],
+        "max": [
+          0.1832984983921051,
+          1.6060473918914795,
+          0.03779999911785126
+        ]
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ]
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ]
+        }
+      }
+    }
+  ]
+}

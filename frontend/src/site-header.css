@@ -2,7 +2,6 @@
 .canvas-shell { max-width: 1920px; margin: 0 auto; padding: 0 24px 20px; }
 .canvas-shell > .kusakari-site-chrome { margin-inline: -24px; }
 .canvas-list-shell .page-shell { width: 100%; max-width: 1360px; min-height: 0; padding: 0 24px; }
-.editor-list-label { margin-left: 3px; font-size: 12px; white-space: nowrap; }
 .canvas-workspace-heading {
   display: flex;
   align-items: center;

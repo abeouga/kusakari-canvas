@@ -3,6 +3,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from .plant_schemas import PlantComposition
+
 
 class ApiModel(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
@@ -38,6 +40,10 @@ class GardenObject(ApiModel):
     position: Vector
     rotation: Vector
     scale: Vector
+    productId: str | None = Field(default=None, max_length=40, pattern=r"^[a-z0-9][a-z0-9-]*$", exclude_if=lambda value: value is None)
+    productName: str | None = Field(default=None, min_length=1, max_length=120, exclude_if=lambda value: value is None)
+    materialCode: str | None = Field(default=None, max_length=80, exclude_if=lambda value: value is None)
+    modelComposition: PlantComposition | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @field_validator("id", "assetId")
     @classmethod

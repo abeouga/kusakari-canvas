@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "module": "ESNext", "moduleResolution": "Bundler", "allowJs": true, "checkJs": false },
+  "include": ["ai-product-references.spec.ts", "../playwright.ai-products.config.ts"]
+}

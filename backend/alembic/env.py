@@ -1,4 +1,5 @@
 from alembic import context
+from kusakari_canvas_api.history_models import HistoryEntity  # noqa: F401 - register Alembic metadata
 from kusakari_canvas_api.models import Base
 
 connection = context.config.attributes.get("connection")

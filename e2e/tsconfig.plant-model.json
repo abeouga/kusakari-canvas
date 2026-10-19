@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "module": "ESNext", "moduleResolution": "Bundler", "allowJs": true, "checkJs": false },
+  "include": ["plant-v3.spec.ts", "plant-v4-interaction.spec.ts", "plant-library-v2.spec.ts", "plant-model-product.spec.ts", "../playwright.plant-v3.config.ts", "../playwright.plant-v4.config.ts"]
+}

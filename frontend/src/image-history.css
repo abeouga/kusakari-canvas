@@ -1,0 +1,36 @@
+.app-dialog.generation-history-dialog { width: 880px; border-radius: 20px; max-height: calc(100dvh - 40px); }
+.generation-history-dialog .dialog-header { padding: 18px 24px; align-items: center; }
+.generation-history-dialog .dialog-header h2 { font-size: 16px; }
+.generation-history-dialog .dialog-body { padding: 20px 24px; }
+.generation-history-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; list-style: none; margin: 0; padding: 0; }
+.history-card { position: relative; min-width: 0; }
+.history-card-open { display: block; width: 100%; padding: 0; border: 1px solid #e4eae1; border-radius: 13px; overflow: hidden; background: white; text-align: left; cursor: pointer; }
+.history-card-open:hover:not(:disabled) { border-color: #70947b; box-shadow: 0 4px 16px #213e2a12; }
+.history-card-image { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 3; background: #edf1eb; overflow: hidden; }
+.history-card-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.history-card-overlay { position: absolute; bottom: 8px; right: 8px; display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 100px; color: white; background: #244c3bdd; font-size: 10px; opacity: 0; }
+.history-card-open:is(:hover, :focus-visible) .history-card-overlay { opacity: 1; }
+.history-card-open time { display: block; padding: 10px 12px; font-size: 11px; color: #637366; }
+.history-card-delete { position: absolute; top: 8px; right: 8px; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 1px solid #e6ebe2; border-radius: 100px; background: #ffffffed; color: #6b7b70; cursor: pointer; }
+.history-card-delete:hover:not(:disabled), .history-detail-delete:hover:not(:disabled) { background: #fff0eb; color: #a14736; }
+.generation-history-dialog :is(button, a):focus-visible { outline: 2px solid #426b53; outline-offset: 3px; }
+.generation-history-dialog button:disabled { opacity: .5; cursor: not-allowed; }
+.history-thumbnail-missing { display: grid; justify-items: center; gap: 8px; padding: 26px 10px 10px; color: #7c8d7e; font-size: 10px; }
+.history-thumbnail-retry { border: 0; background: transparent; padding: 6px; font-size: 10px; color: #527458; text-decoration: underline; cursor: pointer; }
+.history-load-more { display: block; margin: 20px auto 0; border-radius: 100px; }
+.history-empty { display: grid; justify-items: center; gap: 14px; padding: 60px 12px; color: #889782; }
+.history-empty p, .history-loading { margin: 0; color: #697c65; }
+.generation-history-detail { min-width: 0; overflow-wrap: anywhere; }
+.history-detail-toolbar { display: flex; align-items: center; justify-content: space-between; margin: -6px 0 14px; }
+.history-back, .history-detail-delete { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; border: 0; border-radius: 8px; padding: 7px 10px; background: #f1f5ee; color: #59715d; font-size: 11px; cursor: pointer; }
+.generation-history-downloads { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+.generation-history-downloads a { display: inline-flex; align-items: center; gap: 7px; border-radius: 100px; }
+@media (max-width: 600px) {
+  .app-dialog.generation-history-dialog { max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); border-radius: 16px; }
+  .generation-history-dialog .dialog-header { padding: 14px 16px; }
+  .generation-history-dialog .dialog-body { padding: 16px; }
+  .generation-history-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .history-card-open time { padding: 8px; font-size: 10px; }
+  .history-card-delete { top: 6px; right: 6px; }
+  .history-thumbnail-missing { font-size: 9px; }
+}

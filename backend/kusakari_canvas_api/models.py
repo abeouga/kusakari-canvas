@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import ForeignKey, Index
-from sqlalchemy.dialects.mysql import BIGINT, CHAR, DECIMAL, DOUBLE, LONGTEXT, TIMESTAMP, VARCHAR
+from sqlalchemy.dialects.mysql import BIGINT, CHAR, DECIMAL, DOUBLE, LONGBLOB, LONGTEXT, TIMESTAMP, VARCHAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -43,6 +43,10 @@ class PlacedObject(Base):
     garden_id: Mapped[str] = mapped_column(CHAR(36), ForeignKey(
         "gardens.id", name="fk_placed_objects_garden", ondelete="CASCADE"))
     asset_id: Mapped[str] = mapped_column(VARCHAR(64), ForeignKey("assets.id", name="fk_placed_objects_asset"))
+    product_id: Mapped[str | None] = mapped_column(VARCHAR(40))
+    product_name: Mapped[str | None] = mapped_column(VARCHAR(120))
+    material_code: Mapped[str | None] = mapped_column(VARCHAR(80))
+    model_composition_json: Mapped[str | None] = mapped_column(LONGTEXT)
     position_x: Mapped[float] = mapped_column(DOUBLE(asdecimal=False))
     position_y: Mapped[float] = mapped_column(DOUBLE(asdecimal=False))
     position_z: Mapped[float] = mapped_column(DOUBLE(asdecimal=False))
@@ -52,3 +56,13 @@ class PlacedObject(Base):
     scale_x: Mapped[float] = mapped_column(DOUBLE(asdecimal=False))
     scale_y: Mapped[float] = mapped_column(DOUBLE(asdecimal=False))
     scale_z: Mapped[float] = mapped_column(DOUBLE(asdecimal=False))
+
+
+class GardenThumbnail(Base):
+    __tablename__ = "garden_thumbnails"
+    __table_args__ = {"mysql_engine": "InnoDB"}
+    garden_id: Mapped[str] = mapped_column(CHAR(36), ForeignKey(
+        "gardens.id", name="fk_thumbnail_garden", ondelete="CASCADE"), primary_key=True)
+    revision: Mapped[int] = mapped_column(BIGINT)
+    image_png: Mapped[bytes | None] = mapped_column(LONGBLOB, deferred=True)
+    image_key: Mapped[str | None] = mapped_column(VARCHAR(512))

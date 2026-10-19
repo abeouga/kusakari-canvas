@@ -12,6 +12,9 @@ dependencies = [
   "alembic>=1.13,<2",
   "pillow>=11,<13",
   "opencv-python-headless>=5.0.0.93",
+  "openai>=2.26,<3",
+  "httpx>=0.28,<1",
+  "boto3>=1.40,<2",
 ]
 
 [dependency-groups]

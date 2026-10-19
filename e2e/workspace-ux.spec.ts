@@ -34,7 +34,6 @@ test('S. 作業面・独立開閉・ダイアログのフォーカス・未保�
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('asset-tree_oak')).toHaveAttribute('aria-pressed', 'false');
-    await page.getByTestId('save-garden').click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const saved = await (await request.get(`${api}/gardens/${created.id}`)).json() as GardenDocument;
     await page.reload();

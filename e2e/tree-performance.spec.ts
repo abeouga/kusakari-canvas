@@ -83,7 +83,6 @@ test('TREE50. Blender樹木50本の共有描画・独立編集・MySQL保存復�
     await page.getByTestId('rotation-y').fill('45');
     if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
     await page.getByTestId('uniform-scale').fill('1.1');
-    await page.getByTestId('save-garden').click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     await page.reload();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 50 / 50');

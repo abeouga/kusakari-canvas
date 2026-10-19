@@ -1,4 +1,4 @@
-import { CaptureReady } from './CaptureReady';
+import { SceneCapture } from './SceneCapture';
 import { useMemo } from 'react';
 import { Canvas, events } from '@react-three/fiber';
 import { PerspectiveCamera, Vector3 } from 'three';
@@ -7,6 +7,8 @@ import { GardenGround } from './GardenGround';
 import { BrokenObject, GardenModel, SelectionOutline } from './GardenModel';
 import { createPhotoCamera } from './photoCamera';
 import { detectWebgl } from './webgl';
+import { assetForObject } from '../domain/productModels';
+import { DropPlacement } from './DropPlacement';
 // SVG scaling changes the CSS size, so derive rays from the visible canvas bounds.
 function photoEvents(store) {
     const farPoint = new Vector3();
@@ -27,32 +29,42 @@ function photoEvents(store) {
             root.raycaster.camera = root.camera;
         } };
 }
-export function PhotoCanvas({ document, assets, selectedAssetId, disabled, objectsVisible, retryRequest, onModelLoaded, onModelFailed }) {
+export function PhotoCanvas({ document, assets, selectedAssetId, disabled, objectsVisible, retryRequest, onModelLoaded, onModelFailed, captureRef }) {
     const supported = useMemo(detectWebgl, []);
     const camera = useMemo(() => document.photo ? createPhotoCamera(document.photo, document.width, document.depth) : null, [document.photo, document.width, document.depth]);
     const assetMap = new Map(assets.map((asset) => [asset.id, asset]));
     if (!supported || !camera)
         return <div role="alert">写真上の木の表示にはWebGLが必要です。</div>;
     return <div className="photo-models" data-testid="photo-model-canvas" data-object-count={objectsVisible ? document.objects.length : 0}>
-    <Canvas camera={camera} dpr={[1, 1.5]} events={photoEvents} gl={{ antialias: true, alpha: true }} onCreated={({ gl }) => gl.setClearColor(0, 0)}>
-      <CaptureReady />
+    <Canvas camera={camera} dpr={[1, 1.5]} events={photoEvents} frameloop="demand" gl={{ antialias: true, alpha: true }} onCreated={({ gl }) => gl.setClearColor(0, 0)}>
+      <DropPlacement document={document} assets={assets} disabled={disabled || !objectsVisible}/>
+      <SceneCapture captureRef={captureRef}/>
       <ambientLight intensity={1.7}/>
       <directionalLight position={[7, 12, 5]} intensity={2.1}/>
       <GardenGround document={document} selectedAsset={assets.find((asset) => asset.id === selectedAssetId) ?? null} disabled={disabled} invisible/>
-      {objectsVisible && document.objects.map((object) => {
-            const asset = assetMap.get(object.assetId);
+      <group visible={objectsVisible} userData={{ captureRole: 'placements' }}>
+      {document.objects.map((object) => {
+            const asset = assetForObject(object, assetMap);
             if (!asset)
                 return <BrokenObject key={object.id} object={object}/>;
             const retry = retryRequest?.objectId === object.id ? retryRequest.sequence : 0;
-            return <PhotoObject key={object.id + ':' + retry} object={object} asset={asset} disabled={disabled} onModelLoaded={onModelLoaded} onModelFailed={onModelFailed}/>;
+            return <PhotoObject key={object.id + ':' + retry} object={object} asset={asset} disabled={disabled} objectsVisible={objectsVisible} onModelLoaded={onModelLoaded} onModelFailed={onModelFailed}/>;
         })}
+      </group>
     </Canvas>
   </div>;
 }
-function PhotoObject({ object, asset, disabled, onModelLoaded, onModelFailed }) {
+function PhotoObject({ object, asset, disabled, objectsVisible, onModelLoaded, onModelFailed }) {
     const selected = useEditorStore((state) => state.selectedObjectId === object.id);
-    return <group position={[object.position.x, 0, object.position.z]} rotation={[0, object.rotation.y, 0]} scale={[object.scale.x, object.scale.y, object.scale.z]} onPointerDown={(event) => { event.stopPropagation(); if (!disabled)
-        useEditorStore.getState().selectObject(object.id); }} onPointerUp={(event) => event.stopPropagation()}>
+    function selectObject(event) {
+        if (!objectsVisible) return;
+        event.stopPropagation();
+        if (!disabled) useEditorStore.getState().selectObject(object.id);
+    }
+    function stopPointer(event) {
+        if (objectsVisible) event.stopPropagation();
+    }
+    return <group position={[object.position.x, 0, object.position.z]} rotation={[0, object.rotation.y, 0]} scale={[object.scale.x, object.scale.y, object.scale.z]} onPointerDown={selectObject} onPointerUp={stopPointer}>
     <GardenModel object={object} asset={asset} onModelLoaded={onModelLoaded} onModelFailed={onModelFailed}/>
     {selected && <SelectionOutline asset={asset}/>}
   </group>;

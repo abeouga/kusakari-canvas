@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ApiError } from '../api/http';
+import { useQuery } from '@tanstack/react-query';
 import { gardenApi } from '../api/gardens';
 import { GardenHeader } from '../components/GardenHeader';
 import { SiteHeader } from '../components/SiteHeader';
-import { CatalogPanel } from '../components/CatalogPanel';
+import { assetForObject, placedProductAsset, productAsset } from '../domain/productModels';
+import { useGardenThumbnail } from '../hooks/useGardenThumbnail';
+import { useGardenAutosave } from '../hooks/useGardenAutosave';
+import { useSidebarWidth } from '../components/SidebarResize';
 import { ObjectToolbar } from '../components/ObjectToolbar';
 import { CommercePanel } from '../components/CommercePanel';
 import { useCommerce } from '../hooks/useCommerce';
@@ -15,17 +17,10 @@ import { PhotoOverlay } from '../components/PhotoOverlay';
 import { validSurface } from '../domain/photoProjection';
 import { calibratedBoundaryError } from '../domain/calibratedProjection';
 import { Dialog } from '../components/Dialog';
-import { PlanTools } from '../components/PlanTools';
 import { UiIcon } from '../components/UiIcon';
-function errorText(error, fallback) {
-    if (error instanceof ApiError && error.status === 409)
-        return '別の保存結果と競合しました。表示中の編集内容は保持されています。庭を再読み込みして状態を確認してください。';
-    if (error instanceof ApiError)
-        return error.message;
-    return fallback;
-}
+import { CompletionImageAction } from '../components/CompletionImageAction';
+import { clearPlantCompositionCache } from '../three/PlantCompositionModel';
 export function EditorPage({ gardenId }) {
-    const queryClient = useQueryClient();
     const gardenQuery = useQuery({ queryKey: ['garden', gardenId], queryFn: () => gardenApi.getGarden(gardenId), staleTime: Infinity });
     const assetQuery = useQuery({ queryKey: ['assets'], queryFn: gardenApi.listAssets, staleTime: Infinity });
     const document = useEditorStore((state) => state.document);
@@ -48,17 +43,21 @@ export function EditorPage({ gardenId }) {
     const commandCamera = useEditorStore((state) => state.commandCamera);
     const setTool = useEditorStore((state) => state.setTool);
     const selectObject = useEditorStore((state) => state.selectObject);
-    const selectAsset = useEditorStore((state) => state.selectAsset);
     const duplicateSelected = useEditorStore((state) => state.duplicateSelected);
     const deleteSelected = useEditorStore((state) => state.deleteSelected);
     const [retryRequest, setRetryRequest] = useState(null);
     const [viewMode, setViewMode] = useState('3d');
-    const [catalogCollapsed, setCatalogCollapsed] = useState(false);
+    const [sidebarWidth, setSidebarWidth] = useSidebarWidth();
     const [propertiesCollapsed, setPropertiesCollapsed] = useState(false);
     const [dimensionsOpen, setDimensionsOpen] = useState(false);
     const [leaveOpen, setLeaveOpen] = useState(false);
-    const [leaveDestination, setLeaveDestination] = useState('/');
+    const [navigating, setNavigating] = useState(false);
+    const navigationLocked = useRef(false);
+    const [leaveDestination, setLeaveDestination] = useState(canvasUrl('/'));
     const allowNavigation = useRef(false);
+    const captureRef = useRef(null);
+    useGardenThumbnail(document, !isDirty && !isSaving && !isTransformDragging && !isCalibrating
+        && !hasBoundaryDraft && loadedModelIds.length === document?.objects.length, viewMode === 'photo', captureRef);
     useEffect(() => {
         if (gardenQuery.data) {
             useEditorStore.getState().hydrate(gardenQuery.data);
@@ -89,7 +88,7 @@ export function EditorPage({ gardenId }) {
                 useEditorStore.getState().selectAsset(null);
                 return;
             }
-            if ((event.key === 'Delete' || event.key === 'Backspace') && useEditorStore.getState().selectedObjectId && !useEditorStore.getState().isSaving && !useEditorStore.getState().isTransformDragging) {
+            if ((event.key === 'Delete' || event.key === 'Backspace') && !navigationLocked.current && useEditorStore.getState().selectedObjectId && !useEditorStore.getState().isTransformDragging) {
                 event.preventDefault();
                 useEditorStore.getState().deleteSelected();
             }
@@ -97,62 +96,37 @@ export function EditorPage({ gardenId }) {
         window.addEventListener('keydown', handleDeleteKey);
         return () => window.removeEventListener('keydown', handleDeleteKey);
     }, []);
-    const saveGarden = useMutation({
-        mutationFn: gardenApi.saveGarden,
-        onSuccess: async (savedDocument) => {
-            useEditorStore.getState().markSaved(savedDocument);
-            await queryClient.invalidateQueries({ queryKey: ['gardens'] });
-        },
-        onError: (error) => {
-            useEditorStore.getState().setSaving(false);
-            useEditorStore.getState().setSaveError(errorText(error, 'サーバーへ接続できませんでした。編集内容は保持されています。確認後に再試行してください。'));
-        },
-    });
-    async function save() {
-        const state = useEditorStore.getState();
-        if (!state.document || !state.isDirty || state.isSaving || state.isTransformDragging)
-            return;
-        if (state.isCalibrating)
-            return;
-        if (state.photoBoundaryDraft !== null) {
-            state.setSaveError('描画中の輪郭を確定または取消してから保存してください。');
-            return;
-        }
-        if (state.document.photo && !validSurface(state.document.photo)) {
-            state.setSaveError('庭の輪郭を始点につないで確定してから保存してください。');
-            return;
-        }
-        if (state.document.photo) {
-            const error = calibratedBoundaryError(state.document.photo, state.document.width, state.document.depth);
-            if (error) {
-                state.setSaveError(error);
-                return;
-            }
-        }
-        const snapshot = structuredClone(state.document);
-        state.setSaving(true);
-        state.setSaveError(null);
-        try { await saveGarden.mutateAsync(snapshot); return true; }
-        catch { return false; }
-    }
+    const { save, flush } = useGardenAutosave(gardenId, document, isDirty, isSaving, isTransformDragging,
+        isCalibrating, hasBoundaryDraft, saveError);
     function goToList() {
-        requestNavigation('/');
+        requestNavigation(canvasUrl('/'));
     }
-    function requestNavigation(url) {
+    async function requestNavigation(url) {
         const state = useEditorStore.getState();
-        if (state.isSaving || state.isTransformDragging) return;
-        if (state.isDirty || state.photoBoundaryDraft !== null || state.isCalibrating) {
+        if (navigationLocked.current || state.isTransformDragging) return;
+        if (state.photoBoundaryDraft !== null || state.isCalibrating) {
             setLeaveDestination(url);
             setLeaveOpen(true);
             return;
         }
-        window.location.assign(url);
+        navigationLocked.current = true;
+        setNavigating(true);
+        try {
+            if (await flush()) {
+                allowNavigation.current = true;
+                window.location.assign(url);
+            }
+        } finally {
+            navigationLocked.current = false;
+            setNavigating(false);
+        }
     }
     function retryModel(objectId) {
         const object = document?.objects.find((placed) => placed.id === objectId);
         const modelUrl = assetQuery.data?.find((asset) => asset.id === object?.assetId)?.modelUrl;
         if (modelUrl)
             clearGardenModelCache(modelUrl);
+        if (object?.modelComposition) clearPlantCompositionCache(object.modelComposition);
         clearModelFailure(objectId);
         setRetryRequest((previous) => ({ objectId, sequence: previous?.objectId === objectId ? previous.sequence + 1 : 1 }));
     }
@@ -164,14 +138,20 @@ export function EditorPage({ gardenId }) {
         {gardenQuery.isError && (<div className="panel load-error">
             <p className="notice notice-error" role="alert">庭を取得できませんでした。庭ID、API、MySQLの状態を確認してください。</p>
             <button className="button button-secondary" onClick={() => gardenQuery.refetch()}>再試行</button>
-            <button className="button button-secondary" onClick={() => window.location.assign('/')}>庭一覧へ戻る</button>
+            <button className="button button-secondary" onClick={() => window.location.assign(canvasUrl('/'))}>庭一覧へ戻る</button>
           </div>)}
       </div></div>);
     }
-    const assets = assetQuery.data ?? [];
+    const baseAssets = assetQuery.data ?? [];
+    const products = new Map((commerce.products.data ?? []).map((product) => [product.id, product]));
+    const productAssets = [...products.values()].filter((product) => product.modelComposition)
+        .map((product) => productAsset(product, baseAssets)).filter(Boolean);
+    const savedAssets = document.objects.filter((object) => object.modelComposition)
+        .map((object) => placedProductAsset(object, baseAssets));
+    const assets = [...baseAssets, ...productAssets, ...savedAssets];
     const assetMap = new Map(assets.map((asset) => [asset.id, asset]));
     const selectedObject = document.objects.find((object) => object.id === selectedObjectId) ?? null;
-    const selectedAsset = selectedObject ? assetMap.get(selectedObject.assetId) ?? null : null;
+    const selectedAsset = selectedObject ? assetForObject(selectedObject, assetMap) ?? null : null;
     const canvasHint = hasBoundaryDraft ? '庭の輪郭をクリックで描き、始点につないで確定'
         : selectedAssetId
             ? `${assetMap.get(selectedAssetId)?.name ?? '素材'}を配置中 · 地面をクリック / Escで終了`
@@ -179,31 +159,18 @@ export function EditorPage({ gardenId }) {
                 : selectedObject && tool === 'rotate'
                     ? '円形ハンドルをドラッグして角度を調整'
                     : 'オブジェクトを選択して編集';
-    const statusText = isSaving ? '保存中…' : isCalibrating ? 'カメラを設定中' : hasBoundaryDraft ? '輪郭を描画中' : saveError ? '再試行して保存' : isDirty ? '保存' : '保存済み';
-    const isEditingDisabled = isSaving || isTransformDragging || isCalibrating;
+    const statusText = isSaving ? '保存中…' : saveError ? '保存できませんでした' : isCalibrating ? 'カメラを設定中' : hasBoundaryDraft ? '輪郭を描画中' : isDirty ? '自動保存待ち' : '保存済み';
+    const savePending = isDirty || isSaving || isCalibrating || hasBoundaryDraft;
+    const isEditingDisabled = navigating || isTransformDragging || isCalibrating;
     const photoReady = !hasBoundaryDraft && !isCalibrating && (!document.photo || (validSurface(document.photo) && !calibratedBoundaryError(document.photo, document.width, document.depth)));
     const editorOverlay = <ObjectToolbar document={document} assets={assets} onNavigate={requestNavigation} selectedObject={selectedObject} selectedAsset={selectedAsset} tool={tool} photoMode={viewMode === 'photo'} disabled={isEditingDisabled || hasBoundaryDraft} onSetTool={setTool} onDuplicate={duplicateSelected} onDelete={deleteSelected}/>;
     return (<div className="editor-shell canvas-shell">
-      <SiteHeader onNavigate={requestNavigation} disabled={isSaving || isTransformDragging}/>
-      <header className="document-bar">
-        <div className="document-identity">
-        <button className="icon-button list-button" aria-label="← 庭一覧" title="庭一覧に戻る" onClick={goToList} disabled={isEditingDisabled}><UiIcon name="back"/><span className="editor-list-label">庭一覧</span></button>
-        <div className="document-title"><h1 title={document.name}>{document.name}</h1><span>{document.photo && document.photo.boundary.length >= 3
-            ? `${document.photo.boundary.length}辺の庭` : `${document.width} × ${document.depth} m`}</span></div>
-        </div>
-        <PlanTools document={document} assets={assets} disabled={isEditingDisabled} photoMode={viewMode === 'photo'} canSave={photoReady} onSave={save} onNavigate={(url) => { allowNavigation.current = true; window.location.assign(url); }} />
-        <div className="document-save">
-        <button className="button button-primary save-button" data-testid="save-garden" onClick={save} disabled={!isDirty || isSaving || isTransformDragging || !photoReady}>
-          <span data-testid="save-status" aria-live="polite">{statusText}</span>
-        </button>
-        </div>
-      </header>
-
+      <SiteHeader onNavigate={requestNavigation} disabled={navigating || isTransformDragging}/>
       {saveError && (<div className="editor-alert notice-error" role="alert">
           <span>{saveError}</span>
           <button type="button" onClick={save} disabled={isSaving || isTransformDragging}>再試行</button>
         </div>)}
-      {!photoReady && !hasBoundaryDraft && !isCalibrating && <div className="editor-alert photo-progress" role="status">写真上の庭の輪郭と実寸範囲を確認してから保存してください。</div>}
+      {!photoReady && !hasBoundaryDraft && !isCalibrating && <div className="editor-alert photo-progress" role="status">写真上の庭の輪郭と実寸範囲が確定すると自動保存されます。</div>}
       {assetQuery.isError && (<div className="editor-alert notice-error" role="alert">
           <span>オブジェクトカタログを読み込めませんでした。</span>
           <button type="button" onClick={() => assetQuery.refetch()}>再試行</button>
@@ -213,36 +180,46 @@ export function EditorPage({ gardenId }) {
           {failedModelIds.map((id) => (<button key={id} type="button" onClick={() => retryModel(id)}>モデルを再試行</button>))}
         </div>)}
 
-      <main className={`editor-layout${propertiesCollapsed ? ' inspector-hidden' : ''}`}>
+      <main className={`editor-layout${propertiesCollapsed ? ' inspector-hidden' : ''}`} style={{ '--commerce-width': `${sidebarWidth}px` }}>
         <section className="canvas-column" aria-label="庭の3D編集エリア">
-          <div className="canvas-tools">
+          <div className="canvas-tools" data-view-mode={viewMode}>
+            <div className="document-identity">
+              <button type="button" className="icon-button list-button" aria-label="← 庭一覧" title="庭一覧に戻る" onClick={goToList} disabled={isEditingDisabled}><UiIcon name="back" size={16}/></button>
+              <div className="document-title"><h1 title={document.name}>{document.name}</h1></div>
+              <span className="document-save-status" data-testid="save-status" role="status" aria-live="polite" title={statusText}
+                data-state={saveError ? 'error' : savePending ? 'pending' : 'saved'}>
+                <UiIcon name={saveError ? 'alert' : savePending ? 'clock' : 'check'} size={14}/><span className="document-save-label">{statusText}</span>
+              </span>
+            </div>
             <div className="view-mode-actions" role="group" aria-label="表示モード">
-              <button type="button" aria-pressed={viewMode === 'photo'} disabled={isCalibrating} onClick={() => setViewMode('photo')}><UiIcon name="photo"/>写真＋設計</button>
-              <button type="button" aria-pressed={viewMode === '3d'} disabled={hasBoundaryDraft || isCalibrating} onClick={() => setViewMode('3d')}><UiIcon name="cube"/>3D庭</button>
+              <button type="button" aria-label="写真＋設計" title="写真＋設計" aria-pressed={viewMode === 'photo'} disabled={isCalibrating} onClick={() => setViewMode('photo')}><UiIcon name="photo"/><span>写真<span className="view-mode-suffix">＋設計</span></span></button>
+              <button type="button" aria-label="3D庭" title="3D庭" aria-pressed={viewMode === '3d'} disabled={hasBoundaryDraft || isCalibrating} onClick={() => setViewMode('3d')}><UiIcon name="cube"/><span>3D<span className="view-mode-suffix">庭</span></span></button>
             </div>
             <div className="camera-actions">
-              {viewMode === '3d' && !document.photo && <button type="button" aria-haspopup="dialog" onClick={() => setDimensionsOpen(true)} disabled={isEditingDisabled}><UiIcon name="ruler"/>土台設定</button>}
-              {viewMode === '3d' && <button type="button" onClick={() => commandCamera('top')} disabled={isEditingDisabled}><UiIcon name="top"/>上から見る</button>}
-              {viewMode === '3d' && <button type="button" onClick={() => commandCamera('home')} disabled={isEditingDisabled}><UiIcon name="home"/>初期視点</button>}
-              <button type="button" className="inspector-toggle" aria-label={propertiesCollapsed ? '商品・カートパネルを表示' : '商品・カートパネルを隠す'} aria-expanded={!propertiesCollapsed} aria-controls="properties-panel" onClick={() => setPropertiesCollapsed(!propertiesCollapsed)}><UiIcon name="panel"/><span>商品・カート</span></button>
+              {viewMode === '3d' && !document.photo && <button type="button" aria-label="土台設定" title="土台設定" aria-haspopup="dialog" onClick={() => setDimensionsOpen(true)} disabled={isEditingDisabled}><UiIcon name="ruler"/><span>土台設定</span></button>}
+              {viewMode === '3d' && <button type="button" aria-label="上から見る" title="上から見る" onClick={() => commandCamera('top')} disabled={isEditingDisabled}><UiIcon name="top"/><span>上から見る</span></button>}
+              {viewMode === '3d' && <button type="button" aria-label="初期視点" title="初期視点" onClick={() => commandCamera('home')} disabled={isEditingDisabled}><UiIcon name="home"/><span>初期視点</span></button>}
+              <button type="button" className="inspector-toggle" aria-label={propertiesCollapsed ? '商品・買い物リストパネルを表示' : '商品・買い物リストパネルを隠す'} title={propertiesCollapsed ? '商品・買い物リストを表示' : '商品・買い物リストを隠す'} aria-expanded={!propertiesCollapsed} aria-controls="properties-panel" onClick={() => setPropertiesCollapsed(!propertiesCollapsed)}><UiIcon name="panel"/><span>商品・リスト</span></button>
             </div>
           </div>
           {dimensionsOpen && viewMode === '3d' && !document.photo && <Dialog title="土台のサイズ" description="庭の中心を基準に、幅と奥行きを変更します。" closeLabel="土台設定を閉じる" onClose={() => setDimensionsOpen(false)}>
             <GardenDimensions key={`${document.id}:${document.width}:${document.depth}`} document={document} disabled={isEditingDisabled || hasBoundaryDraft}/>
           </Dialog>}
-          {viewMode === 'photo' ? <PhotoOverlay document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={isEditingDisabled} retryRequest={retryRequest} onModelLoaded={markModelLoaded} onModelFailed={markModelFailed} editorOverlay={editorOverlay}/> : assetQuery.isLoading ? (<div className="canvas-loading" role="status">アセット一覧を読み込んでいます…</div>) : (<GardenCanvas document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={isSaving} retryRequest={retryRequest} onModelLoaded={markModelLoaded} onModelFailed={markModelFailed} editorOverlay={editorOverlay}/>)}
+          {viewMode === 'photo' ? <PhotoOverlay document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={isEditingDisabled} retryRequest={retryRequest} onModelLoaded={markModelLoaded} onModelFailed={markModelFailed} editorOverlay={editorOverlay} captureRef={captureRef}/> : assetQuery.isLoading ? (<div className="canvas-loading" role="status">アセット一覧を読み込んでいます…</div>) : (<GardenCanvas document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={isEditingDisabled || hasBoundaryDraft} retryRequest={retryRequest} onModelLoaded={markModelLoaded} onModelFailed={markModelFailed} editorOverlay={editorOverlay} captureRef={captureRef}/>)}
+          <CompletionImageAction key={document.id} garden={document} assets={assets} photoMode={viewMode === 'photo'} captureRef={captureRef}
+            storeId={commerce.cart.data?.storeId} disabled={isEditingDisabled || hasBoundaryDraft}/>
           <div className="canvas-footer">
             <span className="canvas-tool-hint" aria-live="polite">{canvasHint}</span>
             <span data-testid="model-loaded">読み込み済み: {loadedModelIds.length} / {document.objects.length}</span>
             <span>1目盛り = 1m</span>
           </div>
         </section>
-        {!propertiesCollapsed && <CommercePanel document={document} assets={assets} selectedObject={selectedObject} disabled={isEditingDisabled || hasBoundaryDraft} commerce={commerce} onSelectObject={selectObject} onNavigate={requestNavigation}/>}
-        <CatalogPanel assets={assets} selectedAssetId={selectedAssetId} disabled={isEditingDisabled || hasBoundaryDraft || assetQuery.isError} collapsed={catalogCollapsed} onSelect={selectAsset} onToggle={() => setCatalogCollapsed((collapsed) => !collapsed)}/>
+        {!propertiesCollapsed && <CommercePanel document={document} assets={assets} selectedObject={selectedObject} disabled={isEditingDisabled || hasBoundaryDraft || assetQuery.isLoading || assetQuery.isError} commerce={commerce} onSelectObject={selectObject} onNavigate={requestNavigation} width={sidebarWidth} onWidthChange={setSidebarWidth}/>}
       </main>
       {leaveOpen && <Dialog title="変更を保存せずに戻りますか？" description="保存していない編集内容は破棄されます。" onClose={() => setLeaveOpen(false)} footer={<>
         <button type="button" className="button button-secondary" data-dialog-autofocus onClick={() => setLeaveOpen(false)}>編集を続ける</button>
-        <button type="button" className="button button-danger" onClick={() => { allowNavigation.current = true; window.location.assign(leaveDestination); }}>変更を破棄して戻る</button>
+        <button type="button" className="button button-danger" disabled={isSaving} onClick={() => { allowNavigation.current = true; window.location.assign(leaveDestination); }}>変更を破棄して戻る</button>
       </>}><p>「{document.name}」の最後に保存した状態は残ります。</p></Dialog>}
     </div>);
 }
+import { canvasUrl } from '../domain/urls';

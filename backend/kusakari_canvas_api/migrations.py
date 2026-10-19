@@ -13,9 +13,11 @@ from alembic import command
 
 from .config import BACKEND_ROOT, Settings
 from .database import create_database_engine
+from .history_models import HistoryEntity  # noqa: F401 - register history metadata for schema validation
 from .models import Base
 
-HEAD = "0002"
+HEAD = "0007"
+SUPPORTED_REVISIONS = {"0001", "0002", "0003", "0004", "0005", "0006", HEAD}
 
 
 def migration_lock_name(database: str) -> str:
@@ -32,23 +34,46 @@ def type_signature(value, dialect) -> str:
 
 
 def validate_schema(connection: Connection, revision: str) -> None:
-    if revision not in {"0001", HEAD}:
+    if revision not in SUPPORTED_REVISIONS:
         raise ValueError("Unknown Kusakari Canvas schema revision; migration stopped.")
     inspector = inspect(connection)
     names = set(inspector.get_table_names())
-    allowed = set(Base.metadata.tables) | {"flyway_schema_history", "alembic_version"}
-    if not set(Base.metadata.tables) <= names or names - allowed:
+    expected_tables = set()
+    for table in Base.metadata.sorted_tables:
+        if table.name == "garden_image_history" and revision in {"0001", "0002"}:
+            continue
+        if table.name == "garden_thumbnails" and revision not in {"0006", "0007"}:
+            continue
+        expected_tables.add(table.name)
+    allowed = expected_tables | {"flyway_schema_history", "alembic_version"}
+    if not expected_tables <= names or names - allowed:
         raise ValueError("Database tables do not match the Kusakari Canvas schema; migration stopped.")
     for table in Base.metadata.sorted_tables:
-        expected = {c.name: c for c in table.columns if not (
-            revision == "0001" and table.name == "gardens" and c.name == "photo_json")}
+        if table.name not in expected_tables:
+            continue
+        expected = {}
+        for column in table.columns:
+            if revision == "0001" and table.name == "gardens" and column.name == "photo_json":
+                continue
+            if revision in {"0001", "0002", "0003"} and table.name == "garden_image_history" and column.name == "generation_method":
+                continue
+            if revision not in {"0005", "0006", "0007"} and table.name == "placed_objects" and column.name in {
+                "product_id", "product_name", "material_code", "model_composition_json"
+            }:
+                continue
+            if revision != "0007" and table.name in {"garden_image_history", "garden_thumbnails"} and column.name.endswith("_key"):
+                continue
+            expected[column.name] = column
         actual = {c["name"]: c for c in inspector.get_columns(table.name)}
         if set(expected) != set(actual):
             raise ValueError(f"Schema column mismatch: {table.name}; migration stopped.")
         for name, column in expected.items():
             found = actual[name]
+            nullable = column.nullable
+            if revision != "0007" and table.name in {"garden_image_history", "garden_thumbnails"} and name.endswith("_png"):
+                nullable = False
             if type_signature(column.type, connection.dialect) != type_signature(found["type"], connection.dialect) \
-                    or bool(column.nullable) != bool(found["nullable"]):
+                    or bool(nullable) != bool(found["nullable"]):
                 raise ValueError(f"Schema type/nullability mismatch: {table.name}.{name}; migration stopped.")
         if inspector.get_pk_constraint(table.name)["constrained_columns"] != [c.name for c in table.primary_key]:
             raise ValueError(f"Schema primary key mismatch: {table.name}; migration stopped.")
@@ -77,7 +102,7 @@ def current_revision(connection: Connection) -> str | None:
     if "alembic_version" not in inspect(connection).get_table_names():
         return None
     rows = list(connection.scalars(text("SELECT version_num FROM alembic_version")))
-    if len(rows) != 1 or rows[0] not in {"0001", HEAD}:
+    if len(rows) != 1 or rows[0] not in SUPPORTED_REVISIONS:
         raise ValueError("Alembic history is empty, branched, or unsupported; migration stopped.")
     return rows[0]
 
@@ -90,7 +115,7 @@ def legacy_revision(connection: Connection) -> str:
     versions = [str(row["version"]) for row in rows]
     if versions not in (["1"], ["1", "2"]) or any(not r["success"] or r["type"] != "SQL" for r in rows):
         raise ValueError("Flyway history does not match V1/V2; migration stopped.")
-    revision = "0001" if versions == ["1"] else HEAD
+    revision = "0001" if versions == ["1"] else "0002"
     validate_schema(connection, revision)
     return revision
 
@@ -149,7 +174,12 @@ def migrate(settings: Settings) -> dict:
                         previous = "flyway_" + revision
                         adopted = True
                     if tables and (adopted or revision != HEAD):
-                        backup = backup_database(settings)
+                        if settings.profile == "container":
+                            backup = os.environ.get("KUSAKARI_CANVAS_MIGRATION_BACKUP_REFERENCE")
+                            if not backup or not re.fullmatch(r"arn:aws(?:-cn|-us-gov)?:rds:[a-z0-9-]+:\d{12}:snapshot:[A-Za-z0-9-]+", backup):
+                                raise ValueError("Existing container DB migration requires the ARN of a verified available RDS snapshot.")
+                        else:
+                            backup = backup_database(settings)
                     connection.commit()
                     config = alembic_config(connection)
                     if adopted:

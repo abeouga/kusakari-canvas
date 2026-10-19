@@ -49,7 +49,7 @@ for (const fixedProjection of [false, true]) {
         await expect(popup.getByRole('button', { name: '長さを適用' })).toBeEnabled();
         await expect(page.getByTestId('photo-ground')).toHaveAttribute('points', outline!);
         await expect(page.getByTestId('save-status')).toHaveText('保存済み');
-        await expect(page.getByTestId('save-garden')).toBeDisabled();
+        await expect(page.getByTestId('save-garden')).toHaveCount(0);
         if (index % 2 === 0) await page.keyboard.press('Escape');
         else await popup.getByRole('button', { name: '辺の計測を閉じる' }).click();
         await expect(edge).toBeFocused();

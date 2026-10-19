@@ -1,0 +1,76 @@
+.canvas-column { position: relative; }
+.completion-launcher {
+  position: absolute; right: 20px; bottom: 50px; z-index: 10;
+  display: flex; align-items: center; border-radius: 100px;
+  box-shadow: 0 6px 24px #1a352b26;
+}
+.completion-launcher button {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; border: 0; border-radius: 100px; padding: 10px 14px;
+  font: inherit; font-size: 12px; cursor: pointer;
+}
+.completion-launcher .completion-launch { color: white; background: #244c3b; padding-inline: 20px; font-weight: 600; }
+.completion-launcher .completion-launch:hover:not(:disabled) { background: #183e2e; }
+.completion-launch > svg:last-child { transform: rotate(180deg); }
+.completion-launch[aria-expanded='true'] > svg:last-child { transform: none; }
+.completion-menu {
+  position: absolute; right: 0; bottom: calc(100% + 10px); width: 232px; max-width: calc(100vw - 54px);
+  padding: 8px; border: 1px solid #dce5dc; border-radius: 16px; background: #fffffff9;
+  box-shadow: 0 12px 36px #1a352b26;
+}
+.completion-menu-heading { display: block; padding: 4px 10px 8px; font-size: 10px; color: #7b887e; }
+.completion-menu button { width: 100%; justify-content: flex-start; border-radius: 10px; }
+.completion-menu button > svg:last-child { margin-left: auto; color: #91a094; }
+.completion-new { color: #244c3b; background: #edf3ed; font-weight: 600; }
+.completion-new:hover:not(:disabled) { background: #e4eee3; }
+.completion-menu-error { margin: 6px 8px; color: #9d392f; font-size: 11px; }
+.completion-history { background: transparent; color: #5b6f60; }
+.completion-history:hover { background: #edf3ed; }
+.completion-launcher button:disabled { opacity: .5; cursor: not-allowed; }
+.completion-launcher button:focus-visible { outline: 2px solid #426b53; outline-offset: 3px; }
+.completion-launcher-error { position: absolute; right: 0; bottom: calc(100% + 12px); width: min(340px, 75vw); margin: 0; padding: 14px; color: #9d392f; background: #fff5f1; border: 1px solid #eed6cc; border-radius: 12px; font-size: 12px; }
+.app-dialog.completion-image-dialog { width: 960px; border-radius: 20px; max-height: calc(100dvh - 40px); }
+.completion-image-dialog .dialog-header { padding: 18px 24px; align-items: center; }
+.completion-image-dialog .dialog-header h2 { font-size: 16px; letter-spacing: .02em; }
+.completion-image-dialog .dialog-body { padding: 20px 24px 12px; }
+.completion-image-dialog .ai-image-generation { margin: 0; padding: 0; border: 0; }
+.completion-image-dialog .ai-after-result { margin: 0; }
+.ai-preview-surface { position: relative; display: grid; place-items: center; overflow: hidden; background: #f0f2ed; border-radius: 12px; }
+.ai-preview-image { display: block; width: 100%; height: auto; max-height: min(52dvh, 520px); object-fit: contain; }
+.ai-preview-badge { position: absolute; left: 14px; top: 14px; padding: 4px 10px; background: #ffffffeb; color: #3f584a; border-radius: 100px; font-size: 11px; }
+.ai-studio-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0 14px; }
+.ai-action-copy { display: grid; gap: 5px; color: #334d3d; font-size: 13px; }
+.ai-action-copy small { font-size: 10px; color: #7b857e; line-height: 1.5; }
+.ai-studio-actions .button, .ai-result-actions .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 100px; white-space: nowrap; }
+.ai-studio-actions .ai-generate-button { min-height: 44px; min-width: 142px; padding: 12px 22px; font-size: 13px; background: #244c3b; }
+.ai-studio-details { border-top: 1px solid #e8ece6; color: #778278; }
+.ai-studio-details > summary { width: fit-content; padding: 10px 0; font-size: 11px; cursor: pointer; }
+.ai-studio-details-body { padding: 0 0 12px; }
+.ai-studio-details-body p { font-size: 11px; }
+.ai-result-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.ai-result-actions > span { display: flex; align-items: center; gap: 6px; color: #58755f; font-size: 11px; }
+.ai-result-actions > a { margin-left: auto; }
+.ai-reference-error { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ai-save-warning { padding: 12px; border: 1px solid #eed6cc; border-radius: 10px; margin-top: 12px; }
+.ai-save-warning button { margin-right: 12px; }
+.ai-save-warning small { display: block; margin-top: 8px; }
+.ai-config-notice { font-size: 11px; color: #9c5a38; margin: 0 0 10px; }
+.ai-generating-state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #f2f5efe8; color: #284b37; backdrop-filter: blur(3px); }
+.ai-progress-ring { display: block; width: 30px; height: 30px; border: 2px solid #cbd9ca; border-top-color: #2b593f; border-radius: 50%; animation: image-studio-spin 1s linear infinite; }
+@keyframes image-studio-spin { to { transform: rotate(360deg); } }
+.completion-image-dialog .before-after-frame, .generation-history-dialog .before-after-frame { max-width: calc(var(--comparison-aspect) * min(52dvh, 520px)); margin-inline: auto; border-radius: 12px; }
+.before-after-control { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.before-after-help { margin: 0; text-align: center; color: #869185; font-size: 10px; }
+.before-after-range { min-height: 24px; margin: 7px 0 0; }
+@media (prefers-reduced-motion: reduce) { .ai-progress-ring { animation: none; } }
+@media (max-width: 600px) {
+  .completion-launcher { right: 12px; bottom: 52px; }
+  .completion-launcher .completion-launch { padding-inline: 15px; }
+  .app-dialog.completion-image-dialog { width: calc(100vw - 24px); max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); border-radius: 16px; }
+  .completion-image-dialog .dialog-header { padding: 14px 16px; }
+  .completion-image-dialog .dialog-body { padding: 14px 16px 8px; }
+  .ai-studio-actions { flex-direction: column; align-items: stretch; gap: 12px; padding-top: 14px; }
+  .ai-studio-actions .ai-generate-button { width: 100%; }
+  .ai-action-copy { text-align: center; font-size: 12px; }
+  .ai-result-actions { flex-wrap: wrap; }
+}

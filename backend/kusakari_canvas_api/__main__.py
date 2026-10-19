@@ -5,7 +5,6 @@ import sys
 import uvicorn
 
 from .config import Settings
-from .local_mysql import ensure_for_settings
 from .migrations import migrate
 from .startup_errors import safe_error
 
@@ -16,12 +15,16 @@ def main() -> int:
     args = parser.parse_args()
     try:
         settings = Settings.from_env()
-        settings = ensure_for_settings(settings)
-        result = migrate(settings)
-        print(json.dumps(result, ensure_ascii=False), flush=True)
+        if settings.profile != "container":
+            from .local_mysql import ensure_for_settings
+            settings = ensure_for_settings(settings)
+        if args.action == "migrate" or settings.profile != "container":
+            result = migrate(settings)
+            print(json.dumps(result, ensure_ascii=False), flush=True)
         if args.action == "serve":
             from .main import create_app
-            uvicorn.run(create_app(settings), host=settings.host, port=settings.port, log_level="info")
+            uvicorn.run(create_app(settings), host=settings.host, port=settings.port, log_level="info",
+                        proxy_headers=False, timeout_graceful_shutdown=30)
         return 0
     except ValueError as error:
         print(f"Kusakari Canvas startup rejected: {error}", file=sys.stderr)

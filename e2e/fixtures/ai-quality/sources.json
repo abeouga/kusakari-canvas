@@ -1,0 +1,40 @@
+[
+  {
+    "file": "garden.jpg",
+    "author": "Mehmet Turgut Kirkgoz",
+    "source": "https://www.pexels.com/photo/trees-shrubs-and-lawn-in-a-garden-12220735/",
+    "license": "https://www.pexels.com/license/",
+    "download": "https://images.pexels.com/photos/12220735/pexels-photo-12220735.jpeg?w=1280",
+    "dimensions": [
+      1280,
+      853
+    ],
+    "sha256": "6e1070ab23c5028227d2a029f502890d1fe3e439abfded04b562b633b63e3f60"
+  },
+  {
+    "file": "boxwood.jpg",
+    "caption": "Form",
+    "author": "Leonora (Ellie) Enking",
+    "download": "https://eit-planttoolbox-prod.s3.amazonaws.com/media/images/Buxus_Sempervirens___888qux3Mat0p.jpeg",
+    "dimensions": [
+      481,
+      640
+    ],
+    "sha256": "eab1e905af04bc78bcee2a7bb6af156d6c4f378ade620383239eefdec4726415",
+    "source": "https://plants.ces.ncsu.edu/plants/buxus-sempervirens/",
+    "license": "https://creativecommons.org/licenses/by-sa/2.0/"
+  },
+  {
+    "file": "oak.jpg",
+    "caption": "Form",
+    "author": "Peter O'connor aka anemo",
+    "download": "https://eit-planttoolbox-prod.s3.amazonaws.com/media/images/Quercus_robur_form_P_UnT1nhYxVeT2.jpe",
+    "dimensions": [
+      1024,
+      768
+    ],
+    "sha256": "501c02042df40e5b54d6bd35206858b4f154ad0b8ee15101ed1a1d46fee18607",
+    "source": "https://plants.ces.ncsu.edu/plants/quercus-robur/",
+    "license": "https://creativecommons.org/licenses/by-sa/2.0/"
+  }
+]

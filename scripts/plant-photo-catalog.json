@@ -1,0 +1,242 @@
+[
+  {
+    "key": "round-tree",
+    "name": "カツラ",
+    "latinName": "Cercidiphyllum japonicum",
+    "description": "丸みのあるハート形の葉と、やわらかな枝ぶりを楽しむ落葉樹です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of young katsura tree, rounded heart-shaped bright green leaves, slender branching trunk, 1.8m. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-round-tree.png"
+  },
+  {
+    "key": "narrow-tree",
+    "name": "オリーブ",
+    "latinName": "Olea europaea",
+    "description": "細長い銀緑色の葉と、軽やかな樹形が特徴の常緑樹です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce product thumbnail. Create a photorealistic nursery catalog photograph of one potted olive tree (Olea europaea), slender woody trunk with branching airy crown of narrow gray-green lanceolate leaves, approximately 1.8 m young specimen. Entire plant and simple unbranded charcoal nursery pot visible, centered with generous margins in portrait 2:3 composition. Soft natural daylight, warm pale stone wall backdrop, subtle ground shadow, realistic fine leaf texture and organic irregularity. No text, no labels, no watermark, no people, no collage, not an illustration or 3D render.",
+    "imageUrl": "/images/plant-photo-narrow-tree.png"
+  },
+  {
+    "key": "maple-tree",
+    "name": "イロハモミジ",
+    "latinName": "Acer palmatum",
+    "description": "深く切れ込む掌状の葉が特徴。横に広がる枝ぶりが庭に奥行きを添えます。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of Japanese maple with green deeply palmate five to seven lobed leaves, spreading delicate branches, 1.8m. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-maple-tree.png"
+  },
+  {
+    "key": "compound-tree",
+    "name": "シマトネリコ",
+    "latinName": "Fraxinus griffithii",
+    "description": "光沢のある小葉が連なる複葉と、風を通す軽やかな枝ぶりが特徴です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of evergreen ash Fraxinus griffithii, glossy green pinnate compound leaves made of small pointed oval leaflets, airy canopy, 2.4m. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-compound-tree.png"
+  },
+  {
+    "key": "gold-conifer",
+    "name": "ゴールドクレスト",
+    "latinName": "Cupressus macrocarpa 'Goldcrest'",
+    "description": "明るい黄緑から黄金色の葉を持つ、すっきりした円錐形のコニファーです。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of Goldcrest lemon cypress, golden yellow-green fine scale foliage, narrow conical habit, 1.5m. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-gold-conifer.png"
+  },
+  {
+    "key": "blue-conifer",
+    "name": "ブルーアイス",
+    "latinName": "Cupressus arizonica var. glabra 'Blue Ice'",
+    "description": "青みを帯びた銀色の葉が特徴。円錐形の樹姿が植栽のアクセントになります。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of Blue Ice Arizona cypress, blue silver fine scale foliage, conical form, 1.8m. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-blue-conifer.png"
+  },
+  {
+    "key": "compact-conifer",
+    "name": "コニカ",
+    "latinName": "Picea glauca 'Conica'",
+    "description": "細かな緑の針葉が密につく、コンパクトな円錐形のコニファーです。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of dwarf Alberta spruce Conica, dense tiny green needles, neat cone-shaped compact specimen, 80cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-compact-conifer.png"
+  },
+  {
+    "key": "grove-oval",
+    "name": "ソヨゴ（株立ち）",
+    "latinName": "Ilex pedunculosa",
+    "description": "縁がゆるく波打つ緑の葉と、複数の幹がつくる自然な樹姿が特徴です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of multi-stem Japanese longstalk holly, smooth oval dark green leaves with slightly wavy margins, airy 2.3m specimen, no berries. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-grove-oval.png"
+  },
+  {
+    "key": "grove-round",
+    "name": "ユーカリ・ポポラス",
+    "latinName": "Eucalyptus polyanthemos",
+    "description": "丸みのある銀緑色の葉が特徴。株立ちの枝ぶりを楽しめるユーカリです。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of young multi-stem Eucalyptus polyanthemos, rounded silver green juvenile leaves on fine branching stems, 1.7m. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-grove-round.png"
+  },
+  {
+    "key": "grove-cane",
+    "name": "クロチク",
+    "latinName": "Phyllostachys nigra",
+    "description": "黒く色づく細い稈と、さらりとした細葉の対比が特徴の竹です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of black bamboo, cluster of slender black segmented culms and narrow green leaves, 2.1m. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-grove-cane.png"
+  },
+  {
+    "key": "round-shrub",
+    "name": "ボックスウッド",
+    "latinName": "Buxus sempervirens",
+    "description": "小さな丸みのある葉が密につく常緑低木。まとまりのある緑の輪郭をつくります。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of common boxwood, dense small rounded oval green leaves, softly rounded bush, 65cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-round-shrub.png"
+  },
+  {
+    "key": "cluster-shrub",
+    "name": "アジサイ（青花）",
+    "latinName": "Hydrangea macrophylla",
+    "description": "大きな葉と、青い小花が集まった丸い花房を楽しむ花木です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of blue mophead hydrangea, broad serrated leaves, several rounded blue flower heads, 90cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-cluster-shrub.png"
+  },
+  {
+    "key": "pink-shrub",
+    "name": "サツキ（桃花）",
+    "latinName": "Rhododendron indicum",
+    "description": "小ぶりの葉と、鮮やかな桃色の花が特徴。低くまとまる花木です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of pink satsuki azalea, low rounded woody shrub with small narrow oval leaves and vivid pink five-lobed funnel flowers, 75cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-pink-shrub.png"
+  },
+  {
+    "key": "silver-spread",
+    "name": "ウエストリンギア",
+    "latinName": "Westringia fruticosa",
+    "description": "細い灰緑色の葉と、横に広がる枝ぶりが特徴の常緑低木です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of low spreading coastal rosemary Westringia fruticosa, narrow gray green leaves in whorls, silver undersides, no flowers, 40cm tall wide mound. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-silver-spread.png"
+  },
+  {
+    "key": "gold-spread",
+    "name": "黄金シモツケ・ゴールドマウンド",
+    "latinName": "Spiraea japonica 'Gold Mound'",
+    "description": "明るい黄金色の葉が低く広がる、こんもりした樹姿の低木です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of Gold Mound Japanese spirea, small golden yellow serrated oval leaves, low broad mound, no flowers, 40cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-gold-spread.png"
+  },
+  {
+    "key": "white-spread",
+    "name": "イベリス",
+    "latinName": "Iberis sempervirens",
+    "description": "濃い緑の葉を覆うように白い花房が咲く、横に広がる植物です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of evergreen candytuft Iberis sempervirens, low spreading cushion of narrow dark green leaves covered with small white four-petalled flowers in flat clusters, 30cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-white-spread.png"
+  },
+  {
+    "key": "purple-spike",
+    "name": "イングリッシュラベンダー",
+    "latinName": "Lavandula angustifolia",
+    "description": "細い灰緑色の葉と、立ち上がる紫色の花穂が特徴です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of English lavender, narrow gray green leaves and slender stems with purple flower spikes, 55cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-purple-spike.png"
+  },
+  {
+    "key": "white-daisy",
+    "name": "マーガレット（白花）",
+    "latinName": "Argyranthemum frutescens",
+    "description": "繊細に裂けた葉と、黄色い中心を囲む白い花びらが特徴です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of white marguerite daisy, finely divided green leaves, white daisy ray petals and yellow disks, 40cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-white-daisy.png"
+  },
+  {
+    "key": "blue-bell",
+    "name": "カンパニュラ（青紫花）",
+    "latinName": "Campanula medium",
+    "description": "青紫色のふっくらした釣鐘形の花が、茎に沿って咲く草花です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of Canterbury bells Campanula medium, upright stems with blue violet inflated bell shaped flowers, green basal foliage, 45cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-blue-bell.png"
+  },
+  {
+    "key": "soft-grass",
+    "name": "フウチソウ",
+    "latinName": "Hakonechloa macra",
+    "description": "細長い緑の葉が弓なりにしなり、やわらかなまとまりをつくるグラスです。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of Japanese forest grass Hakonechloa macra plain green form, graceful cascading arching blades, soft dense mound, 60cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-soft-grass.png"
+  },
+  {
+    "key": "red-grass",
+    "name": "ベニチガヤ",
+    "latinName": "Imperata cylindrica 'Rubra'",
+    "description": "緑の葉元から赤く染まる葉先への色の変化を楽しむ観賞用グラスです。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of Japanese blood grass Imperata cylindrica Rubra, upright blades green at base graduating to deep crimson tips, 60cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-red-grass.png"
+  },
+  {
+    "key": "plume-grass",
+    "name": "矮性パンパスグラス",
+    "latinName": "Cortaderia selloana 'Pumila'",
+    "description": "細長い葉の株から、ふんわりした淡いクリーム色の穂が立ち上がります。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of dwarf pampas grass Pumila, arching green blades and upright fluffy cream white plumes, 1.3m. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-plume-grass.png"
+  },
+  {
+    "key": "green-rosette",
+    "name": "エケベリア・七福神",
+    "latinName": "Echeveria 'Imbricata'",
+    "description": "淡い緑の肉厚な葉が、バラの花のように重なる多肉植物です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of Echeveria imbricata, one large blue green rosette of thick spoon shaped leaves with slight powdery bloom, 25cm across. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-green-rosette.png"
+  },
+  {
+    "key": "purple-rosette",
+    "name": "エケベリア・パールフォンニュルンベルク",
+    "latinName": "Echeveria 'Perle von Nürnberg'",
+    "description": "淡い紫から桃色を帯びる肉厚の葉が、整ったロゼットをつくります。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of Echeveria Perle von Nurnberg, single broad lavender pink mauve succulent rosette with powdery pointed spoon leaves, 25cm across. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-purple-rosette.png"
+  },
+  {
+    "key": "sword-rosette",
+    "name": "アガベ・アテナータ",
+    "latinName": "Agave attenuata",
+    "description": "青緑色の長い葉が放射状に広がる、存在感のある多肉植物です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of Agave attenuata, broad smooth spineless blue green sword shaped leaves in open rosette, 65cm tall, no flower spike. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-sword-rosette.png"
+  },
+  {
+    "key": "heart-vine",
+    "name": "フィロデンドロン・ヘデラケウム",
+    "latinName": "Philodendron hederaceum",
+    "description": "つやのあるハート形の緑の葉が、つるに沿って連なる観葉植物です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of heartleaf philodendron hederaceum, glossy green heart shaped leaves on climbing and trailing vines with slim natural coir support, 90cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-heart-vine.png"
+  },
+  {
+    "key": "palmate-vine",
+    "name": "ヘデラ・ヘリックス",
+    "latinName": "Hedera helix",
+    "description": "掌状に切れ込む緑の葉と、しなやかに伸びるつるが特徴です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of English ivy Hedera helix green form, three to five lobed ivy leaves on gracefully trailing vines, pot on plain low plinth. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-palmate-vine.png"
+  },
+  {
+    "key": "split-leaf",
+    "name": "モンステラ・デリシオーサ",
+    "latinName": "Monstera deliciosa",
+    "description": "深い切れ込みと穴のある大きな葉を楽しむ、代表的な観葉植物です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of Monstera deliciosa, five large glossy green mature fenestrated split leaves with natural holes, 80cm. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-split-leaf.png"
+  },
+  {
+    "key": "tall-palm",
+    "name": "フェニックス・ロベレニー",
+    "latinName": "Phoenix roebelenii",
+    "description": "細かな小葉が並ぶ羽状の葉と、すっきりした幹が特徴のヤシです。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of pygmy date palm Phoenix roebelenii, single slender textured trunk and arching pinnate feather fronds, 1.8m. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-tall-palm.png"
+  },
+  {
+    "key": "compact-palm",
+    "name": "テーブルヤシ",
+    "latinName": "Chamaedorea elegans",
+    "description": "細い茎に羽状の葉が広がる、小型のヤシ。軽やかな葉姿が特徴です。",
+    "prompt": "Use case: product-mockup. Asset type: botanical e-commerce thumbnail. Primary request: photorealistic nursery catalog photograph of parlor palm Chamaedorea elegans, cluster of thin green stems with delicate pinnate fronds, 1m. One specimen in a simple unbranded charcoal nursery pot, entire plant and pot visible centered in portrait 2:3 composition with generous margin around leaves. Warm pale stone wall backdrop, natural soft daylight, subtle ground shadow, realistic organic leaf texture and irregularity. Camera slightly above small plants to show rosettes, eye-level for trees. No text, no labels, no watermark, no people, no collage, not a 3D render.",
+    "imageUrl": "/images/plant-photo-compact-palm.png"
+  }
+]

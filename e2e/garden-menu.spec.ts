@@ -15,7 +15,6 @@ test('garden options duplicate and delete with persisted independent data', asyn
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     await page.keyboard.press('Escape');
-    await page.getByTestId('save-garden').click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const saved = await (await request.get(`${api}/gardens/${source.id}`)).json();
     await page.getByRole('button', { name: '← 庭一覧', exact: true }).click();

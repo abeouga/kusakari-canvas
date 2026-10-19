@@ -85,7 +85,7 @@ for (const mode of ['legacy', 'fixed-projection', 'calibrated']) {
       await field.fill('12.5');
       await field.press('Enter');
       await expect(page.getByTestId('edge-measurement')).toHaveText('12.50 m');
-      await expect(page.getByTestId('save-garden')).toBeEnabled();
+      await expect(page.getByTestId('save-status')).toHaveText('保存済み');
       await expect(popup).toBeVisible();
       await page.keyboard.press('Escape');
       await page.getByTestId('photo-edge-1').click();
@@ -100,7 +100,6 @@ for (const mode of ['legacy', 'fixed-projection', 'calibrated']) {
       const expectedArea = mode === 'calibrated' ? 180 : 142.5;
       await expect(summary).toContainText(`面積：${expectedArea.toFixed(2)} m²`);
       await page.keyboard.press('Escape');
-      await page.getByTestId('save-garden').click();
       await expect(page.getByTestId('save-status')).toHaveText('保存済み');
       const after = await (await request.get(`${api}/gardens/${initial.id}`)).json() as GardenDocument;
       expect(after.width).toBeCloseTo(before.width * 1.5, 4);

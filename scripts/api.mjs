@@ -66,10 +66,11 @@ const tasks = {
   compile: ['run', '--locked', '--project', backend, 'python', '-m', 'compileall', '-q', 'kusakari_canvas_api', 'alembic', 'verification'],
   lint: ['run', '--locked', '--project', backend, 'ruff', 'check', 'kusakari_canvas_api', 'alembic', 'verification'],
   verify: ['run', '--locked', '--project', backend, 'python', '-m', 'verification.verify_backend'],
+  'verify-container': ['run', '--locked', '--project', backend, 'python', '-m', 'verification.serve_container'],
 };
 const task = process.argv[2];
 if (!Object.hasOwn(tasks, task)) {
-  process.stderr.write('Usage: node scripts/api.mjs <dev|migrate|compile|lint|verify>\n');
+  process.stderr.write('Usage: node scripts/api.mjs <dev|migrate|compile|lint|verify|verify-container>\n');
   process.exit(2);
 }
 const child = spawn(uvExecutable, tasks[task], { cwd: backend, env: process.env, stdio: 'inherit' });

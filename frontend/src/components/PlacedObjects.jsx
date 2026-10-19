@@ -1,4 +1,5 @@
 import { UiIcon } from './UiIcon';
+import { assetForObject } from '../domain/productModels';
 export function PlacedObjects({ document, assets, selectedObject, disabled, onSelectObject }) {
     const assetMap = new Map(assets.map((asset) => [asset.id, asset]));
     return (      <section className="placed-section">
@@ -8,9 +9,9 @@ export function PlacedObjects({ document, assets, selectedObject, disabled, onSe
           </div>
           <span className="count-tag">{document.objects.length} / 200</span>
         </div>
-        {document.objects.length === 0 ? (<div className="inspector-empty"><UiIcon name="leaf" size={30}/><strong>最初の素材を置く</strong><p>下のカタログで素材を選び、<br />庭の好きな場所をクリックします。</p></div>) : (<ul className="placed-list">
+        {document.objects.length === 0 ? (<div className="inspector-empty"><UiIcon name="leaf" size={30}/><strong>最初の商品を置く</strong><p>商品を庭へドラッグするか、<br />「庭に配置」を選んで地面をクリックします。</p></div>) : (<ul className="placed-list">
             {document.objects.map((object, index) => {
-                const asset = assetMap.get(object.assetId);
+                const asset = assetForObject(object, assetMap);
                 return (<li key={object.id}>
                   <button type="button" className={`placed-row${selectedObject?.id === object.id ? ' is-active' : ''}`} aria-pressed={selectedObject?.id === object.id} disabled={disabled} data-testid={`object-row-${index}`} data-object-id={object.id} onClick={() => onSelectObject(object.id)}>
                     <span className="placed-index">{String(index + 1).padStart(2, '0')}</span>

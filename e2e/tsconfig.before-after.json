@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "module": "ESNext", "moduleResolution": "Bundler", "allowJs": true, "checkJs": false },
+  "include": ["before-after-resolution.spec.ts", "ai-quality-evidence.ts", "ai-quality.spec.ts",
+    "ai-history-recovery-live.spec.ts", "ai-image-live.spec.ts", "../playwright.before-after.config.ts"]
+}

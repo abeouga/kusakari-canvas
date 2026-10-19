@@ -1,0 +1,12 @@
+.ai-image-generation { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
+.ai-image-generation p { line-height: 1.7; }
+.ai-store-label { display: grid; gap: 6px; max-width: 100%; margin-top: 16px; }
+.ai-store-label select { width: 100%; padding: 8px; }
+.ai-reference { border: 1px solid var(--line); border-radius: 6px; margin: 18px 0; padding: 16px; min-width: 0; }
+.ai-reference legend { font-weight: 600; }
+.ai-reference label { display: grid; gap: 8px; margin: 8px 0; }
+.ai-reference select { max-width: 100%; padding: 9px; }
+.ai-reference input[type="file"] { max-width: 100%; }
+.ai-reference-image { display: block; max-width: 100%; width: 220px; height: 170px; object-fit: contain; margin-top: 12px; background: #f4f5f1; }
+.ai-reference p { overflow-wrap: anywhere; }
+.ai-after-result { margin-top: 24px; }

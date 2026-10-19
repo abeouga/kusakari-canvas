@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.Http;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -211,7 +212,7 @@ public sealed class KusakariCanvasController
     private async Task<(bool Healthy, int? Port)> CheckFrontendAsync(IEnumerable<int> ports, IReadOnlySet<int>? oldPorts, bool requireNew)
     {
         int? oldHealthyPort = null;
-        foreach (var port in ports)
+        foreach (var port in ListeningCandidates(ports))
         {
             try
             {
@@ -233,7 +234,7 @@ public sealed class KusakariCanvasController
     private async Task<(bool Healthy, int? Port)> CheckBackendAsync(IEnumerable<int> ports, int? oldPort)
     {
         int? oldHealthyPort = null;
-        foreach (var port in ports)
+        foreach (var port in ListeningCandidates(ports))
         {
             try
             {
@@ -255,6 +256,23 @@ public sealed class KusakariCanvasController
             catch (InvalidOperationException) { }
         }
         return (oldHealthyPort is not null, oldHealthyPort ?? _backendPort);
+    }
+
+    private static IEnumerable<int> ListeningCandidates(IEnumerable<int> ports)
+    {
+        try
+        {
+            // Closed Windows loopback ports can each consume the HTTP timeout.
+            // Discovery is read-only; stopping still requires command + creation-time ownership.
+            var listening = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners()
+                .Select(endpoint => endpoint.Port).ToHashSet();
+            return ports.Where(listening.Contains).ToArray();
+        }
+        catch (NetworkInformationException)
+        {
+            // Keep the previous safe probe behavior if listener enumeration is unavailable.
+            return ports.ToArray();
+        }
     }
 
     private async Task WaitForStatusAsync(Func<ServiceStatus, bool> predicate, int timeoutSeconds, string message)

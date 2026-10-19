@@ -1,0 +1,100 @@
+.before-after-comparison {
+  width: 100%;
+  min-width: 0;
+}
+
+.before-after-frame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: #e7ebe5;
+  border-radius: 8px;
+  cursor: ew-resize;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.before-after-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.before-after-label {
+  position: absolute;
+  top: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 70%);
+  color: #fff;
+  font-size: 0.875rem;
+  pointer-events: none;
+}
+
+.before-after-label-before {
+  left: 12px;
+}
+
+.before-after-label-after {
+  right: 12px;
+}
+
+.before-after-divider {
+  position: absolute;
+  inset-block: 0;
+  left: var(--comparison-position);
+  width: 2px;
+  background: #fff;
+  box-shadow: 0 0 3px #333;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.before-after-handle {
+  position: absolute;
+  top: 50%;
+  left: clamp(22px, var(--comparison-position), calc(100% - 22px));
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #234d38;
+  color: #fff;
+  font-size: 24px;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 45%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.before-after-control {
+  display: block;
+  margin-top: 12px;
+}
+
+.before-after-range {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin: 8px 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: #234d38;
+}
+
+.before-after-range:focus-visible {
+  outline: 2px solid #234d38;
+  outline-offset: 4px;
+}
+
+.before-after-help {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+}

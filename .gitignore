@@ -10,6 +10,15 @@ playwright-report/
 test-results/
 artifacts/playwright-report/
 artifacts/playwright-results/
+artifacts/plant-model-report/
+artifacts/plant-model-results/
+artifacts/shopping-report/
+artifacts/shopping-results/
+artifacts/plant-migration-mysql-*/
+artifacts/plant-migration-backups/
+artifacts/plant-v3/
+artifacts/plant-v4/
+artifacts/deployment-refactor/
 .env
 .env.*
 !.env.example

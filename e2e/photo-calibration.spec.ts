@@ -58,7 +58,7 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
     await page.getByTestId('photo-vertex-1').click();
     const uncalibrated = await page.getByTestId('photo-ground').getAttribute('points');
     await page.getByRole('button', { name: '写真のカメラを設定' }).click();
-    await expect(page.getByTestId('save-garden')).toBeDisabled();
+    await expect(page.getByTestId('save-status')).toHaveText('カメラを設定中');
     await expect(page.getByRole('button', { name: '3D庭', exact: true })).toBeDisabled();
     for (const p of corners) await clickPoint(page, '.calibration-stage', p);
     await page.getByRole('button', { name: 'カメラを計算', exact: true }).click();
@@ -77,7 +77,6 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
       ids.push((await page.getByTestId(`object-row-${i}`).getAttribute('data-object-id'))!);
     }
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 3 / 3');
-    await page.getByTestId('save-garden').click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     let saved = await (await request.get(`${api}/gardens/${initial.id}`)).json() as GardenDocument;
     const calibration = saved.photo!.calibration!;
@@ -139,7 +138,6 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
     await page.getByTestId('photo-edge-0').click();
     expect(parseFloat((await page.getByTestId('edge-measurement').textContent())!)).toBeCloseTo(8, 1);
     await page.keyboard.press('Escape');
-    await page.getByTestId('save-garden').click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const edited = await (await request.get(`${api}/gardens/${initial.id}`)).json() as GardenDocument;
     expect(edited.photo!.calibration!.referenceWidth).toBe(8);

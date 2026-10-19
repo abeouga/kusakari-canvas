@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "units": "m",
+  "upAxis": "Y",
+  "parts": [
+    {
+      "id": "stem",
+      "role": "stem",
+      "modelUrl": "/models/plant-parts/v1/stem.glb",
+      "baseDimensions": {
+        "width": 1,
+        "height": 1,
+        "depth": 1
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "kind": "stem"
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ],
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "kind": "tip"
+        }
+      }
+    },
+    {
+      "id": "leaf-oval",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v1/leaf-oval.glb",
+      "baseDimensions": {
+        "width": 0.5,
+        "height": 1,
+        "depth": 0.13
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "kind": "tip"
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ],
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "kind": "tip"
+        }
+      }
+    },
+    {
+      "id": "leaf-narrow",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v1/leaf-narrow.glb",
+      "baseDimensions": {
+        "width": 0.2,
+        "height": 1,
+        "depth": 0.13
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "kind": "tip"
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ],
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "kind": "tip"
+        }
+      }
+    },
+    {
+      "id": "leaf-needle",
+      "role": "leaf",
+      "modelUrl": "/models/plant-parts/v1/leaf-needle.glb",
+      "baseDimensions": {
+        "width": 0.05,
+        "height": 1,
+        "depth": 0.13
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "kind": "tip"
+        },
+        "tip": {
+          "position": [
+            0,
+            1,
+            0
+          ],
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "kind": "tip"
+        }
+      }
+    },
+    {
+      "id": "flower-five",
+      "role": "flower",
+      "modelUrl": "/models/plant-parts/v1/flower-five.glb",
+      "baseDimensions": {
+        "width": 1.06,
+        "height": 0.16,
+        "depth": 1.06
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "kind": "tip"
+        },
+        "tip": {
+          "position": [
+            0,
+            0.15,
+            0
+          ],
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "kind": "tip"
+        }
+      }
+    },
+    {
+      "id": "flower-eight",
+      "role": "flower",
+      "modelUrl": "/models/plant-parts/v1/flower-eight.glb",
+      "baseDimensions": {
+        "width": 1.06,
+        "height": 0.16,
+        "depth": 1.06
+      },
+      "connectors": {
+        "base": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "kind": "tip"
+        },
+        "tip": {
+          "position": [
+            0,
+            0.15,
+            0
+          ],
+          "direction": [
+            0,
+            1,
+            0
+          ],
+          "kind": "tip"
+        }
+      }
+    }
+  ]
+}

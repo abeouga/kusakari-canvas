@@ -4,7 +4,7 @@ import { DoubleSide, Plane, Vector2, Vector3, Raycaster } from 'three';
 import { useEditorStore } from '../stores/editorStore';
 /** The drag angle is accumulated across atan2's branch cut, including multiple turns. */
 export function RotationRing({ target, position, radius, onCommit }) {
-    const { camera, gl } = useThree();
+    const { camera, gl, invalidate } = useThree();
     const controls = useThree((state) => state.controls);
     const [hovered, setHovered] = useState(false);
     const drag = useRef(null);
@@ -22,6 +22,7 @@ export function RotationRing({ target, position, radius, onCommit }) {
                 return;
             drag.current = null;
             target.current.rotation.set(0, current.initial, 0);
+            invalidate();
             if (canvas.hasPointerCapture(current.pointerId))
                 canvas.releasePointerCapture(current.pointerId);
             useEditorStore.getState().setTransformDragging(false);
@@ -46,6 +47,7 @@ export function RotationRing({ target, position, radius, onCommit }) {
             current.angle += Math.atan2(Math.sin(angle - current.last), Math.cos(angle - current.last));
             current.last = angle;
             target.current.rotation.set(0, current.angle, 0);
+            invalidate();
         }
         function finish(event) {
             if (event.pointerId !== drag.current?.pointerId)
@@ -98,7 +100,7 @@ export function RotationRing({ target, position, radius, onCommit }) {
             window.removeEventListener('blur', cancel);
             window.removeEventListener('keydown', key);
         };
-    }, [camera, gl, controls, projection, radius, target]);
+    }, [camera, gl, controls, projection, radius, target, invalidate]);
     return <group position={[position.x, 0.06, position.z]}>
     <mesh rotation={[-Math.PI / 2, 0, 0]} renderOrder={1000} onPointerOver={(event) => { event.stopPropagation(); setHovered(true); }} onPointerOut={() => setHovered(false)}>
       <ringGeometry args={[radius - 0.1, radius + 0.1, 128]}/>

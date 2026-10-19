@@ -18,7 +18,13 @@ const paths = {
     rotate: 'M20 8a8 8 0 1 0 0 8M20 3v5h-5',
     scale: 'M4 14v6h6M14 4h6v6M4 20l7-7m2-2 7-7',
     check: 'm5 12 4 4L19 6',
+    clock: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 7v5l3 2',
+    alert: 'm12 3 10 18H2ZM12 9v5m0 3h.01',
     arrow: 'M4 12h16m-6-6 6 6-6 6',
+    sparkles: 'm12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4ZM20 2v4m-2-2h4',
+    history: 'M3 11a9 9 0 1 1 2.3 7M3 4v7h7M12 7v5l3 2',
+    settings: 'M4 7h16M4 17h16M8 4v6m8 4v6',
+    download: 'M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5',
 };
 export function UiIcon({ name, size = 18 }) {
     return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]}/></svg>;

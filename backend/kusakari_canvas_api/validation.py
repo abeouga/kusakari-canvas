@@ -9,12 +9,25 @@ from PIL import Image
 
 from .calibration import validate_calibrated_photo
 from .errors import bad_request
+from .plant_assembly import assemble
 from .schemas import GardenDocumentRequest, GardenPhoto, ImagePoint
 
 
 def validate_document(document: GardenDocumentRequest) -> None:
     ids: set[str] = set()
     for obj in document.objects:
+        if obj.assetId == "plant_modular":
+            if not obj.productId or not obj.productName or obj.materialCode != f"product.{obj.productId}" \
+                    or obj.modelComposition is None:
+                bad_request("INVALID_PLANT_MODEL", "商品の植物構成が不足しています。商品から配置し直してください。")
+            try:
+                expected = assemble(obj.modelComposition.profile, obj.modelComposition.version)
+            except ValueError:
+                bad_request("INVALID_PLANT_MODEL", "植物の特徴と構成の版が一致しません。")
+            if expected != obj.modelComposition:
+                bad_request("INVALID_PLANT_MODEL", "保存された植物の部品構成が不正です。")
+        elif any(value is not None for value in (obj.productId, obj.productName, obj.materialCode, obj.modelComposition)):
+            bad_request("INVALID_PLANT_MODEL", "固定アセットに植物構成を指定できません。")
         try:
             canonical = str(UUID(obj.id))
             if canonical != obj.id.lower():

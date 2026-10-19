@@ -16,7 +16,7 @@ export function EdgeMeasurementPopover({ document, selection, onClose }) {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [position, setPosition] = useState({ left: selection.left, top: selection.top });
-  const locked = useEditorStore((state) => state.isSaving || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null);
+  const locked = useEditorStore((state) => state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null);
   const measurable = Number.isFinite(length) && length > 0.000001;
 
   useLayoutEffect(() => {
@@ -79,7 +79,7 @@ export function EdgeMeasurementPopover({ document, selection, onClose }) {
       setNotice('長さは変更されていません。');
       return;
     }
-    setNotice('長さを適用しました。画面上部の「保存」で確定します。');
+    setNotice('長さを適用しました。自動保存されます。');
   }
 
   return <section ref={panel} className="edge-popover" role="dialog" aria-label="選択した辺の長さ" style={position}

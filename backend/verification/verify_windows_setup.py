@@ -244,7 +244,7 @@ def managed_checks(repo: Path, output: Path, log_prefix: str, state: dict, confi
         engine = create_database_engine(setup_database.configured_settings(config))
         try:
             with engine.connect() as connection:
-                assert connection.scalar(text('SELECT version_num FROM alembic_version')) == '0002'
+                assert connection.scalar(text('SELECT version_num FROM alembic_version')) == '0004'
         finally:
             engine.dispose()
     return checks

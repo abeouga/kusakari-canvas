@@ -2,20 +2,38 @@ import logging
 from collections.abc import Generator
 from contextlib import asynccontextmanager
 from typing import Annotated
+from urllib.parse import urlparse
 
-from fastapi import Depends, FastAPI, Response
+from fastapi import APIRouter, Depends, FastAPI, Query, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 from starlette.exceptions import HTTPException
 
-from . import service
+from . import service, shopping
+from .ai_body import AiBodyLimitMiddleware
+from .ai_catalog import candidates, material_code, product_references, stores
+from .ai_config import MODEL, AiSettings
+from .ai_schemas import (
+    AiCandidate,
+    AiImageRequest,
+    AiImageResponse,
+    AiStatus,
+    AiStore,
+    ProductReferencesRequest,
+)
+from .ai_service import generate_image
 from .calibration import solve_calibration
 from .config import Settings
 from .database import create_database_engine
 from .errors import ApiError
+from .history_routes import history_router
+from .media import MediaStore
 from .migrations import HEAD, current_revision, validate_schema
+from .plant_assembly import assemble, part_catalog
+from .plant_schemas import PlantComposition, PlantProfile
 from .schemas import (
     AssetResponse,
     CalibrationRequest,
@@ -25,6 +43,7 @@ from .schemas import (
     GardenSummary,
     PhotoCalibration,
 )
+from .thumbnails import thumbnail_router
 
 
 def error_response(status: int, code: str, message: str) -> JSONResponse:
@@ -35,22 +54,46 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
     engine = create_database_engine(settings)
     sessions = sessionmaker(engine, expire_on_commit=False)
+    media = MediaStore()
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
         try:
             with engine.connect() as connection:
-                validate_schema(connection, "0002")
+                validate_schema(connection, HEAD)
                 if current_revision(connection) != HEAD:
                     raise ValueError("Run npm run migrate:api before starting the API directly.")
             yield
         finally:
+            media.close()
             engine.dispose()
 
     app = FastAPI(title="Kusakari Canvas API", version="0.2.0", lifespan=lifespan, redirect_slashes=False)
+    ai_settings = AiSettings.from_profile(settings.profile)
+    router = APIRouter(prefix=settings.api_prefix)
+    app.add_middleware(AiBodyLimitMiddleware)
+
+    @app.get("/health/live")
+    def live():
+        return {"status": "ok", "application": "kusakari-canvas", "backend": "fastapi"}
+
+    @app.get("/health/ready")
+    def ready():
+        try:
+            with engine.connect() as connection:
+                connection.execute(text("SELECT 1"))
+            return live()
+        except Exception:
+            return error_response(503, "NOT_READY", "データベースへ接続できません。")
 
     @app.middleware("http")
     async def backend_identity(request, call_next):
+        if settings.public_origin:
+            origin = request.headers.get("origin")
+            health = request.method == "GET" and request.url.path in {"/health/live", "/health/ready"}
+            allowed_hosts = {"127.0.0.1", "localhost", urlparse(settings.public_origin).hostname}
+            if (origin and origin != settings.public_origin) or (not health and request.url.hostname not in allowed_hosts):
+                return error_response(403, "ORIGIN_REJECTED", "許可されていない接続元です。")
         try:
             response = await call_next(request)
         except Exception as error:
@@ -91,36 +134,83 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             yield session
 
     Db = Annotated[Session, Depends(get_session)]
+    router.include_router(history_router(settings.owner_id, get_session, media))
+    router.include_router(thumbnail_router(settings.owner_id, get_session, media))
 
-    @app.post("/api/photo-calibration", response_model=PhotoCalibration)
+    @router.get("/api/ai/status", response_model=AiStatus)
+    def ai_status():
+        return AiStatus(configured=bool(ai_settings.api_key), model=MODEL, quality=ai_settings.quality)
+
+    @router.get("/api/ai/stores", response_model=list[AiStore])
+    def ai_stores():
+        return stores(ai_settings)
+
+    @router.get("/api/ai/candidates", response_model=list[AiCandidate])
+    def ai_candidates(db: Db, storeId: Annotated[int, Query(gt=0)],
+                      assetId: Annotated[str, Query(min_length=1, max_length=64)]):
+        # Only serve known, supported plant assets; release the DB read before EC I/O.
+        service.require_asset(db, assetId)
+        material_code(assetId)
+        return candidates(ai_settings, storeId, assetId)
+
+    @router.post("/api/gardens/{id}/ai-image", response_model=AiImageResponse)
+    def ai_image(id: str, request: AiImageRequest, db: Db):
+        return generate_image(db, ai_settings, settings.owner_id, id, request)
+
+    @router.post("/api/ai/product-references", response_model=list[AiCandidate])
+    def automatic_references(request: ProductReferencesRequest):
+        return product_references(ai_settings, request.productIds)
+
+    @router.post("/api/photo-calibration", response_model=PhotoCalibration)
     def calibrate(request: CalibrationRequest):
         return solve_calibration(request)
 
-    @app.get("/api/assets", response_model=list[AssetResponse])
+    @router.get("/api/assets", response_model=list[AssetResponse])
     def assets(db: Db):
         return service.list_assets(db)
 
-    @app.get("/api/gardens", response_model=list[GardenSummary])
+    @router.get("/api/model-parts")
+    def model_parts():
+        return part_catalog()
+
+    @router.post("/api/model-assemblies/resolve", response_model=PlantComposition)
+    def resolve_model(profile: PlantProfile, version: int = 4):
+        try:
+            return assemble(profile, version)
+        except ValueError as error:
+            from .errors import bad_request
+            bad_request("INCOMPATIBLE_PLANT_DIMENSIONS", str(error))
+
+    @router.get("/api/shopping-lists", response_model=list[shopping.ShoppingSummary])
+    def shopping_lists(db: Db):
+        return shopping.summaries(db, settings.owner_id)
+
+    @router.get("/api/gardens/{id}/shopping-list", response_model=shopping.ShoppingList)
+    def shopping_list(id: str, db: Db):
+        return shopping.detail(db, settings.owner_id, id)
+
+    @router.get("/api/gardens", response_model=list[GardenSummary])
     def gardens(db: Db):
         return service.list_gardens(db, settings.owner_id)
 
-    @app.post("/api/gardens", status_code=201, response_model=GardenDocument)
+    @router.post("/api/gardens", status_code=201, response_model=GardenDocument)
     def create(request: CreateGardenRequest, response: Response, db: Db):
         garden = service.create_garden(db, settings.owner_id, request)
-        response.headers["Location"] = f"/api/gardens/{garden.id}"
+        response.headers["Location"] = f"{settings.api_prefix}/api/gardens/{garden.id}"
         return garden
 
-    @app.get("/api/gardens/{id}", response_model=GardenDocument)
+    @router.get("/api/gardens/{id}", response_model=GardenDocument)
     def get(id: str, db: Db):
-        return service.get_garden(db, settings.owner_id, id)
+        return service.get_garden(db, settings.owner_id, id, media)
 
-    @app.put("/api/gardens/{id}", response_model=GardenDocument)
+    @router.put("/api/gardens/{id}", response_model=GardenDocument)
     def update(id: str, request: GardenDocumentRequest, db: Db):
-        return service.update_garden(db, settings.owner_id, id, request)
+        return service.update_garden(db, settings.owner_id, id, request, media)
 
-    @app.delete("/api/gardens/{id}", status_code=204)
+    @router.delete("/api/gardens/{id}", status_code=204)
     def delete(id: str, db: Db):
         service.delete_garden(db, settings.owner_id, id)
         return Response(status_code=204)
 
+    app.include_router(router)
     return app

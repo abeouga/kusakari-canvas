@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import secrets
@@ -15,6 +16,9 @@ from kusakari_canvas_api.config import REPO_ROOT
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--tasks", nargs="+", choices=("verify:api", "test:e2e"), default=["verify:api", "test:e2e"])
+    tasks = parser.parse_args().tasks
     executable = os.environ.get("KUSAKARI_CANVAS_MYSQL_BIN")
     executable = str(Path(executable) / "mysqld.exe") if executable else None
     executable = executable if executable and Path(executable).is_file() else (
@@ -79,7 +83,7 @@ def main() -> int:
             npm = shutil.which("npm.cmd" if os.name == "nt" else "npm")
             if not npm:
                 raise ValueError("npm is missing.")
-            for task in ("verify:api", "test:e2e"):
+            for task in tasks:
                 args = [os.environ.get("ComSpec", "cmd.exe"), "/d", "/s", "/c", f'npm run {task}'] \
                     if os.name == "nt" else [npm, "run", task]
                 print(f"Running {task} against isolated real MySQL at 127.0.0.1:{port}", flush=True)

@@ -1,5 +1,6 @@
+import { assetForObject } from './productModels';
 export const ecUrl =
-  import.meta.env.VITE_KUSAKARI_EC_URL || "http://127.0.0.1:5186/";
+  new URL(import.meta.env.VITE_KUSAKARI_EC_URL || "http://127.0.0.1:5186/", window.location.origin).href;
 export const materialCodes = {
   tree_oak: "plant.oak",
   shrub_boxwood: "plant.boxwood",
@@ -9,16 +10,20 @@ export const materialCodes = {
 
 export function placementRows(document, assets) {
   const rows = [];
+  const assetMap = new Map(assets.map((asset) => [asset.id, asset]));
   for (const object of document.objects) {
-    let row = rows.find((entry) => entry.assetId === object.assetId);
+    const key = object.productId ?? object.assetId;
+    let row = rows.find((entry) => entry.assetId === key);
     if (!row) {
-      const asset = assets.find((entry) => entry.id === object.assetId);
+      const asset = assetForObject(object, assetMap);
       row = {
-        assetId: object.assetId,
+        key: object.productId ? `product:${object.productId}` : `asset:${object.assetId}`,
+        productId: object.productId ?? null,
+        assetId: key,
         name: asset?.name || object.assetId,
-        materialCode: Object.hasOwn(materialCodes, object.assetId)
+        materialCode: object.materialCode ?? (Object.hasOwn(materialCodes, object.assetId)
           ? materialCodes[object.assetId]
-          : "",
+          : ""),
         footprint: 0,
         quantity: 0,
         unit: "piece",
@@ -26,9 +31,7 @@ export function placementRows(document, assets) {
       rows.push(row);
     }
     row.quantity += 1;
-    const dimensions = assets.find(
-      (entry) => entry.id === object.assetId,
-    )?.baseDimensions;
+    const dimensions = assetForObject(object, assetMap)?.baseDimensions;
     if (dimensions)
       row.footprint +=
         dimensions.width * dimensions.depth * object.scale.x * object.scale.z;

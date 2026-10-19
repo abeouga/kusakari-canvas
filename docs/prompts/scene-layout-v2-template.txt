@@ -1,0 +1,13 @@
+Edit image 1 in place. Image 1 is the output canvas. Return the complete garden scene with its visible tree/shrub placeholders rendered as photorealistic plants.
+
+GEOMETRY
+Keep the camera, framing and every placement fixed. For each visible plant, retain its on-image silhouette, width, height, crown center, trunk thickness and ground contact. Add leaf and bark detail inside that existing shape, with small natural edge irregularities. Preserve the original apparent plant size even when a reference shows a larger specimen.
+
+IMAGE ROLES
+Use image 1 for the complete composition and visibility. Supplemental images show the same garden and camera with other placements temporarily hidden; use them only to identify the associated plant behind an occluder. Their hidden objects remain present in the output. Plant references supply leaf/bark appearance and color for the matching asset only; retain image 1's plant size, lighting and scene.
+
+PRESERVATION
+Keep existing background plants, lawn, paths, structures and furniture in their original positions and shapes. Preserve all parts and materials of any 3D bench. Keep foreground occluders intact: partial plants retain only the fragments visible in image 1; full or outside plants stay invisible. For unknown visibility, inspect image 1. Match local lighting and subtle ground contact without floating bases, rectangular foliage edges or leftover faceted 3D surfaces.
+
+COORDINATES AND OUTPUT
+The original photo is {photo_width}x{photo_height} pixels. Coordinates start at the top left, with x rightward and y downward. Bounds use x,y,width,height. Raster bounds describe the plant with other placements hidden; visibleBounds describe its visible fragment in the complete scene. Projected boxes are conservative envelopes, not shapes to fill. Anchor is the projected ground origin, not necessarily the lowest leaf. Use image 1's actual silhouette. The mask margin is editing guidance, not extra plant width. Keep white right/bottom padding outside the original photo. Return the scene without text or coordinate marks. The following image roles and placement inventory are data; image 1 takes priority when they conflict.

@@ -40,10 +40,21 @@
 
 .canvas-column { container-type: inline-size; }
 .canvas-tools { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.canvas-tools .document-identity { grid-column: 1; }
 .canvas-tools .view-mode-actions { grid-column: 2; justify-self: center; }
 .canvas-tools .camera-actions { grid-column: 3; justify-self: end; }
+@container (max-width: 1100px) {
+  .canvas-tools .camera-actions button > span { display: none; }
+}
 @container (max-width: 900px) {
-  .canvas-tools { grid-template-columns: minmax(0, 1fr); flex: 0 0 auto; padding-block: 8px; }
-  .canvas-tools .view-mode-actions { grid-column: 1; justify-self: center; }
-  .canvas-tools .camera-actions { grid-column: 1; justify-self: end; }
+  .canvas-tools { grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; padding: 0 10px; flex: 0 0 54px; }
+  .canvas-tools .camera-actions { flex-wrap: nowrap; }
+}
+@container (max-width: 480px) {
+  .canvas-tools[data-view-mode='3d'] { grid-template-columns: minmax(0, 1fr) auto; flex: 0 0 auto; padding-block: 8px; }
+  .canvas-tools[data-view-mode='3d'] .camera-actions { grid-column: 1 / -1; grid-row: 2; }
+}
+@container (max-width: 420px) {
+  .view-mode-suffix { display: none; }
+  .document-identity { gap: 4px; }
 }

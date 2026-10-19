@@ -1,3 +1,4 @@
+import { canvasUrl } from '../domain/urls';
 export class ApiError extends Error {
     status;
     code;
@@ -9,7 +10,7 @@ export class ApiError extends Error {
     }
 }
 export async function requestJson(path, init) {
-    const response = await fetch(path, {
+    const response = await fetch(canvasUrl(path), {
         ...init,
         headers: { 'Content-Type': 'application/json', ...init?.headers },
     });

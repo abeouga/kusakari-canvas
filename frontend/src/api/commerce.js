@@ -24,8 +24,8 @@ async function request(path, method = 'GET', payload) {
 }
 export const commerceApi = {
     cart: () => request('/cart'),
+    products: (storeId) => request(`/products?storeId=${storeId}`),
     quote: (storeId, items) => request('/materials/quote', 'POST', { storeId, items }),
-    setItem: (id, quantity, revision) => request(`/cart/items/${encodeURIComponent(id)}`, 'PUT', { quantity, revision }),
 };
 export function productImage(path) {
     return new URL(path, ecUrl).href;

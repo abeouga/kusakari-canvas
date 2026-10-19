@@ -1,3 +1,4 @@
+import json
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -5,7 +6,9 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from .errors import ApiError, bad_request, not_found
+from .media import MediaStore
 from .models import Asset, Garden, PlacedObject
+from .plant_schemas import PlantComposition
 from .schemas import (
     AssetResponse,
     BaseDimensions,
@@ -30,16 +33,21 @@ def owned_garden(session: Session, owner: str, id: str, *, lock: bool = False) -
     return garden
 
 
-def as_document(garden: Garden, objects: list[GardenObject]) -> GardenDocument:
+def as_document(garden: Garden, objects: list[GardenObject], media: MediaStore | None = None) -> GardenDocument:
+    photo = json.loads(garden.photo_json) if garden.photo_json else None
+    if photo and media:
+        photo = media.load_photo(photo)
     return GardenDocument(id=garden.id, revision=garden.revision, name=garden.name,
                           width=garden.width, depth=garden.depth, objects=objects,
-                          photo=GardenPhoto.model_validate_json(garden.photo_json) if garden.photo_json else None)
+                          photo=GardenPhoto.model_validate(photo) if photo else None)
 
 
 def object_response(obj: PlacedObject) -> GardenObject:
     vectors = {kind: Vector(**{axis: getattr(obj, f"{kind}_{axis}") for axis in "xyz"})
                for kind in ("position", "rotation", "scale")}
-    return GardenObject(id=obj.id, assetId=obj.asset_id, **vectors)
+    composition = PlantComposition.model_validate_json(obj.model_composition_json) if obj.model_composition_json else None
+    return GardenObject(id=obj.id, assetId=obj.asset_id, productId=obj.product_id, productName=obj.product_name,
+                        materialCode=obj.material_code, modelComposition=composition, **vectors)
 
 
 def list_assets(session: Session) -> list[AssetResponse]:
@@ -48,6 +56,12 @@ def list_assets(session: Session) -> list[AssetResponse]:
                               baseDimensions=BaseDimensions(width=float(a.base_width), height=float(a.base_height),
                                                             depth=float(a.base_depth)))
                 for a in session.scalars(select(Asset).order_by(Asset.id))]
+
+
+def require_asset(session: Session, asset_id: str) -> None:
+    with session.begin():
+        if session.get(Asset, asset_id) is None:
+            bad_request("UNKNOWN_ASSET", "カタログに存在しないアセットです。")
 
 
 def list_gardens(session: Session, owner: str) -> list[GardenSummary]:
@@ -68,18 +82,26 @@ def create_garden(session: Session, owner: str, request: CreateGardenRequest) ->
     return response
 
 
-def get_garden(session: Session, owner: str, id: str) -> GardenDocument:
+def get_garden(session: Session, owner: str, id: str, media: MediaStore | None = None) -> GardenDocument:
     with session.begin():
         garden = owned_garden(session, owner, id)
         objects = [object_response(o) for o in session.scalars(select(PlacedObject)
                    .where(PlacedObject.garden_id == garden.id).order_by(PlacedObject.id))]
-        return as_document(garden, objects)
+    return as_document(garden, objects, media)
 
 
-def update_garden(session: Session, owner: str, id: str, document: GardenDocumentRequest) -> GardenDocument:
+def update_garden(session: Session, owner: str, id: str, document: GardenDocumentRequest,
+                  media: MediaStore | None = None) -> GardenDocument:
     validate_document(document)
     if id != document.id:
         bad_request("GARDEN_ID_MISMATCH", "URLと保存データの庭IDが一致しません。")
+    photo = document.photo.model_dump(mode="json") if document.photo else None
+    if media and media.external:
+        with session.begin():
+            garden = owned_garden(session, owner, id)
+            if garden.revision != document.revision:
+                raise ApiError(409, "REVISION_CONFLICT", "庭が別の版で更新されています。最新データを取得してください。")
+        photo = media.store_photo(photo)
     with session.begin():
         garden = owned_garden(session, owner, id, lock=True)
         if garden.revision != document.revision:
@@ -95,16 +117,22 @@ def update_garden(session: Session, owner: str, id: str, document: GardenDocumen
         garden.depth = document.depth
         garden.revision += 1
         garden.updated_at = datetime.now(UTC).replace(tzinfo=None)
-        garden.photo_json = document.photo.model_dump_json() if document.photo is not None else None
+        garden.photo_json = json.dumps(photo, ensure_ascii=False, separators=(",", ":")) if photo else None
         session.execute(delete(PlacedObject).where(PlacedObject.garden_id == id))
         response_objects = []
         for obj in document.objects:
             values = {f"{kind}_{axis}": getattr(getattr(obj, kind), axis)
                       for kind in ("position", "rotation", "scale") for axis in "xyz"}
-            session.add(PlacedObject(id=obj.id.lower(), garden_id=id, asset_id=obj.assetId, **values))
+            session.add(PlacedObject(id=obj.id.lower(), garden_id=id, asset_id=obj.assetId,
+                                     product_id=obj.productId, product_name=obj.productName,
+                                     material_code=obj.materialCode,
+                                     model_composition_json=obj.modelComposition.model_dump_json()
+                                     if obj.modelComposition else None, **values))
             response_objects.append(obj.model_copy(update={"id": obj.id.lower()}))
         session.flush()
-        response = as_document(garden, response_objects)
+        response = GardenDocument(id=garden.id, revision=garden.revision, name=garden.name,
+                                  width=garden.width, depth=garden.depth, objects=response_objects,
+                                  photo=document.photo)
     return response
 
 

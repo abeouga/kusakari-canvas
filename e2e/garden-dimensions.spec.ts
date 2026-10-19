@@ -24,9 +24,9 @@ test('Q. 名前だけで作成・土台寸法を編集・縮小検証・MySQL保
     await page.getByLabel('奥行き (m)', { exact: true }).fill('12');
     await page.getByRole('button', { name: '土台に適用' }).click();
     await expect(page.getByRole('img', { name: '現在の土台：幅14m、奥行き12m' })).toBeVisible();
-    await expect(page.getByTestId('save-garden')).toBeEnabled();
+    await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const initial = await (await request.get(`${api}/gardens/${id}`)).json() as GardenDocument;
-    expect([initial.width, initial.depth]).toEqual([10, 8]);
+    expect([initial.width, initial.depth]).toEqual([14, 12]);
     await page.getByRole('button', { name: '土台設定を閉じる' }).click();
     await page.getByRole('button', { name: '上から見る' }).click();
     await page.getByTestId('asset-tree_oak').click();
@@ -43,7 +43,6 @@ test('Q. 名前だけで作成・土台寸法を編集・縮小検証・MySQL保
     await expect(page.getByRole('img', { name: '現在の土台：幅14m、奥行き12m' })).toBeVisible();
     await page.getByRole('button', { name: '入力を戻す' }).click();
     await page.getByRole('button', { name: '土台設定を閉じる' }).click();
-    await page.getByTestId('save-garden').click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const saved = await (await request.get(`${api}/gardens/${id}`)).json() as GardenDocument;
     expect([saved.width, saved.depth]).toEqual([14, 12]);
@@ -65,7 +64,6 @@ test('Q. 名前だけで作成・土台寸法を編集・縮小検証・MySQL保
     await page.getByLabel('幅 (m)', { exact: true }).fill('12.5');
     await page.getByRole('button', { name: '土台に適用' }).click();
     await page.getByRole('button', { name: '土台設定を閉じる' }).click();
-    await page.getByTestId('save-garden').click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const shrunk = await (await request.get(`${api}/gardens/${id}`)).json() as GardenDocument;
     expect(shrunk.width).toBe(12.5); expect(shrunk.objects).toEqual(saved.objects);

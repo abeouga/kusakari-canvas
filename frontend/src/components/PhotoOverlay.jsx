@@ -7,7 +7,7 @@ import { calibratedBoundaryError, projectionCorners } from '../domain/calibrated
 import { PhotoEdges } from './PhotoEdges';
 import { EdgeMeasurementPopover } from './EdgeMeasurementPopover';
 import { UiIcon } from './UiIcon';
-export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retryRequest, onModelLoaded, onModelFailed, editorOverlay }) {
+export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retryRequest, onModelLoaded, onModelFailed, editorOverlay, captureRef }) {
     const svg = useRef(null);
     const fileInput = useRef(null);
     const cameraButton = useRef(null);
@@ -203,7 +203,7 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
         {surfaceVisible && groundVisible && <polygon data-testid="photo-ground" points={boundary} fill="#74b780" fillOpacity="0.16" stroke="#d9ee87" strokeWidth={Math.max(2, photo.imageWidth / 500)}/>}
         {valid && surfaceVisible && gridVisible && <g clipPath="url(#garden-photo-boundary)">{grid.map(({ a, b }, i) => <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#e9f7be" strokeOpacity="0.85" strokeWidth={Math.max(1, photo.imageWidth / 1100)}/>)}</g>}
         {surfaceVisible && <foreignObject width={photo.imageWidth} height={photo.imageHeight}>
-          <PhotoCanvas document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={disabled} objectsVisible={objectsVisible} retryRequest={retryRequest} onModelLoaded={onModelLoaded} onModelFailed={onModelFailed}/>
+          <PhotoCanvas document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={disabled} objectsVisible={objectsVisible} retryRequest={retryRequest} onModelLoaded={onModelLoaded} onModelFailed={onModelFailed} captureRef={captureRef}/>
         </foreignObject>}
         {boundaryPoints.length > 1 && <polyline points={boundary} fill="none" stroke="#ffbd68" strokeWidth={Math.max(2, photo.imageWidth / 500)} pointerEvents="none"/>}
         {boundaryValid && !drawingBoundary && <PhotoEdges document={document} selected={selectedEdge?.index ?? null} disabled={disabled} onSelect={(selection) => { useEditorStore.getState().selectAsset(null); setSelectedEdge(selection); }}/>}

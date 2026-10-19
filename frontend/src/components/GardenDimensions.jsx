@@ -39,7 +39,7 @@ export function GardenDimensions({ document, disabled }) {
         <button className="button button-primary" type="submit" disabled={disabled || !changed}>土台に適用</button>
         {changed && <button className="button button-secondary" type="button" disabled={disabled} onClick={() => { setWidth(String(document.width)); setDepth(String(document.depth)); setError(''); }}>入力を戻す</button>}
       </div>
-      {changed && <p className="form-hint" role="status">辺の長さを入力中です。「土台に適用」の後、画面上部の「保存」で確定します。</p>}
+      {changed && <p className="form-hint" role="status">「土台に適用」すると自動保存されます。</p>}
     </form>
   </section>;
 }

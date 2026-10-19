@@ -47,7 +47,7 @@ export function GardenGround({ document, selectedAsset, disabled, invisible = fa
       </lineSegments>}
     </>);
 }
-function groundOutline(document) {
+export function groundOutline(document) {
     const photo = document.photo;
     if (photo && validSurface(photo)) {
         if (photo.calibration && !calibratedBoundaryError(photo, document.width, document.depth)) {

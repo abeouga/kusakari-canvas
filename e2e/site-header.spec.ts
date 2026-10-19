@@ -33,12 +33,9 @@ test('共通ヘッダー・ECへの移動確認・未保存の変更保護', asy
     await page.getByLabel('幅 (m)', { exact: true }).fill('11');
     await page.getByRole('button', { name: '土台に適用', exact: true }).click();
     await page.getByRole('button', { name: '土台設定を閉じる', exact: true }).click();
-    await expect(page.getByTestId('save-garden')).toBeEnabled();
     await header.getByRole('link', { name: /^カートを開く/ }).click();
-    await expect(page.getByRole('dialog', { name: '変更を保存せずに戻りますか？' })).toBeVisible();
-    await page.getByRole('button', { name: '編集を続ける', exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`/gardens/${garden.id}$`));
-    await page.getByTestId('save-garden').click();
+    await expect(page).toHaveURL(/\/cart$/);
+    await page.goto(`/gardens/${garden.id}`);
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     await page.reload();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');

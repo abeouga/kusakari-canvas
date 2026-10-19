@@ -6,7 +6,6 @@
   min-width: 0;
   padding: 0;
 }
-.document-bar > .plan-actions { flex-wrap: nowrap; }
 .plan-actions button {
   font: inherit;
   font-size: 11px;
@@ -65,6 +64,9 @@
   border-radius: 8px;
   margin: 18px 0;
 }
+.completion-image-dialog { width: 720px; }
+.placement-identity { margin-top: 6px; font-size: 11px; }
+.placement-identity summary { cursor: pointer; }
 .ec-return-link {
   margin-left: 12px;
   color: #3a603b;

@@ -1,6 +1,6 @@
 export function AssetPreview({ assetId }) {
     if (assetId === 'tree_oak') {
-        return <img className="asset-preview preview-tree_oak" src="/icons/tree-oak.webp" alt="" aria-hidden="true" width="160" height="160" loading="lazy"/>;
+        return <img className="asset-preview preview-tree_oak" src={canvasUrl('/icons/tree-oak.webp')} alt="" aria-hidden="true" width="160" height="160" loading="lazy"/>;
     }
     return <svg className={`asset-preview preview-${assetId}`} viewBox="0 0 80 70" aria-hidden="true">
     <ellipse cx="40" cy="59" rx="25" ry="5" fill="#1f352814"/>
@@ -19,3 +19,4 @@ export function AssetPreview({ assetId }) {
     </>}
   </svg>;
 }
+import { canvasUrl } from '../domain/urls';

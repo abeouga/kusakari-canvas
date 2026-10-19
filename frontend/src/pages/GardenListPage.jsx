@@ -58,7 +58,7 @@ export function GardenListPage() {
     mutationFn: (request) => gardenApi.createGarden(request),
     onSuccess: async (document) => {
       await queryClient.invalidateQueries({ queryKey: ["gardens"] });
-      window.location.assign(`/gardens/${encodeURIComponent(document.id)}`);
+      window.location.assign(canvasUrl(`/gardens/${encodeURIComponent(document.id)}`));
     },
     onError: (error) =>
       setFormError(
@@ -187,7 +187,7 @@ export function GardenListPage() {
                       className="garden-card-open"
                       onClick={() =>
                         window.location.assign(
-                          `/gardens/${encodeURIComponent(garden.id)}`,
+                          canvasUrl(`/gardens/${encodeURIComponent(garden.id)}`),
                         )
                       }
                     >
@@ -262,7 +262,7 @@ export function GardenListPage() {
               <UiIcon name="polygon" />
               <strong>{deleteTarget.name}</strong>
             </div>
-            <p>庭の写真、輪郭、配置したすべての素材を削除します。</p>
+            <p>庭の写真、輪郭、配置したすべての素材と生成履歴を削除します。</p>
             {removeGarden.isError && (
               <p className="notice notice-error" role="alert">
                 削除できませんでした。接続を確認して再試行してください。
@@ -274,3 +274,4 @@ export function GardenListPage() {
     </div>
   );
 }
+import { canvasUrl } from '../domain/urls';

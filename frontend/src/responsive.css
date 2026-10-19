@@ -13,10 +13,7 @@
   .garden-cards { grid-template-columns: minmax(0, 1fr); }
   .garden-card-open { padding: 20px; }
   .editor-shell { height: auto; min-height: 100dvh; }
-  .document-bar { flex: none; flex-wrap: wrap; gap: 10px; padding: 12px; }
   .editor-brand { padding-right: 10px; font-size: 17px; }
-  .document-identity .document-title { order: initial; width: auto; }
-  .document-title h1 { max-width: 100%; margin: 0; }
   .toolbar-status { margin-left: 0; }
   .save-button { margin-left: auto; }
   .editor-layout, .editor-layout.inspector-hidden { display: flex; flex-direction: column; }
@@ -34,25 +31,4 @@
   .calibration-settings { max-height: none; }
   .plan-quantity-row { gap: 8px; }
   .plan-actions button { flex: 1 1 145px; min-height: 44px; }
-}
-
-@media (max-width: 1100px) {
-  .document-bar { grid-template-columns: minmax(0, 1fr) auto; }
-  .document-bar .plan-actions { grid-column: 1 / -1; grid-row: 2; flex-wrap: wrap; }
-  .document-save { grid-column: 2; grid-row: 1; }
-}
-@media (max-width: 768px) {
-  .document-bar { padding: 10px; gap: 10px; }
-  .document-identity { gap: 6px; }
-  .document-identity .editor-list-label { display: none; }
-  .document-identity .document-title > span { display: none; }
-  .document-save { gap: 8px; }
-  .document-save .save-button { min-width: 64px; padding-inline: 12px; }
-  .document-save .toolbar-status { font-size: 10px; gap: 4px; }
-}
-
-@media (max-width: 600px) {
-  .document-bar .plan-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .document-bar .plan-actions button { min-width: 0; padding: 7px 6px; white-space: normal; line-height: 1.5; font-size: 10px; }
-  .document-bar .plan-actions button:last-child { grid-column: 1 / -1; }
 }

@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "module": "ESNext", "moduleResolution": "Bundler", "allowJs": true, "checkJs": false },
+  "include": ["editor-autosave.spec.ts", "../playwright.autosave.config.ts"]
+}

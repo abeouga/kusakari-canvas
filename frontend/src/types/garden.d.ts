@@ -8,9 +8,22 @@ export interface Vector {
 export interface GardenObject {
     id: string;
     assetId: string;
+    productId?: string;
+    productName?: string;
+    materialCode?: string;
+    modelComposition?: PlantComposition;
     position: Vector;
     rotation: Vector;
     scale: Vector;
+}
+
+export interface PlantComposition {
+    version: 1 | 2 | 3 | 4;
+    catalogVersion: 1 | 2 | 3 | 4;
+    profile: { plantType: 'tree' | 'shrub' | 'flower' | 'conifer' | 'multistem' | 'spreading' | 'grass' | 'rosette' | 'vine' | 'palm'; [key: string]: unknown };
+    baseDimensions: { width: number; height: number; depth: number };
+    fitScale?: number[];
+    parts: { partId: string; position: number[]; quaternion: number[]; scale: number[]; color: string | null }[];
 }
 
 export interface ImagePoint {

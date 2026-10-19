@@ -40,7 +40,7 @@ export const useEditorStore = create((set, get) => ({
     },
     resizeGarden: (width, depth) => {
         const state = get();
-        if (!state.document || state.isSaving || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null)
+        if (!state.document || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null)
             return false;
         if (dimensionError(state.document, width, depth))
             return false;
@@ -51,8 +51,8 @@ export const useEditorStore = create((set, get) => ({
     },
     setPhotoEdgeLength: (index, length) => {
         const state = get();
-        if (!state.document?.photo || state.isSaving || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null)
-            return '保存・カメラ設定・輪郭編集・配置物の移動が終わってから変更してください。';
+        if (!state.document?.photo || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null)
+            return 'カメラ設定・輪郭編集・配置物の移動が終わってから変更してください。';
         const result = scalePhotoFromEdge(state.document, index, length);
         if (result.error)
             return result.error;
@@ -62,21 +62,21 @@ export const useEditorStore = create((set, get) => ({
     },
     setPhoto: (photo) => {
         const state = get();
-        if (!state.document || state.isSaving)
+        if (!state.document)
             return;
         set({ document: { ...state.document, photo }, isDirty: true, saveError: null,
             photoBoundaryDraft: !photo || photo.dataUrl !== state.document.photo?.dataUrl ? null : state.photoBoundaryDraft });
     },
     setPhotoBoundaryDraft: (photoBoundaryDraft) => {
         const state = get();
-        if (!state.document?.photo || state.isSaving)
+        if (!state.document?.photo)
             return;
         set({ photoBoundaryDraft, saveError: null });
     },
     confirmPhotoBoundary: () => {
         const state = get();
         const photo = state.document?.photo;
-        if (!state.document || !photo || state.photoBoundaryDraft === null || state.isSaving)
+        if (!state.document || !photo || state.photoBoundaryDraft === null)
             return false;
         const next = withPhotoBoundary(photo, state.photoBoundaryDraft);
         if (!validSurface(next))
@@ -86,7 +86,7 @@ export const useEditorStore = create((set, get) => ({
     },
     addAssetAt: (asset, x, z) => {
         const state = get();
-        if (!state.document || state.isSaving)
+        if (!state.document)
             return;
         const next = addObject(state.document, createPlacedObject(asset, x, z));
         if (!next) {
@@ -101,7 +101,7 @@ export const useEditorStore = create((set, get) => ({
     setTool: (tool) => set({ tool }),
     transformObject: (id, transform) => {
         const state = get();
-        if (!state.document || state.isSaving)
+        if (!state.document)
             return false;
         const next = changeObjectTransform(state.document, id, transform);
         if (!next) {
@@ -113,7 +113,7 @@ export const useEditorStore = create((set, get) => ({
     },
     duplicateSelected: () => {
         const state = get();
-        if (!state.document || !state.selectedObjectId || state.isSaving)
+        if (!state.document || !state.selectedObjectId)
             return;
         const next = duplicateObject(state.document, state.selectedObjectId);
         if (!next) {
@@ -124,7 +124,7 @@ export const useEditorStore = create((set, get) => ({
     },
     deleteSelected: () => {
         const state = get();
-        if (!state.document || !state.selectedObjectId || state.isSaving)
+        if (!state.document || !state.selectedObjectId)
             return;
         const next = removeObject(state.document, state.selectedObjectId);
         if (!next)
@@ -142,7 +142,7 @@ export const useEditorStore = create((set, get) => ({
     },
     setAssetQuantity: (assetId, quantity) => {
         const state = get();
-        if (!state.document || state.isSaving || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null) return;
+        if (!state.document || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null) return;
         const matching = state.document.objects.filter((object) => object.assetId === assetId);
         if (!Number.isInteger(quantity) || quantity < 0 || quantity > 200 || state.document.objects.length - matching.length + quantity > 200) {
             set({ editError: '数量は0〜200の整数、配置の合計は200個までです。' });
@@ -169,7 +169,12 @@ export const useEditorStore = create((set, get) => ({
     setTransformDragging: (isTransformDragging) => set({ isTransformDragging }),
     setSaveError: (saveError) => set({ saveError }),
     setEditError: (editError) => set({ editError }),
-    markSaved: (document) => set({ document: structuredClone(document), isDirty: false, isSaving: false, isTransformDragging: false, saveError: null, editError: null }),
+    markSaved: (document, submitted) => set((state) => {
+        if (state.document?.id !== document.id) return {};
+        const newerEdits = state.document !== submitted;
+        return { document: newerEdits ? { ...state.document, revision: document.revision } : structuredClone(document),
+            isDirty: newerEdits, isSaving: false, saveError: null };
+    }),
     commandCamera: (view) => set((state) => ({ cameraCommand: { view, sequence: state.cameraCommand.sequence + 1 } })),
     markModelLoaded: (id) => set((state) => ({
         loadedModelIds: state.loadedModelIds.includes(id) ? state.loadedModelIds : [...state.loadedModelIds, id],

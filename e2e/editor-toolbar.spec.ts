@@ -2,22 +2,23 @@ import { expect, test } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { api } from './api-url.js';
 
-test('editor plan actions share the garden bar, preserve state and fit narrow screens', async ({ page, request }) => {
+test('editor controls preserve state and the merged canvas toolbar fits narrow screens', async ({ page, request }) => {
   const garden = await (await request.post(`${api}/gardens`, { data: { name: `E2E toolbar ${Date.now()}` } })).json();
   try {
     await page.goto(`/gardens/${garden.id}`);
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
-    const bar = page.locator('.document-bar');
+    await expect(page.locator('.document-bar')).toHaveCount(0);
+    const bar = page.locator('.canvas-tools');
     await expect(bar.locator('.toolbar-status')).toHaveCount(0);
-    await expect(page.getByTestId('save-garden')).toHaveText('保存済み');
-    await expect(bar.getByRole('group', { name: '庭の計画と購入' }).getByRole('button')).toHaveCount(3);
+    await expect(page.getByTestId('save-garden')).toHaveCount(0);
+    await expect(bar.locator('.document-identity').getByRole('button')).toHaveCount(1);
     await expect(page.locator('.editor-shell > .plan-actions')).toHaveCount(0);
     for (const width of [1440, 1280, 1100, 1024, 768, 390, 320]) {
       await page.setViewportSize({ width, height: 960 });
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       const modes = await page.getByRole('group', { name: '表示モード' }).boundingBox();
       const surface = await page.locator('.canvas-column').boundingBox();
-      expect(Math.abs(modes!.x + modes!.width / 2 - surface!.x - surface!.width / 2)).toBeLessThan(2);
+      if (surface!.width > 900) expect(Math.abs(modes!.x + modes!.width / 2 - surface!.x - surface!.width / 2)).toBeLessThan(2);
       const bounds = await bar.boundingBox();
       for (const button of await bar.getByRole('button').all()) {
         const item = await button.boundingBox();
@@ -32,11 +33,7 @@ test('editor plan actions share the garden bar, preserve state and fit narrow sc
     await expect(page.locator('.construction-details')).toContainText('配置したものはありません');
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('object-details-toggle')).toBeFocused();
-    await bar.getByRole('button', { name: '植物候補を相談', exact: true }).click();
-    await page.getByRole('combobox', { name: '日照', exact: true }).selectOption('半日陰');
-    await page.getByRole('button', { name: '候補を確認', exact: true }).click();
-    await expect(page.getByRole('dialog')).toContainText('アオキ・ヤブラン');
-    await page.keyboard.press('Escape');
+    await expect(page.getByRole('button', { name: '植物候補を相談', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
     await page.getByTestId('asset-tree_oak').click();
     const canvas = await page.locator('[data-testid="garden-canvas"] canvas').boundingBox();
@@ -52,11 +49,7 @@ test('editor plan actions share the garden bar, preserve state and fit narrow sc
     await page.getByTestId('object-details-toggle').click();
     await page.getByRole('button', { name: '複製', exact: true }).click();
     await page.keyboard.press('Escape');
-    await bar.getByRole('button', { name: '配置したものから商品を探す', exact: true }).click();
-    await expect(page.getByRole('dialog', { name: '変更を保存して進みますか？' })).toBeVisible();
-    await page.getByRole('button', { name: '取消', exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`/gardens/${garden.id}$`));
-    await bar.getByTestId('save-garden').click();
+    await expect(bar.getByRole('button', { name: '買い物リストをECで確認', exact: true })).toHaveCount(0);
     await expect(bar.getByTestId('save-status')).toHaveText('保存済み');
     await page.reload();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 2 / 2');
@@ -65,7 +58,7 @@ test('editor plan actions share the garden bar, preserve state and fit narrow sc
     await mkdir('artifacts/e2e', { recursive: true });
     await writeFile('artifacts/e2e/editor-toolbar-reloaded.json', JSON.stringify(saved, null, 2));
     await page.screenshot({ path: 'artifacts/e2e/editor-toolbar-reloaded.png' });
-    await bar.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
+    await page.getByTestId('completion-launcher').getByRole('button', { name: '完成イメージを確認', exact: true }).click();
     await expect(page.getByRole('dialog', { name: '庭の完成イメージ' }).locator('img')).toBeVisible();
     await page.keyboard.press('Escape');
     // The real destination/cart roundtrip is covered by the EC integration suite.

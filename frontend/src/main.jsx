@@ -11,6 +11,7 @@ import './plan.css';
 import './responsive.css';
 import './site-header.css';
 import './commerce.css';
+import './product-browser.css';
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: { retry: 1, refetchOnWindowFocus: false },

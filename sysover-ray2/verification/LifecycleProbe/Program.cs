@@ -2,7 +2,7 @@ using System.Text.Json;
 using SysOverRay;
 
 var destinationRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
-var gardenRoot = Path.GetFullPath(Path.Combine(destinationRoot, ".."));
+var gardenRoot = args.Length > 0 ? Path.GetFullPath(args[0]) : Path.GetFullPath(Path.Combine(destinationRoot, ".."));
 var settings = new OverlaySettings
 {
     ProjectRoot = Path.GetRelativePath(AppContext.BaseDirectory, gardenRoot),

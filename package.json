@@ -17,7 +17,14 @@
     "compile:api": "node scripts/api.mjs compile",
     "build:web": "npm --workspace frontend run build",
     "test:e2e": "node scripts/e2e.mjs",
-    "assets:generate": "node scripts/generate-assets.mjs"
+    "assets:generate": "node scripts/generate-assets.mjs",
+    "assets:plant-parts": "node scripts/generate-plant-parts.mjs",
+    "assets:plant-parts:v2": "node scripts/generate-plant-parts-v2.mjs",
+    "verify:plant-parts:v2": "node scripts/verify-plant-parts-v2.mjs",
+    "test:plant-library": "playwright test --config playwright.plant-library.config.ts",
+    "test:plant-model": "playwright test --config playwright.plant-model.config.ts",
+    "test:ai-products": "playwright test --config playwright.ai-products.config.ts",
+    "test:shopping": "playwright test --config playwright.shopping.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

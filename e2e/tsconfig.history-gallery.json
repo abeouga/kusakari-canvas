@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "module": "ESNext", "moduleResolution": "Bundler", "allowJs": true, "checkJs": false },
+  "include": ["history-gallery.spec.ts", "../playwright.history-gallery.config.ts"]
+}

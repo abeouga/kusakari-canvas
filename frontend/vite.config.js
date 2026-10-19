@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
+  base: process.env.KUSAKARI_CANVAS_WEB_BASE || '/',
   plugins: [react()],
   optimizeDeps: {
     exclude: ['@kusakari/site-header'],
