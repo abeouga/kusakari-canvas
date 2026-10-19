@@ -4,8 +4,8 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import type { GardenDocument } from '../frontend/src/types/garden';
 import { syntheticPhoto } from './occlusion-helpers';
 
-const api = 'http://127.0.0.1:18081/api';
-const ec = 'http://127.0.0.1:15286';
+const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
+const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286');
 const evidence = process.env.KUSAKARI_AUTOSAVE_EVIDENCE!;
 const fixtures: { productIds: string[]; gardenIds: string[]; cartIds: string[] } = { productIds: [], gardenIds: [], cartIds: [] };
 test.skip(!evidence, 'Use playwright.autosave.config.ts with dedicated data');
@@ -28,7 +28,8 @@ test.afterEach(async ({ page, request }) => {
   await record();
 });
 async function read(request: APIRequestContext, id: string): Promise<GardenDocument> {
-  const response = await request.get(`${api}/gardens/${id}`);
+  // Retry only a reset idle connection; HTTP errors still fail the assertion below.
+  const response = await request.get(`${api}/gardens/${id}`, { maxRetries: 1 });
   expect(response.status()).toBe(200);
   return response.json();
 }
@@ -130,7 +131,7 @@ test('merged toolbar fits 7 widths in both views and transform, duplicate, delet
   await expect(page.getByRole('tabpanel', { name: /買い物リスト/ }).getByRole('button', { name: 'ECで買い物リストを確認', exact: true })).toBeVisible();
   await reloadedEvidence(page, request, garden.id, 'transform');
   await page.getByRole('button', { name: '← 庭一覧', exact: true }).click();
-  await expect(page).toHaveURL('http://127.0.0.1:15173/');
+  await expect(page).toHaveURL((process.env.KUSAKARI_CANVAS_E2E_WEB_PORT ? 'http://127.0.0.1:' + process.env.KUSAKARI_CANVAS_E2E_WEB_PORT + '/' : 'http://127.0.0.1:15173/'));
 });
 
 test('dimensions, photo upload, confirmed boundary, edge length and photo removal autosave', async ({ page, request }) => {

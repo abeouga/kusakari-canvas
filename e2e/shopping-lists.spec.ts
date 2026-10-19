@@ -5,8 +5,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import type { GardenDocument, PlantComposition } from '../frontend/src/types/garden';
 
-const ec = 'http://127.0.0.1:15286';
-const canvas = 'http://127.0.0.1:18081/api';
+const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286');
+const canvas = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
 const evidence = 'artifacts/e2e/shopping-lists';
 type Garden = GardenDocument;
 type Product = { id: string; name: string; modelComposition: PlantComposition; [key: string]: unknown };
@@ -17,7 +17,7 @@ const profile = { plantType: 'flower', heightCm: 55, widthCm: 65, crownShape: 'r
 
 async function createProduct(request: APIRequestContext) {
   const products = await request.get(`${ec}/api/products?storeId=1`).then(r => r.json());
-  const excluded = new Set(['id', 'unit', 'source', 'sourceUpdatedAt', 'publishedAt', 'active', 'modelComposition', 'canvasMaterialCode']);
+  const excluded = new Set(['id', 'unit', 'source', 'sourceUpdatedAt', 'publishedAt', 'active', 'publicationStatus', 'modelComposition', 'canvasMaterialCode']);
   const input = Object.fromEntries(Object.entries(products[0]).filter(([key]) => !excluded.has(key)));
   const body = { ...input, storeId: 1, name: 'リスト用草花-' + randomUUID().slice(0, 8),
     sku: 'SL-' + randomUUID().slice(0, 12), stock: 20, heightCm: 55, plantModelProfile: profile };
@@ -56,7 +56,7 @@ function legacyCandidate(productId: string, remove = false) {
     : `INSERT INTO material_products(material_code,product_id) VALUES('garden.bench','${productId}');`;
   const result = spawnSync(process.execPath, ['--input-type=module', '-e',
     "import { sql } from './e2e/database.js'; sql(process.argv[1]);", statement], {
-    cwd: fileURLToPath(new URL('../../kusakari-ec/', import.meta.url)), encoding: 'utf8',
+    cwd: fileURLToPath(new URL('../../kusakari-mvp/', import.meta.url)), encoding: 'utf8',
   });
   if (result.status !== 0) throw new Error('Dedicated legacy candidate fixture failed: ' + result.stderr);
 }

@@ -1,12 +1,14 @@
 import { expect, test } from '@playwright/test';
+import { createTestProduct } from './catalog-fixture';
 
 test('EC接続失敗を表示し、再取得後に商品を配置・保存・復元できる', async ({ page, request }, testInfo) => {
-  const api = 'http://127.0.0.1:18081/api';
+  const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
   const response = await request.post(`${api}/gardens`, { data: { name: `商品接続検証 ${Date.now()}` } });
   expect(response.ok()).toBeTruthy();
   const garden = await response.json();
+  const fixtureProduct = await createTestProduct(request, '接続復旧検証用');
   // Only the failure is injected. Recovery uses the real EC API and dedicated MySQL.
-  const cartUrl = 'http://127.0.0.1:15286/api/cart';
+  const cartUrl = ((process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286') + '/api/cart');
   await page.route(cartUrl, (route) => route.abort('failed'));
   await page.goto(`/gardens/${garden.id}`);
   const browser = page.getByRole('region', { name: 'ECの商品一覧' });
@@ -16,7 +18,7 @@ test('EC接続失敗を表示し、再取得後に商品を配置・保存・復
   await page.unroute(cartUrl);
   await browser.getByRole('button', { name: '商品を再取得' }).click();
   await expect(browser.getByRole('alert')).toHaveCount(0);
-  const product = browser.locator('.browse-product').filter({ has: page.getByRole('button', { name: '庭に配置', exact: true }).and(page.locator(':enabled')) }).first();
+  const product = browser.getByTestId(`browse-${fixtureProduct.id}`);
   await expect(product).toBeVisible();
   await product.getByRole('button', { name: '庭に配置', exact: true }).click();
   const canvas = page.getByTestId('garden-canvas').locator('canvas');

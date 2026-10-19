@@ -1,3 +1,4 @@
+import { selectTestPlant } from './catalog-fixture';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
@@ -29,7 +30,7 @@ test('Q. 名前だけで作成・土台寸法を編集・縮小検証・MySQL保
     expect([initial.width, initial.depth]).toEqual([14, 12]);
     await page.getByRole('button', { name: '土台設定を閉じる' }).click();
     await page.getByRole('button', { name: '上から見る' }).click();
-    await page.getByTestId('asset-tree_oak').click();
+    await selectTestPlant(page);
     const box = await page.locator('[data-testid="garden-canvas"] canvas').boundingBox();
     if (!box) throw new Error('3D庭が表示されていません。');
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);

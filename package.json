@@ -7,6 +7,7 @@
     "frontend"
   ],
   "scripts": {
+    "check:js": "tsc -p frontend/jsconfig.json",
     "dev:web": "npm --workspace frontend run dev",
     "dev:api": "node scripts/api.mjs dev",
     "migrate:api": "node scripts/api.mjs migrate",

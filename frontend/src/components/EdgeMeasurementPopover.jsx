@@ -53,7 +53,10 @@ export function EdgeMeasurementPopover({ document, selection, onClose }) {
 
   function close() {
     onClose();
-    requestAnimationFrame(() => window.document.querySelector(`[data-testid="photo-edge-${selection.index}"]`)?.focus());
+    requestAnimationFrame(() => {
+      const edge = window.document.querySelector(`[data-testid="photo-edge-${selection.index}"]`);
+      if (edge instanceof SVGElement) edge.focus();
+    });
   }
 
   function apply(event) {

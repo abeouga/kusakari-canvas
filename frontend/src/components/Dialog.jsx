@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { UiIcon } from './UiIcon';
-export function Dialog({ title, description, children, footer, onClose, className = '', busy = false, closeLabel = '閉じる', returnFocus }) {
+export function Dialog({ title, description = null, children, footer = null, onClose, className = '', busy = false, closeLabel = '閉じる', returnFocus = null }) {
     const ref = useRef(null);
     const opener = useRef(null);
     const titleId = useId(), descriptionId = useId();
@@ -23,6 +23,7 @@ export function Dialog({ title, description, children, footer, onClose, classNam
             if (event.key !== 'Tab')
                 return;
             const focusable = [...event.currentTarget.querySelectorAll('button, input, select, textarea, summary, a[href], [tabindex]')]
+                .filter((element) => element instanceof HTMLElement)
                 .filter((element) => !element.matches(':disabled') && element.tabIndex >= 0 && element.getClientRects().length > 0);
             const first = focusable[0], last = focusable[focusable.length - 1];
             if (event.shiftKey && document.activeElement === first) {

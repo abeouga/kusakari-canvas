@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
-import { Color, InstancedMesh, Matrix4, Quaternion, Vector3 } from 'three';
+import { Color, InstancedMesh, Matrix4, Mesh, MeshStandardMaterial, Quaternion, Vector3 } from 'three';
 import { canvasUrl } from '../domain/urls';
 const supportedParts = new Set(['stem', 'leaf-oval', 'leaf-narrow', 'leaf-needle', 'flower-five', 'flower-eight']);
 const partsV2 = new Set(['stem-wood', 'stem-herb', 'stem-cane', 'stem-palm', 'stem-vine', 'stem-arching',
@@ -25,7 +25,7 @@ export function clearPlantCompositionCache(composition) {
 }
 
 // GLB geometries are shared. Instances only apply the transforms saved with the product.
-export function PlantCompositionModel({ composition, objectId, onLoaded }) {
+export function PlantCompositionModel({ composition, objectId = undefined, onLoaded }) {
   const ids = [...new Set(composition.parts.map((part) => part.partId))];
   const urls = ids.map((id) => partUrl(id, composition.catalogVersion));
   const loaded = useGLTF(urls);
@@ -40,12 +40,14 @@ export function PlantCompositionModel({ composition, objectId, onLoaded }) {
       for (const color of colors) {
         const placements = perInstanceColor ? parts : parts.filter((part) => part.color === color);
         scene.traverse((source) => {
-          if (!source.isMesh) return;
+          if (!(source instanceof Mesh)) return;
           const materials = Array.isArray(source.material) ? source.material : [source.material];
           const clones = materials.map((material) => {
             const clone = material.clone();
-            if (color && source.name.startsWith('tint-')) clone.color.set(color);
-            if (perInstanceColor && source.name.startsWith('tint-')) clone.color.set('#ffffff');
+            if (clone instanceof MeshStandardMaterial && source.name.startsWith('tint-')) {
+              if (color) clone.color.set(color);
+              if (perInstanceColor) clone.color.set('#ffffff');
+            }
             return clone;
           });
           const mesh = new InstancedMesh(source.geometry, Array.isArray(source.material) ? clones : clones[0], placements.length);

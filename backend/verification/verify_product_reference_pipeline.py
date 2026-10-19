@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -18,12 +19,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", type=Path, required=True)
     output = parser.parse_args().output_dir.resolve()
-    assert output.parent.parent == Path("D:/KusakariVerification").resolve()
+    assert output.is_dir(), "The browser must save its captured request first"
     request = AiImageRequest.model_validate(load(output, "generation-request.json"))
-    settings = AiSettings("", "http://127.0.0.1:18186", image_origin="http://127.0.0.1:15286")
+    ec_port = os.environ.get("KUSAKARI_EC_E2E_API_PORT", "18186")
+    image_origin = os.environ.get("KUSAKARI_EC_E2E_WEB_URL", "http://127.0.0.1:15286")
+    canvas_origin = os.environ.get("KUSAKARI_CANVAS_E2E_API_URL", "http://127.0.0.1:18081")
+    settings = AiSettings("", f"http://127.0.0.1:{ec_port}", image_origin=image_origin)
     ids = [item.productId for item in request.references]
     products = linked_products(settings, ids)
-    with urlopen("http://127.0.0.1:18081/api/assets", timeout=10) as response:
+    with urlopen(f"{canvas_origin}/api/assets", timeout=10) as response:
         categories = {item["id"]: item["category"] for item in json.load(response)}
     layout = layout_manifest(request, categories)
     summaries, images = [], []

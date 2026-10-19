@@ -7,7 +7,7 @@ import { GenerationHistory } from './GenerationHistory';
 import { UiIcon } from './UiIcon';
 import '../image-studio.css';
 
-export function CompletionImageAction({ garden, assets, photoMode, captureRef, storeId, disabled }) {
+export function CompletionImageAction({ garden, assets, photoMode, captureRef, storeId, disabled, drawingBoundary = false }) {
   const [image, setImage] = useState(null);
   const [capturing, setCapturing] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
@@ -49,8 +49,8 @@ export function CompletionImageAction({ garden, assets, photoMode, captureRef, s
   }
 
   return <>
-    <CompletionMenu photoMode={photoMode} disabled={disabled} capturing={capturing} error={error} toggleRef={toggleRef}
-      onCapture={capture} onHistory={() => setHistoryOpen(true)}/>
+    {!drawingBoundary && <CompletionMenu photoMode={photoMode} disabled={disabled} capturing={capturing} error={error} toggleRef={toggleRef}
+      onCapture={capture} onHistory={() => setHistoryOpen(true)}/>}
     {historyOpen && <GenerationHistory gardenId={garden.id} onClose={() => setHistoryOpen(false)} returnFocus={toggleRef}/>}
     {image && <Dialog title="庭の完成イメージ" className="completion-image-dialog" busy={aiBusy} onClose={closeImage} returnFocus={toggleRef}>
       {!image.hasPhoto && <>

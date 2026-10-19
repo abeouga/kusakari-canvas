@@ -1,6 +1,6 @@
 import { SiteHeader } from './SiteHeader';
 
-export function GardenHeader({ title, subtitle }) {
+export function GardenHeader({ title, subtitle = null }) {
     return (<>
       <SiteHeader />
       <header className="canvas-workspace-heading">

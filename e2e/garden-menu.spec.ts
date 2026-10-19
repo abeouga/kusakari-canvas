@@ -1,3 +1,4 @@
+import { selectTestPlant } from './catalog-fixture';
 import { expect, test } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { api } from './api-url.js';
@@ -9,7 +10,7 @@ test('garden options duplicate and delete with persisted independent data', asyn
   try {
     await page.goto(`/gardens/${source.id}`);
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
-    await page.getByTestId('asset-tree_oak').click();
+    await selectTestPlant(page);
     const box = await page.locator('[data-testid="garden-canvas"] canvas').boundingBox();
     if (!box) throw new Error('Canvasが表示されません。');
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);

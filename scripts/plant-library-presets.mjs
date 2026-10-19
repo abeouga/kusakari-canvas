@@ -52,6 +52,6 @@ export function productInput(preset, imageUrl) {
     sizeLabel: `高さ ${profile.heightCm}cm・幅 ${profile.widthCm}cm`, care: '', priceYen: preset.priceYen, stock: 20,
     imageUrl, badge: '', nurseryName: '', nurseryAddress: '', sunlight: '未設定', useCase: '庭の配置・組み合わせ',
     careLevel: 1, minTemperatureC: null, heatTolerant: false, droughtTolerant: false, ageYears: null,
-    heightCm: profile.heightCm, potDiameterCm: null, familyName: '', floweringDescription: '', seasonalCare: '',
-    styleDescription: '', images: [], plantModelProfile: profile };
+    heightCm: profile.heightCm, potDiameterCm: null, familyName: '',
+    images: [], plantModelProfile: profile };
 }

@@ -3,6 +3,7 @@ export const gardenApi = {
     listAssets: () => requestJson('/api/assets'),
     listGardens: () => requestJson('/api/gardens'),
     getGarden: (id) => requestJson(`/api/gardens/${encodeURIComponent(id)}`),
+    /** @param {{name: string, width?: number, depth?: number}} request */
     createGarden: (request) => requestJson('/api/gardens', {
         method: 'POST',
         body: JSON.stringify(request),

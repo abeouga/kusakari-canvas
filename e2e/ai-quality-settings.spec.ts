@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
 import { api } from './api-url.js';
 import { verifyFixedInputs } from './ai-quality-fixed-inputs.js';
-import { qualityPhoto, uploadReferences, type QualityPayload } from './ai-quality-helpers.js';
+import { qualityPhoto, type QualityPayload } from './ai-quality-helpers.js';
+import { createTestProduct, productPlacement } from './catalog-fixture';
 import { artifacts, capture, createScene, openScene, readGarden, removeScenes, shrub, syntheticPhoto } from './occlusion-helpers.js';
 
 const artifactPrefix = process.env.KUSAKARI_CANVAS_AI_SETTINGS_RUN ?? 'quality-settings';
@@ -72,15 +73,33 @@ test('fixed-input guard accepts the actual browser capture before a real no-key 
   test.setTimeout(180_000);
   const ids: string[] = [];
   try {
-    const baseline = 'layout-revision-03';
+    const baseline = `fixed-input-${randomUUID()}`;
     const directory = resolve('artifacts/e2e/ai-quality', baseline, 'single');
-    const snapshot = JSON.parse(await readFile(resolve(directory, 'snapshot.json'), 'utf8'));
+    await mkdir(directory, { recursive: true });
     const photo = await qualityPhoto(page);
-    expect(photo).toEqual(snapshot.photo);
-    const garden = await createScene(request, ids, photo, snapshot.objects);
+    const product = await createTestProduct(request, '品質固定入力');
+    const garden = await createScene(request, ids, photo, [productPlacement(product)]);
     await openScene(page, garden);
     const image = await capture(page);
-    await uploadReferences(page, garden);
+    await page.getByRole('group', { name: '品質固定入力の参考写真' }).getByLabel('写真を選択').setInputFiles({
+      name: 'reference.jpg', mimeType: 'image/jpeg', buffer: Buffer.from(photo.dataUrl.split(',')[1], 'base64'),
+    });
+    await expect(page.getByAltText('品質固定入力の選択した参考写真')).toBeVisible();
+    const firstResponse = page.waitForResponse(r => r.url().endsWith('/ai-image') && r.request().method() === 'POST');
+    await page.getByRole('button', { name: 'AIで生成（API利用料が発生します）', exact: true }).click();
+    const first = await firstResponse;
+    expect(first.status()).toBe(503);
+    const frozen = first.request().postDataJSON() as QualityPayload;
+    await writeFile(resolve(directory, 'snapshot.json'), JSON.stringify(garden));
+    await writeFile(resolve(directory, 'before.png'), Buffer.from(frozen.beforeDataUrl.split(',')[1], 'base64'));
+    await writeFile(resolve(directory, 'coverage.png'), Buffer.from(frozen.coverageDataUrl.split(',')[1], 'base64'));
+    await writeFile(resolve(directory, 'reference.jpg'), Buffer.from(frozen.references[0].photoDataUrl.split(',')[1], 'base64'));
+    await writeFile(resolve(directory, 'request.json'), JSON.stringify({ ...frozen, inputOrder: [
+      { kind: 'uploaded-reference', assetId: frozen.references[0].assetId, productId: product.id, file: 'reference.jpg' },
+    ] }));
+    const changed = structuredClone(frozen);
+    changed.document.width += 1;
+    await expect(verifyFixedInputs(changed, 'single', baseline)).rejects.toThrow();
     let matched = false;
     await page.route('**/ai-image', async (route) => {
       try {
@@ -105,6 +124,6 @@ test('fixed-input guard accepts the actual browser capture before a real no-key 
     const serverQuality = process.env.KUSAKARI_CANVAS_AI_EVAL_QUALITY ?? 'medium';
     await page.screenshot({ path: resolve(artifacts, `${artifactPrefix}-${serverQuality}-fixed-inputs-reloaded.png`), fullPage: true });
     await writeFile(resolve(artifacts, `${artifactPrefix}-${serverQuality}-fixed-inputs.json`), JSON.stringify({ garden,
-      fixedInputsMatch: true, apiAttempts: 1, providerRequests: 0 }, null, 2));
+      fixedInputsMatch: true, changedInputRejected: true, apiAttempts: 2, providerRequests: 0 }, null, 2));
   } finally { await removeScenes(request, ids); }
 });

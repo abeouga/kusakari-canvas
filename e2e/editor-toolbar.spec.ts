@@ -1,3 +1,4 @@
+import { selectTestPlant } from './catalog-fixture';
 import { expect, test } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { api } from './api-url.js';
@@ -35,7 +36,7 @@ test('editor controls preserve state and the merged canvas toolbar fits narrow s
     await expect(page.getByTestId('object-details-toggle')).toBeFocused();
     await expect(page.getByRole('button', { name: '植物候補を相談', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
-    await page.getByTestId('asset-tree_oak').click();
+    await selectTestPlant(page);
     const canvas = await page.locator('[data-testid="garden-canvas"] canvas').boundingBox();
     await page.mouse.click(canvas!.x + canvas!.width / 2, canvas!.y + canvas!.height / 2);
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
@@ -58,11 +59,13 @@ test('editor controls preserve state and the merged canvas toolbar fits narrow s
     await mkdir('artifacts/e2e', { recursive: true });
     await writeFile('artifacts/e2e/editor-toolbar-reloaded.json', JSON.stringify(saved, null, 2));
     await page.screenshot({ path: 'artifacts/e2e/editor-toolbar-reloaded.png' });
-    await page.getByTestId('completion-launcher').getByRole('button', { name: '完成イメージを確認', exact: true }).click();
+    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+
+    await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
     await expect(page.getByRole('dialog', { name: '庭の完成イメージ' }).locator('img')).toBeVisible();
     await page.keyboard.press('Escape');
     // The real destination/cart roundtrip is covered by the EC integration suite.
-    const navigation = page.waitForRequest((request) => request.isNavigationRequest() && request.url() === 'http://127.0.0.1:15186/');
+    const navigation = page.waitForRequest((request) => request.isNavigationRequest() && request.url() === ((process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15186') + '/'));
     await expect(page.getByRole('button', { name: 'ECへ戻る', exact: true })).toHaveCount(0);
     await page.getByRole('link', { name: 'Kusakari トップへ', exact: true }).click();
     expect((await navigation).isNavigationRequest()).toBe(true);

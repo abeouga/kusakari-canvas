@@ -30,12 +30,10 @@ async function getAvailablePort() {
 }
 
 async function getPorts() {
-  const apiPort = await getAvailablePort();
-  let webPort = await getAvailablePort();
-  while (webPort === apiPort) {
-    webPort = await getAvailablePort();
-  }
-  return { apiPort, webPort };
+  const ports = new Set();
+  while (ports.size < 4) ports.add(await getAvailablePort());
+  const [apiPort, webPort, ecApiPort, ecWebPort] = [...ports];
+  return { apiPort, webPort, ecApiPort, ecWebPort };
 }
 
 function runPlaywright(ports) {
@@ -48,6 +46,9 @@ function runPlaywright(ports) {
     KUSAKARI_CANVAS_E2E_API_PORT: String(ports.apiPort),
     KUSAKARI_CANVAS_E2E_WEB_PORT: String(ports.webPort),
     KUSAKARI_CANVAS_E2E_API_URL: `http://127.0.0.1:${ports.apiPort}`,
+    KUSAKARI_EC_E2E_API_PORT: String(ports.ecApiPort),
+    KUSAKARI_EC_E2E_WEB_PORT: String(ports.ecWebPort),
+    KUSAKARI_EC_E2E_WEB_URL: `http://127.0.0.1:${ports.ecWebPort}`,
   };
   const child = spawn(process.execPath, [playwrightCli, 'test', ...process.argv.slice(2)], {
     cwd: root,

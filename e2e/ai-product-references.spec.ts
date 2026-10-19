@@ -7,8 +7,8 @@ import { plantPresetsV3 } from '../scripts/plant-library-v3-presets.mjs';
 import { productInput } from '../scripts/plant-library-presets.mjs';
 import { capture, createScene, openScene, readGarden, syntheticPhoto } from './occlusion-helpers';
 
-const api = 'http://127.0.0.1:18081/api';
-const ec = 'http://127.0.0.1:18186/api';
+const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
+const ec = (process.env.KUSAKARI_EC_E2E_API_PORT ? 'http://127.0.0.1:' + process.env.KUSAKARI_EC_E2E_API_PORT + '/api' : 'http://127.0.0.1:18186/api');
 const evidence = process.env.KUSAKARI_AI_PRODUCTS_EVIDENCE!;
 test.skip(!evidence, 'Run with playwright.ai-products.config.ts and a dedicated evidence directory; four real services are required.');
 type Product = { id: string; name: string; canvasMaterialCode: string; modelComposition: PlantComposition };
@@ -110,8 +110,11 @@ test('linked products are automatic, grouped by product, archived-readable and p
       .map((id) => ({ assetId: 'plant_modular', productId: id })));
     expect(payload.document).toEqual(garden);
     await writeFile(`${evidence}/generation-request.json`, JSON.stringify(payload, null, 2));
+    const pipelineEvidence = `${evidence}/pipeline-${garden.id}`;
+    await mkdir(pipelineEvidence, { recursive: true });
+    await writeFile(`${pipelineEvidence}/generation-request.json`, JSON.stringify(payload, null, 2));
     execFileSync(process.cwd() + '/backend/.venv/Scripts/python.exe', ['-m', 'verification.verify_product_reference_pipeline',
-      '--output-dir', evidence], { cwd: process.cwd() + '/backend', stdio: 'pipe' });
+      '--output-dir', pipelineEvidence], { cwd: process.cwd() + '/backend', stdio: 'pipe' });
     for (const invalid of [[payload.references[0], payload.references[0]],
       [payload.references[0], { assetId: 'plant_modular', productId: randomUUID() }]]) {
       // Uvicorn can close an idle keep-alive while the separate image-byte validation runs.
