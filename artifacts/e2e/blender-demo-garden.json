@@ -1,7 +1,0 @@
-{
-  "url": "http://127.0.0.1:5173/gardens/35f733b6-1944-482f-824e-cefc33ea7d8e",
-  "errors": [],
-  "resources": [
-    "http://127.0.0.1:5173/node_modules/.vite/deps/@react-three_fiber.js?v=ebd7d488"
-  ]
-}
