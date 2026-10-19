@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { captureImage } from '../capture/captureImage';
+import { thumbnailImage } from '../capture/thumbnailImage';
 import { requestJson } from '../api/http';
 
 export function useGardenThumbnail(garden, ready, photoMode, captureRef) {
@@ -12,17 +13,10 @@ export function useGardenThumbnail(garden, ready, photoMode, captureRef) {
       attempts++;
       try {
         const capture = await captureImage(garden, photoMode, captureRef.current);
-        const image = new Image();
-        image.src = capture.dataUrl;
-        await image.decode();
+        const dataUrl = await thumbnailImage(capture.dataUrl);
         if (cancelled) return;
-        const scale = Math.min(640 / image.width, 400 / image.height, 1);
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(image.width * scale);
-        canvas.height = Math.round(image.height * scale);
-        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
         await requestJson(`/api/gardens/${garden.id}/thumbnail`, {
-          method: 'POST', body: JSON.stringify({ revision: garden.revision, dataUrl: canvas.toDataURL('image/png') }),
+          method: 'POST', body: JSON.stringify({ revision: garden.revision, dataUrl }),
         });
       } catch {
         // A current placement plan remains available if capture is not ready or the upload fails.
