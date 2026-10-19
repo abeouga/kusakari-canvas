@@ -18,7 +18,7 @@
 .photo-stage circle { cursor: grab; }
 .photo-stage circle[role='button'] { cursor: pointer; }
 .photo-stage circle[role='button']:focus-visible { outline: none; stroke: #d9ee87; stroke-width: 5; }
-.photo-empty { display: flex; flex: 1; min-height: 0; flex-direction: column; justify-content: center; align-items: center; gap: 12px; border: 1px dashed #c7d4bf; margin: 28px; border-radius: 8px; padding: 28px; background: #f5f8f1; color: #6c8063; }
+.photo-empty { display: flex; flex: 1; width: auto; min-width: 0; min-height: 0; flex-direction: column; justify-content: center; align-items: center; gap: 12px; border: 1px dashed #c7d4bf; margin: 28px; border-radius: 8px; padding: 28px; background: #f5f8f1; color: #6c8063; }
 .photo-empty:hover:not(:disabled) { background: #f0f5eb; border-color: #8ba481; }
 .photo-empty strong { color: #425f39; font-size: 19px; font-weight: 500; margin-top: 5px; }
 .photo-empty > span { font-size: 12px; }
