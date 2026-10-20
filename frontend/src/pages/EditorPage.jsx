@@ -47,6 +47,7 @@ export function EditorPage({ gardenId }) {
     const deleteSelected = useEditorStore((state) => state.deleteSelected);
     const [retryRequest, setRetryRequest] = useState(null);
     const [viewMode, setViewMode] = useState('3d');
+    const initializedGarden = useRef(null);
     const [sidebarWidth, setSidebarWidth] = useSidebarWidth();
     const [propertiesCollapsed, setPropertiesCollapsed] = useState(false);
     const [dimensionsOpen, setDimensionsOpen] = useState(false);
@@ -61,8 +62,10 @@ export function EditorPage({ gardenId }) {
     useEffect(() => {
         if (gardenQuery.data) {
             useEditorStore.getState().hydrate(gardenQuery.data);
-            if (gardenQuery.data.photo)
-                setViewMode('photo');
+            if (initializedGarden.current !== gardenQuery.data.id) {
+                initializedGarden.current = gardenQuery.data.id;
+                setViewMode(gardenQuery.data.photo ? 'photo' : '3d');
+            }
         }
     }, [gardenQuery.data]);
     useEffect(() => {
@@ -155,7 +158,7 @@ export function EditorPage({ gardenId }) {
     const canvasHint = hasBoundaryDraft ? '庭の輪郭をクリックで描き、始点につないで確定'
         : selectedAssetId
             ? `${assetMap.get(selectedAssetId)?.name ?? '素材'}を配置中 · 地面をクリック / Escで終了`
-            : selectedObject && viewMode === 'photo' ? '右上の詳細から位置・回転・倍率を調整'
+            : selectedObject && viewMode === 'photo' ? '矢印または配置物をドラッグして移動 · 詳細で回転・倍率を調整'
                 : selectedObject && tool === 'rotate'
                     ? '円形ハンドルをドラッグして角度を調整'
                     : 'オブジェクトを選択して編集';
@@ -180,7 +183,7 @@ export function EditorPage({ gardenId }) {
           {failedModelIds.map((id) => (<button key={id} type="button" onClick={() => retryModel(id)}>モデルを再試行</button>))}
         </div>)}
 
-      <main className={`editor-layout${propertiesCollapsed ? ' inspector-hidden' : ''}`} style={{ '--commerce-width': `${sidebarWidth}px` }}>
+      <main className={`editor-layout${propertiesCollapsed ? ' inspector-hidden' : ''}`} style={/** @type {import('react').CSSProperties & {'--commerce-width': string}} */ ({ '--commerce-width': `${sidebarWidth}px` })}>
         <section className="canvas-column" aria-label="庭の3D編集エリア">
           <div className="canvas-tools" data-view-mode={viewMode}>
             <div className="document-identity">
@@ -192,8 +195,8 @@ export function EditorPage({ gardenId }) {
               </span>
             </div>
             <div className="view-mode-actions" role="group" aria-label="表示モード">
-              <button type="button" aria-label="写真＋設計" title="写真＋設計" aria-pressed={viewMode === 'photo'} disabled={isCalibrating} onClick={() => setViewMode('photo')}><UiIcon name="photo"/><span>写真<span className="view-mode-suffix">＋設計</span></span></button>
-              <button type="button" aria-label="3D庭" title="3D庭" aria-pressed={viewMode === '3d'} disabled={hasBoundaryDraft || isCalibrating} onClick={() => setViewMode('3d')}><UiIcon name="cube"/><span>3D<span className="view-mode-suffix">庭</span></span></button>
+              <button type="button" aria-label="写真＋設計" title="写真＋設計" aria-pressed={viewMode === 'photo'} disabled={isEditingDisabled} onClick={() => setViewMode('photo')}><UiIcon name="photo"/><span>写真<span className="view-mode-suffix">＋設計</span></span></button>
+              <button type="button" aria-label="3D庭" title="3D庭" aria-pressed={viewMode === '3d'} disabled={hasBoundaryDraft || isEditingDisabled} onClick={() => setViewMode('3d')}><UiIcon name="cube"/><span>3D<span className="view-mode-suffix">庭</span></span></button>
             </div>
             <div className="camera-actions">
               {viewMode === '3d' && !document.photo && <button type="button" aria-label="土台設定" title="土台設定" aria-haspopup="dialog" onClick={() => setDimensionsOpen(true)} disabled={isEditingDisabled}><UiIcon name="ruler"/><span>土台設定</span></button>}
@@ -207,7 +210,7 @@ export function EditorPage({ gardenId }) {
           </Dialog>}
           {viewMode === 'photo' ? <PhotoOverlay document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={isEditingDisabled} retryRequest={retryRequest} onModelLoaded={markModelLoaded} onModelFailed={markModelFailed} editorOverlay={editorOverlay} captureRef={captureRef}/> : assetQuery.isLoading ? (<div className="canvas-loading" role="status">アセット一覧を読み込んでいます…</div>) : (<GardenCanvas document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={isEditingDisabled || hasBoundaryDraft} retryRequest={retryRequest} onModelLoaded={markModelLoaded} onModelFailed={markModelFailed} editorOverlay={editorOverlay} captureRef={captureRef}/>)}
           <CompletionImageAction key={document.id} garden={document} assets={assets} photoMode={viewMode === 'photo'} captureRef={captureRef}
-            storeId={commerce.cart.data?.storeId} disabled={isEditingDisabled || hasBoundaryDraft}/>
+            storeId={commerce.cart.data?.storeId} disabled={isEditingDisabled || hasBoundaryDraft} drawingBoundary={hasBoundaryDraft}/>
           <div className="canvas-footer">
             <span className="canvas-tool-hint" aria-live="polite">{canvasHint}</span>
             <span data-testid="model-loaded">読み込み済み: {loadedModelIds.length} / {document.objects.length}</span>

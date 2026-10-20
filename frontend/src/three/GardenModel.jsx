@@ -28,7 +28,7 @@ export function SelectionOutline({ asset }) {
         return edges;
     }, [dimensions.depth, dimensions.height, dimensions.width]);
     useEffect(() => () => geometry.dispose(), [geometry]);
-    return (<lineSegments geometry={geometry} position={[0, dimensions.height / 2, 0]} userData={{ captureRole: 'editor' }}>
+    return (<lineSegments raycast={() => null} geometry={geometry} position={[0, dimensions.height / 2, 0]} userData={{ captureRole: 'editor' }}>
       <lineBasicMaterial color="#bf7831" depthTest={false}/>
     </lineSegments>);
 }

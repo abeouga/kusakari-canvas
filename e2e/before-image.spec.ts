@@ -87,6 +87,8 @@ async function preparePhoto(page: Page, request: APIRequestContext, initial: Gar
 }
 
 async function captureImage(page: Page) {
+  if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+
   await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
   const image = page.getByAltText('現在の庭の完成イメージ');
   await expect(image).toBeVisible();
@@ -230,12 +232,19 @@ for (const variant of variants) {
       await page.getByRole('checkbox', { name: 'グリッド', exact: true }).uncheck();
       await page.getByRole('checkbox', { name: '地面', exact: true }).uncheck();
       await expect(page.getByTestId('photo-model-canvas')).toHaveAttribute('data-object-count', '0');
+      // Locator screenshots include overlapping HTML. Keep keyboard focus identical
+      // so the restored launcher's focus ring is not mistaken for changed WebGL pixels.
+      await page.getByRole('checkbox', { name: '地面', exact: true }).focus();
       const hiddenViewBefore = await page.locator('.photo-models canvas').screenshot();
       const hidden = await captureImage(page);
       expect((await comparePixels(page, baseline, hidden)).differences).toBe(0);
       await expect(page.getByRole('checkbox', { name: '配置', exact: true })).not.toBeChecked();
       await expect(page.getByTestId('photo-model-canvas')).toHaveAttribute('data-object-count', '0');
+      await page.getByRole('checkbox', { name: '地面', exact: true }).focus();
       const hiddenViewAfter = await page.locator('.photo-models canvas').screenshot();
+      await mkdir(artifactDirectory, { recursive: true });
+      await writeFile(resolve(artifactDirectory, `hidden-${variant.name}-before.png`), hiddenViewBefore);
+      await writeFile(resolve(artifactDirectory, `hidden-${variant.name}-after.png`), hiddenViewAfter);
       expect((await comparePixels(page,
         `data:image/png;base64,${hiddenViewBefore.toString('base64')}`,
         `data:image/png;base64,${hiddenViewAfter.toString('base64')}`)).differences).toBe(0);
@@ -252,8 +261,9 @@ for (const variant of variants) {
             return Reflect.apply(drawImage, this, [source, ...values]);
           };
         });
-        await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
-        await expect(page.locator('.document-bar > .plan-feedback')).toContainText('E2E capture copy failure');
+        if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+    await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
+        await expect(page.getByTestId('completion-launcher').getByRole('alert')).toContainText('E2E capture copy failure');
         expect(await canvasDimensions(page)).toEqual(dimensions);
         await expect(page.getByTestId('object-row-0')).toHaveAttribute('aria-pressed', 'true');
         await expect(page.getByRole('checkbox', { name: '配置', exact: true })).not.toBeChecked();
@@ -279,11 +289,13 @@ for (const variant of variants) {
       await mkdir(artifactDirectory, { recursive: true });
       await writeFile(resolve(artifactDirectory, `before-${variant.name}.json`), JSON.stringify(garden, null, 2));
       await writeFile(resolve(artifactDirectory, `before-${variant.name}-metrics.json`), JSON.stringify({ ...measurements, reloadComparison }, null, 2));
-      await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
+      if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+    await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
       await expect(page.getByAltText('現在の庭の完成イメージ')).toBeVisible();
       await expect(page.getByRole('dialog', { name: '庭の完成イメージ' })).toContainText('Before画像');
       const downloadEvent = page.waitForEvent('download');
-      await page.getByRole('link', { name: 'PNGで保存', exact: true }).click();
+      await page.getByTestId('generation-details').locator('summary').click();
+      await page.getByRole('link', { name: 'Before画像をPNGで保存', exact: true }).click();
       const download = await downloadEvent;
       expect(download.suggestedFilename()).toBe('kusakari-before.png');
       await download.saveAs(resolve(artifactDirectory, `before-${variant.name}.png`));
@@ -307,12 +319,14 @@ test('loading and failed real models block capture and retry produces a complete
     await preparePhoto(page, request, initial);
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 2');
     await page.getByRole('checkbox', { name: '配置', exact: true }).uncheck();
+    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
-    await expect(page.locator('.plan-feedback')).toContainText('モデルを読み込み中');
+    await expect(page.getByTestId('completion-launcher').getByRole('alert')).toContainText('モデルを読み込み中');
     releaseModelRequest();
     await expect(page.getByRole('button', { name: 'モデルを再試行', exact: true })).toBeVisible();
+    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
-    await expect(page.locator('.plan-feedback')).toContainText('読み込めないモデル');
+    await expect(page.getByTestId('completion-launcher').getByRole('alert')).toContainText('読み込めないモデル');
     await expect(page.getByRole('dialog', { name: '庭の完成イメージ' })).toHaveCount(0);
     await page.unroute('**/models/tree-oak.glb');
     await page.getByRole('button', { name: 'モデルを再試行', exact: true }).click();

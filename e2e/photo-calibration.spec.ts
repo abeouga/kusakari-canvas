@@ -3,10 +3,11 @@ import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { PerspectiveCamera, Vector3 } from 'three';
 import { api } from './api-url.js';
+import { shrub } from './occlusion-helpers';
 import { createPhotoCamera } from '../frontend/src/three/photoCamera.js';
 import type { GardenDocument, ImagePoint, PhotoCalibration } from '../frontend/src/types/garden.js';
 
-const artifacts = resolve('artifacts/e2e');
+const artifacts = resolve('artifacts/e2e/photo-calibration-current');
 const source = new PerspectiveCamera(50, 4 / 3, 0.01, 1000);
 source.position.set(5, 8, 13); source.lookAt(0, 0, 0); source.updateMatrixWorld(true);
 const locations = [[-2.6, 0, 2.5], [0, 0, 0], [2.6, 0, -2.5]];
@@ -33,7 +34,12 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
   const created = await request.post(`${api}/gardens`, { data: { name: `E2E camera ${Date.now()}`, width: 10, depth: 8 } });
   expect(created.status()).toBe(201);
   const initial = await created.json() as GardenDocument;
-  try {
+  // Existing saved assets can be placed again from the current shopping list UI.
+  // Seed only this starting fixture through the real API; all three measured placements use mouse input.
+  const seed = { ...shrub(-4.5, -3.5), assetId: 'tree_oak' };
+  const seeded = await request.put(`${api}/gardens/${initial.id}`, { data: { ...initial, objects: [seed] } });
+  expect(seeded.status()).toBe(200);
+  {
     await page.goto(`/gardens/${initial.id}`);
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     await page.getByRole('button', { name: '写真＋設計', exact: true }).click();
@@ -69,14 +75,16 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
     await expect(page.getByTestId('photo-vertex-number')).toHaveCount(0);
     // Real pointer rays must recover the same metric coordinates, even after resize.
     await page.setViewportSize({ width: 1280, height: 960 });
-    await page.getByTestId('asset-tree_oak').click();
     const ids: string[] = [];
     for (const [i, location] of locations.entries()) {
+      await page.getByRole('tab', { name: /買い物リスト/ }).click();
+      await page.getByTestId('shopping-line-tree_oak').getByRole('button', { name: '庭に配置' }).click();
       await clickPoint(page, '.photo-stage', project(location));
-      await expect(page.getByTestId(`object-row-${i}`)).toBeVisible();
-      ids.push((await page.getByTestId(`object-row-${i}`).getAttribute('data-object-id'))!);
+      await page.getByRole('tab', { name: '商品一覧', exact: true }).click();
+      await expect(page.getByTestId(`object-row-${i + 1}`)).toBeVisible();
+      ids.push((await page.getByTestId(`object-row-${i + 1}`).getAttribute('data-object-id'))!);
     }
-    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 3 / 3');
+    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 4 / 4');
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     let saved = await (await request.get(`${api}/gardens/${initial.id}`)).json() as GardenDocument;
     const calibration = saved.photo!.calibration!;
@@ -104,14 +112,14 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
     saved = await canonical.json() as GardenDocument;
     expect(saved.photo!.calibration).toEqual(calibration);
     await page.reload();
-    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 3 / 3');
+    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 4 / 4');
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     expect(await (await request.get(`${api}/gardens/${initial.id}`)).json()).toEqual(saved);
     await page.screenshot({ path: resolve(artifacts, 'camera-calibrated-reloaded.png'), fullPage: true });
     await writeFile(resolve(artifacts, 'camera-calibrated.json'), JSON.stringify(saved, null, 2));
     await writeFile(resolve(artifacts, 'camera-metrics.json'), JSON.stringify({ sourcePosition: source.position, sourceFov: 50, sizes, calibration }, null, 2));
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
-    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 3 / 3');
+    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 4 / 4');
     await page.screenshot({ path: resolve(artifacts, 'camera-calibrated-3d.png'), fullPage: true });
     await page.getByRole('button', { name: '写真＋設計', exact: true }).click();
     await page.getByRole('button', { name: '写真のカメラを設定' }).click();
@@ -161,13 +169,15 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
     await page.locator('.construction-details > summary').click();
     await expect(page.locator('.construction-details')).toContainText('m²');
     await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
     const completionImage = page.getByAltText('現在の庭の完成イメージ');
     await expect(completionImage).toBeVisible();
     expect(await completionImage.evaluate((node) => (node as HTMLImageElement).naturalWidth)).toBe(edited.photo!.imageWidth);
     await page.screenshot({ path: resolve(artifacts, 'camera-calibrated-completion.png'), fullPage: true });
 
-  } finally { expect((await request.delete(`${api}/gardens/${initial.id}`)).status()).toBe(204); }
+  }
 });
 
 test('P. 不正な基準点と画角の不定性を拒否し、手動画角で復帰', async ({ request }) => {

@@ -1,3 +1,4 @@
+import { selectTestPlant } from './catalog-fixture';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test, type Page, type APIRequestContext } from '@playwright/test';
@@ -130,7 +131,7 @@ test('I. 仮線追従・始点で6点輪郭確定・配置・保存復元・3D�
   await expect(page.getByTestId('photo-preview-edge')).toHaveCount(0);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(6);
   await expect(page.getByRole('button', { name: '輪郭を確定', exact: true })).toHaveCount(0);
-  await page.getByTestId('asset-tree_oak').click();
+  await selectTestPlant(page);
   await clickImage(page, 0.5, 0.65);
   await expect(page.getByTestId('object-row-0')).toBeVisible();
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
@@ -319,7 +320,7 @@ test('N. 木の3D・写真相互配置、固定カメラ、頂点番号非表示
 
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await page.getByRole('button', { name: '上から見る' }).click();
-  await page.getByTestId('asset-tree_oak').click();
+  await selectTestPlant(page);
   const bounds = await page.locator('[data-testid="garden-canvas"] canvas').boundingBox();
   if (!bounds) throw new Error('3D庭が表示されていません。');
   await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
@@ -364,7 +365,7 @@ test('N. 木の3D・写真相互配置、固定カメラ、頂点番号非表示
   expect(saved).toEqual(beforeDragDocument);
   expect(saved.photo?.dataUrl).toBe(imageDataUrl);
   expect(saved.objects).toHaveLength(2);
-  expect(saved.objects.every((object) => object.assetId === 'tree_oak')).toBe(true);
+  expect(saved.objects.every((object) => object.assetId === 'plant_modular' && object.productId)).toBe(true);
   // API results are ordered by object ID; identify the placed trees by identity.
   const treeFrom3d = saved.objects.find((object) => object.id === treeFrom3dId)!;
   const treeFromPhoto = saved.objects.find((object) => object.id === treeFromPhotoId)!;

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useThree } from '@react-three/fiber';
+import { OrbitControls } from 'three-stdlib';
 import { DoubleSide, Plane, Vector2, Vector3, Raycaster } from 'three';
 import { useEditorStore } from '../stores/editorStore';
 /** The drag angle is accumulated across atan2's branch cut, including multiple turns. */
 export function RotationRing({ target, position, radius, onCommit }) {
     const { camera, gl, invalidate } = useThree();
-    const controls = useThree((state) => state.controls);
+    const controls = useThree((state) => state.controls instanceof OrbitControls ? state.controls : null);
     const [hovered, setHovered] = useState(false);
     const drag = useRef(null);
     const commit = useRef(onCommit);

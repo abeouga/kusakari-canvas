@@ -1,3 +1,4 @@
+import { openPlantSettings, publishProduct } from './seller-wizard';
 import { test, expect, Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -6,26 +7,10 @@ import type { GardenDocument, PlantComposition } from '../frontend/src/types/gar
 type TestProduct = { id: string; name: string; plantModelProfile: Record<string, unknown>;
   modelComposition: PlantComposition } & Record<string, unknown>;
 
-const ec = 'http://127.0.0.1:15286';
-const api = 'http://127.0.0.1:18081/api';
+const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286');
+const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
 const evidence = 'artifacts/e2e/plant-model';
 
-test.beforeAll(async ({ request }) => {
-  // Recover only this spec's abandoned fixtures from interrupted runs in the dedicated databases.
-  const products = await request.get(`${ec}/api/products?storeId=1`).then((response) => response.json());
-  for (const product of products) {
-    if (/^MOD-[0-9a-f-]{12}$/.test(product.sku)
-        && /^組立検証-(tree|shrub|flower)-[01]-[0-9a-f]{4}$/.test(product.name)) {
-      expect((await request.delete(`${ec}/api/products/${product.id}`, { timeout: 5000 })).ok()).toBeTruthy();
-    }
-  }
-  const gardens = await request.get(`${api}/gardens`).then((response) => response.json());
-  for (const garden of gardens) {
-    if (/^組立配置-[0-9a-f]{8}$/.test(garden.name)) {
-      expect((await request.delete(`${api}/gardens/${garden.id}`, { timeout: 5000 })).ok()).toBeTruthy();
-    }
-  }
-});
 
 async function dragProduct(page: Page, source: ReturnType<Page['locator']>, index = 0) {
   const target = page.getByTestId('garden-canvas').locator('canvas');
@@ -36,6 +21,8 @@ async function dragProduct(page: Page, source: ReturnType<Page['locator']>, inde
 }
 
 test('seller features create six plant compositions; catalog and shopping-list drag placements survive reload', async ({ page, context, request }) => {
+  // Preserve the budget from playwright.plant-model.config.ts in the full suite.
+  test.setTimeout(360000);
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await mkdir(evidence, { recursive: true });
@@ -43,24 +30,23 @@ test('seller features create six plant compositions; catalog and shopping-list d
   let garden: GardenDocument | undefined;
   let failure: unknown;
   try {
-    await page.goto(ec, { waitUntil: 'domcontentloaded' });
-    await page.getByRole('button', { name: '商品管理', exact: true }).click();
-    const form = page.getByRole('dialog');
+    await page.goto(`${ec}/seller/products/new`);
+    const form = page.locator('.product-form');
     for (const type of ['tree', 'shrub', 'flower']) {
       for (let variant = 0; variant < 2; variant++) {
         const name = `組立検証-${type}-${variant}-${randomUUID().slice(0, 4)}`;
         await form.getByLabel('商品名', { exact: true }).fill(name);
         await form.getByLabel('商品番号', { exact: true }).fill(`MOD-${randomUUID().slice(0, 12)}`);
         await form.getByLabel('商品説明', { exact: true }).fill('専用MySQLで植物構成の保存・復元を検証します。');
-        await form.getByLabel('選択店舗の在庫').fill('20');
-        await form.locator('[name="heightCm"]').fill(type === 'tree' ? '250' : type === 'shrub' ? '100' : '55');
-        await form.getByLabel('この植物を庭に配置できるようにする').check();
+        await form.getByLabel('選択店舗の在庫', { exact: true }).fill('20');
+        await openPlantSettings(form, type === 'tree' ? '250' : type === 'shrub' ? '100' : '55');
         await form.getByRole('combobox', { name: '植物タイプ', exact: true }).selectOption(type);
-        await form.getByLabel('植物の幅（cm）').fill(String(type === 'tree' ? 140 + variant * 60 : 60 + variant * 30));
+        await form.getByLabel('植物の幅（cm）', { exact: true }).fill(String(type === 'tree' ? 140 + variant * 60 : 60 + variant * 30));
         await form.getByRole('combobox', { name: '葉の形', exact: true }).selectOption(variant ? 'narrow' : 'oval');
-        await form.getByRole('combobox', { name: '葉の密度', exact: true }).selectOption(variant ? 'high' : 'medium');
+        await form.getByRole('slider', { name: '葉の密度', exact: true }).press('Home');
+        await form.getByRole('slider', { name: '葉の密度', exact: true }).press(variant ? 'End' : 'ArrowRight');
         if (type === 'flower' || (type === 'shrub' && variant)) {
-          await form.getByLabel('花がある').check();
+          await form.getByLabel('花がある', { exact: true }).check();
           await form.getByRole('combobox', { name: '花の形', exact: true }).selectOption(variant ? 'eight' : 'five');
         }
         await form.getByRole('button', { name: '植物のプレビューを確認' }).click();
@@ -69,7 +55,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
         await expect(preview.getByTestId('preview-loaded')).toHaveText('loaded');
         await form.locator('iframe').screenshot({ path: `${evidence}/${type}-${variant}-preview.png` });
         const saved = page.waitForResponse((response) => response.url().endsWith('/api/products') && response.request().method() === 'POST', { timeout: 20000 });
-        await form.getByRole('button', { name: '商品を保存', exact: true }).click();
+        await publishProduct(form);
         const response = await saved;
         expect(response.status()).toBe(200);
         const product = await response.json();
@@ -82,7 +68,8 @@ test('seller features create six plant compositions; catalog and shopping-list d
         expect(resolved.ok()).toBeTruthy();
         expect(await resolved.json()).toEqual(product.modelComposition);
         products.push(product);
-        await expect(form.getByLabel('商品名', { exact: true })).toHaveValue('');
+        await expect(page).toHaveURL(`${ec}/seller/products`);
+        await page.goto(`${ec}/seller/products/new`);
       }
     }
     const catalog = await page.request.get(`${ec}/api/products?storeId=1`).then((response) => response.json());
@@ -146,8 +133,8 @@ test('seller features create six plant compositions; catalog and shopping-list d
     expect(reloaded).toEqual(snapshot);
     // Editing the product creates a new composition; the garden retains its saved snapshot.
     const p = products[0];
-    const { id, unit, source, sourceUpdatedAt, publishedAt, active, modelComposition, canvasMaterialCode, ...input } = p;
-    void id; void unit; void source; void sourceUpdatedAt; void publishedAt; void active; void modelComposition; void canvasMaterialCode;
+    const { id, unit, source, sourceUpdatedAt, publishedAt, active, publicationStatus, modelComposition, canvasMaterialCode, ...input } = p;
+    void id; void unit; void source; void sourceUpdatedAt; void publishedAt; void active; void publicationStatus; void modelComposition; void canvasMaterialCode;
     const changed = await page.request.put(`${ec}/api/products/${p.id}`, {
       data: { ...input, storeId: 1, plantModelProfile: { ...p.plantModelProfile, leafShape: 'needle' } },
     });
@@ -219,7 +206,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
 
 test('model validation, legacy product updates and exact-product material quote use real APIs', async ({ request }) => {
   const catalog = await request.get(`${ec}/api/products?storeId=1`).then((response) => response.json());
-  const responseFields = new Set(['id', 'unit', 'source', 'sourceUpdatedAt', 'publishedAt', 'active',
+  const responseFields = new Set(['id', 'unit', 'source', 'sourceUpdatedAt', 'publishedAt', 'active', 'publicationStatus',
     'modelComposition', 'canvasMaterialCode', 'plantModelProfile']);
   const input = Object.fromEntries(Object.entries(catalog[0]).filter(([key]) => !responseFields.has(key)));
   const profile = { plantType: 'tree', heightCm: 200, widthCm: 100, crownShape: 'round', branchCount: 12,

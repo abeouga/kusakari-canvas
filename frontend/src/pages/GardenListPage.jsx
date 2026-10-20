@@ -55,7 +55,7 @@ export function GardenListPage() {
     }
   }
   const createGarden = useMutation({
-    mutationFn: (request) => gardenApi.createGarden(request),
+    mutationFn: gardenApi.createGarden,
     onSuccess: async (document) => {
       await queryClient.invalidateQueries({ queryKey: ["gardens"] });
       window.location.assign(canvasUrl(`/gardens/${encodeURIComponent(document.id)}`));

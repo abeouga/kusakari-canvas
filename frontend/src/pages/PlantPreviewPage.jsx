@@ -21,7 +21,7 @@ function PlantPreviewScene({ composition }) {
   const size = composition.baseDimensions;
   const camera = useMemo(() => {
     const distance = Math.max(size.width, size.height, size.depth) * 2;
-    return { position: [distance * 0.55, size.height / 2 + distance * 0.65, distance * 0.75], fov: 42 };
+    return { position: /** @type {[number, number, number]} */ ([distance * 0.55, size.height / 2 + distance * 0.65, distance * 0.75]), fov: 42 };
   }, [size]);
   return <div style={{ height: '100dvh', minHeight: 260, position: 'relative', background: '#eef1e7' }} data-testid="plant-preview-scene">
     <Canvas camera={camera} dpr={[1, 1.5]} frameloop="demand">

@@ -1,35 +1,34 @@
+import { openPlantSettings, publishProduct } from './seller-wizard';
 import { test, expect } from '@playwright/test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { productInput } from '../scripts/plant-library-presets.mjs';
 import { plantPresetsV3 as plantPresets } from '../scripts/plant-library-v3-presets.mjs';
 
-const ec = 'http://127.0.0.1:15286';
-const api = 'http://127.0.0.1:18081/api';
+const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286');
+const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
 const evidence = 'artifacts/plant-v4/library-regression';
 
 test('seller can publish current grass; incompatible leaves are excluded and rejected', async ({ page, request }) => {
   let id: string | undefined;
   try {
-    await page.goto(ec);
-    await page.getByRole('button', { name: '商品管理', exact: true }).click();
-    const form = page.getByRole('dialog');
+    await page.goto(`${ec}/seller/products/new`);
+    const form = page.locator('.product-form');
     await form.getByLabel('商品名', { exact: true }).fill('グラス出品入力検証');
     await form.getByLabel('商品番号', { exact: true }).fill(`GRASS-${randomUUID().slice(0, 8)}`);
     await form.getByLabel('商品説明', { exact: true }).fill('新しい植物形態の出品操作を検証します。');
-    await form.getByLabel('選択店舗の在庫').fill('20');
-    await form.locator('[name="heightCm"]').fill('60');
-    await form.getByLabel('この植物を庭に配置できるようにする').check();
+    await form.getByLabel('選択店舗の在庫', { exact: true }).fill('20');
+    await openPlantSettings(form, '60');
     await form.getByRole('combobox', { name: '植物タイプ', exact: true }).selectOption('grass');
     await expect(form.getByRole('combobox', { name: '葉の形', exact: true })).toHaveValue('grass');
     await expect(form.locator('[name="modelLeafShape"] option')).toHaveCount(1);
-    await form.getByLabel('花がある').check();
+    await form.getByLabel('花がある', { exact: true }).check();
     await form.getByRole('combobox', { name: '花の形', exact: true }).selectOption('plume');
     await form.getByRole('button', { name: '植物のプレビューを確認' }).click();
     await form.locator('iframe').scrollIntoViewIfNeeded();
     await expect(page.frameLocator('iframe[title="植物の3Dプレビュー"]').getByTestId('preview-loaded')).toHaveText('loaded');
     const saved = page.waitForResponse((response) => response.url().endsWith('/api/products') && response.request().method() === 'POST');
-    await form.getByRole('button', { name: '商品を保存', exact: true }).click();
+    await publishProduct(form);
     const response = await saved;
     expect(response.status()).toBe(200);
     const product = await response.json(); id = product.id;
@@ -56,12 +55,6 @@ test('30 plant products: actual GLBs, preview, drag, save, reload and exact purc
   let garden;
   let failure;
   try {
-    const abandoned = await request.get(`${ec}/api/products?storeId=1`).then((r) => r.json());
-    for (const product of abandoned) {
-      if (/^V2-[0-9a-f]{8}-/.test(product.sku) && plantPresets.some((preset) => preset.name === product.name)) {
-        expect((await request.delete(`${ec}/api/products/${product.id}`)).ok()).toBeTruthy();
-      }
-    }
     await page.setViewportSize({ width: 720, height: 540 });
     const catalog = await request.get(`${api}/model-parts`).then((r) => r.json());
     expect(catalog.version).toBe(4);

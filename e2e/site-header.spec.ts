@@ -24,9 +24,9 @@ test('共通ヘッダー・ECへの移動確認・未保存の変更保護', asy
     await expect(panel.locator('.side-panel-controls')).toHaveCount(0);
     await expect(panel).not.toContainText('受取店舗：');
     await expect(panel).not.toContainText('庭に素材を配置すると、対応する商品候補を表示します。');
-    await page.getByRole('button', { name: '商品・カートパネルを隠す', exact: true }).click();
+    await page.getByRole('button', { name: '商品・買い物リストパネルを隠す', exact: true }).click();
     await expect(panel).toHaveCount(0);
-    await page.getByRole('button', { name: '商品・カートパネルを表示', exact: true }).click();
+    await page.getByRole('button', { name: '商品・買い物リストパネルを表示', exact: true }).click();
     await expect(panel).toBeVisible();
 
     await page.getByRole('button', { name: '土台設定', exact: true }).click();

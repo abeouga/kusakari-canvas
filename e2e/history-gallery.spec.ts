@@ -109,6 +109,8 @@ test('one closed button nests history, supports keyboard and outside dismissal, 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await toggle.click();
   await page.screenshot({ path: `${evidence}/nested-menu.png` });
+  if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+
   await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
   await expect(page.getByTestId('before-image')).toBeVisible();
   await page.keyboard.press('Escape');

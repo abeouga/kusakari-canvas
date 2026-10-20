@@ -4,7 +4,7 @@ import { useEcCart } from '../hooks/useCommerce';
 import { ecUrl } from '../domain/shopping';
 import { canvasUrl } from '../domain/urls';
 
-export function SiteHeader({ onNavigate, disabled = false }) {
+export function SiteHeader({ onNavigate = undefined, disabled = false }) {
   const cart = useEcCart();
   return (
     <KusakariHeader

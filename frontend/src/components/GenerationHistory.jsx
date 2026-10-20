@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { imageHistoryApi } from '../api/imageHistory';
+import { ApiError } from '../api/http';
 import { BeforeAfterComparison } from './BeforeAfterComparison';
 import { GenerationMethodDetails } from './GenerationMethodDetails';
 import { Dialog } from './Dialog';
@@ -52,7 +53,7 @@ export function GenerationHistory({ gardenId, onClose, returnFocus }) {
       await queryClient.invalidateQueries({ queryKey: historyKey });
     },
     onError: (error) => {
-      if (error.status === 404) {
+      if (error instanceof ApiError && error.status === 404) {
         queryClient.invalidateQueries({ queryKey: historyKey });
         queryClient.invalidateQueries({ queryKey: ['garden-image-history-detail', gardenId, selectedId] });
       }

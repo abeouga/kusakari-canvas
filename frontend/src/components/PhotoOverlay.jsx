@@ -175,7 +175,7 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
       {drawingBoundary && <button type="button" className="button button-secondary" disabled={disabled} onClick={() => { useEditorStore.getState().setPhotoBoundaryDraft(null); setPointer(null); setError(''); }}>輪郭の描画を取消</button>}
       <div className="photo-display-controls"><label><input type="checkbox" checked={groundVisible} onChange={(event) => setGroundVisible(event.target.checked)}/> 地面</label>
       <label><input type="checkbox" checked={gridVisible} onChange={(event) => setGridVisible(event.target.checked)}/> グリッド</label>
-      <label><input type="checkbox" checked={objectsVisible} onChange={(event) => setObjectsVisible(event.target.checked)}/> 配置</label></div>
+      <label><input type="checkbox" disabled={disabled} checked={objectsVisible} onChange={(event) => setObjectsVisible(event.target.checked)}/> 配置</label></div>
     </div>}
     {error && <p role="alert" className="notice-error">{error}</p>}
     {calibrationError && <p role="alert" className="notice-error">{calibrationError}</p>}

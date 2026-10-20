@@ -1,3 +1,4 @@
+import { createTestProduct, productPlacement } from './catalog-fixture';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
@@ -19,7 +20,6 @@ type GenerationPayload = {
 };
 
 async function addReference(page: Page) {
-  await page.getByRole('combobox', { name: '低木に対応する商品', exact: true }).selectOption('canvas-boxwood');
   const source = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 128;
@@ -35,7 +35,7 @@ async function addReference(page: Page) {
     context.fillRect(60, 90, 8, 30);
     return canvas.toDataURL('image/png');
   });
-  const input = page.getByLabel('低木の参考写真を追加・選び直す', { exact: true });
+  const input = page.getByRole('group', { name: '低木の参考写真', exact: true }).getByLabel('写真を選択');
   await input.setInputFiles({ name: 'synthetic-reference.png', mimeType: 'image/png',
     buffer: Buffer.from(source.split(',')[1], 'base64') });
   await expect(page.getByAltText('低木の選択した参考写真')).toBeVisible();
@@ -110,7 +110,8 @@ test('AI generation uses real EC selection, captures plant/furniture coverage, a
     expect(status.status()).toBe(200);
     expect(await status.json()).toEqual({ configured: false, model: 'gpt-image-2.5-sunburst', quality: 'medium' });
     const photo = await syntheticPhoto(page, 1201, 801);
-    const plant = shrub(0.3, -1.8, 1.2);
+    const product = await createTestProduct(request, '低木');
+    const plant = productPlacement(product, 0.3, -1.8, 1.2);
     const bench = { ...shrub(0, 1, 2), assetId: 'bench_wood' };
     const garden = await createScene(request, ids, photo, [plant, bench]);
     await openScene(page, garden);
@@ -119,13 +120,10 @@ test('AI generation uses real EC selection, captures plant/furniture coverage, a
     const baseline = await capture(page);
     await expect(page.getByTestId('ai-result-guidance')).toContainText('庭全体のAfter画像を生成');
     await expect(page.getByTestId('ai-result-guidance')).toContainText('背景や家具も含め');
-    await expect(page.getByRole('combobox', { name: '低木に対応する商品', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'AIで生成（API利用料が発生します）', exact: true }).click();
-    await expect(page.getByRole('region', { name: 'AI完成イメージ生成' }).getByRole('alert')).toContainText('商品を選択');
-    await page.getByRole('combobox', { name: '低木に対応する商品', exact: true }).selectOption('canvas-boxwood');
+    await expect(page.getByRole('combobox', { name: '低木に対応する商品', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'AIで生成（API利用料が発生します）', exact: true }).click();
     await expect(page.getByRole('region', { name: 'AI完成イメージ生成' }).getByRole('alert')).toContainText('参考写真を追加');
-    await page.getByLabel('低木の参考写真を追加・選び直す', { exact: true }).setInputFiles({
+    await page.getByRole('group', { name: '低木の参考写真', exact: true }).getByLabel('写真を選択').setInputFiles({
       name: 'invalid.png', mimeType: 'image/png', buffer: Buffer.from('<svg></svg>') });
     await expect(page.getByRole('region', { name: 'AI完成イメージ生成' }).getByRole('alert')).toContainText('形式と内容が一致しません');
     await addReference(page);
@@ -133,7 +131,7 @@ test('AI generation uses real EC selection, captures plant/furniture coverage, a
     expect(payload.document).toEqual(garden);
     expect(payload.beforeDataUrl).toBe(baseline.before);
     expect(payload.references).toHaveLength(1);
-    expect(payload.references[0].productId).toBe('canvas-boxwood');
+    expect(payload.references[0].productId).toBe(product.id);
     expect(payload.references[0].photoDataUrl).toMatch(/^data:image\/png;base64,/);
     const coverage = await measureCoverage(page, payload);
     expect(coverage.width).toBe(photo.imageWidth);
@@ -150,8 +148,17 @@ test('AI generation uses real EC selection, captures plant/furniture coverage, a
     expect(payload.layout).toHaveLength(2);
     const plantLayout = payload.layout.find((item) => item.placementId === plant.id)!;
     const benchLayout = payload.layout.find((item) => item.placementId === bench.id)!;
-    expect(plantLayout.measurement).toBe('raster');
-    expect(plantLayout.visibleBounds).toEqual(coverage.plantBounds);
+    // Occlusion analysis was retired with Image Studio. The projected envelope
+    // must still contain the actual plant pixels, without claiming visibility.
+    expect(plantLayout.measurement).toBe('projected_box');
+    expect(plantLayout.visibility).toBe('unknown');
+    expect(plantLayout.visibleBounds).toBeNull();
+    expect(plantLayout.bounds!.x).toBeLessThanOrEqual(coverage.plantBounds.x);
+    expect(plantLayout.bounds!.y).toBeLessThanOrEqual(coverage.plantBounds.y);
+    expect(plantLayout.bounds!.x + plantLayout.bounds!.width)
+      .toBeGreaterThanOrEqual(coverage.plantBounds.x + coverage.plantBounds.width);
+    expect(plantLayout.bounds!.y + plantLayout.bounds!.height)
+      .toBeGreaterThanOrEqual(coverage.plantBounds.y + coverage.plantBounds.height);
     expect(plantLayout.anchor).not.toBeNull();
     expect(benchLayout.measurement).toBe('projected_box');
     expect(benchLayout.visibility).toBe('unknown');
@@ -237,8 +244,10 @@ test('coverage copy failure restores rendering and allows a complete retry', asy
         return Reflect.apply(original, this, [source, ...values]);
       };
     });
+    await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
-    await expect(page.locator('.document-bar > .plan-feedback')).toContainText('E2E coverage copy failure');
+    await expect(page.getByTestId('completion-launcher').getByRole('alert')).toContainText('E2E coverage copy failure');
     const retry = await capture(page);
     expectSameImage(await compare(page, baseline.before, retry.before, photo.dataUrl), true);
     await page.keyboard.press('Escape');

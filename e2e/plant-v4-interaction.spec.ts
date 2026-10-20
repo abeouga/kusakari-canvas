@@ -1,7 +1,8 @@
+import { seedLegacyObjects } from './catalog-fixture';
 import { expect, test } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-const api = 'http://127.0.0.1:18081/api', evidence = 'artifacts/plant-v4/interaction';
+const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api'), evidence = 'artifacts/plant-v4/interaction';
 type RenderMetrics = { frame: number; calls: number; triangles: number };
 declare global { interface Window { plantRenderSnapshot: () => RenderMetrics } }
 
@@ -13,7 +14,7 @@ test('demand renderer: idle, camera, live drag, rotation cancellation, capture a
   try {
     await page.goto(`/gardens/${garden.id}?renderReview`);
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
-    await page.getByTestId('asset-bench_wood').click();
+    await seedLegacyObjects(page, ['bench_wood']);
     const canvas = page.getByTestId('garden-canvas').locator('canvas'), box = await canvas.boundingBox();
     if (!box) throw new Error('Missing canvas');
     const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
@@ -60,6 +61,7 @@ test('demand renderer: idle, camera, live drag, rotation cancellation, capture a
     await page.mouse.up(); await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const stored = await request.get(`${api}/gardens/${garden.id}`).then((r) => r.json());
     expect(Math.abs(stored.objects[0].rotation.y)).toBeCloseTo(Math.PI / 2, 1);
+    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
     const image = page.getByRole('dialog', { name: '庭の完成イメージ' }).locator('img');
     await expect(image).toBeVisible();

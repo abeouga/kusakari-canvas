@@ -13,7 +13,7 @@ export function findPlacements(scene) {
 }
 
 function isPlant(placement) {
-  return placement.category === 'tree' || placement.category === 'shrub';
+  return placement.assetId === 'plant_modular' || placement.category === 'tree' || placement.category === 'shrub';
 }
 
 function maskMaterial(source) {
