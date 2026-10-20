@@ -1,5 +1,5 @@
 import { ecUrl } from '../domain/shopping';
-import { authHeaders } from './auth';
+import { authHeaders, login } from './auth';
 
 export class CommerceError extends Error {
     constructor(message, status) {
@@ -20,7 +20,10 @@ async function request(path, method = 'GET', payload) {
         throw new CommerceError('ECへ接続できません。ECの起動と接続設定を確認してください。', 0);
     }
     const data = await response.json();
-    if (!response.ok) throw new CommerceError(data.message || 'ECの処理に失敗しました。', response.status);
+    if (!response.ok) {
+        if (response.status === 401) login();
+        throw new CommerceError(data.message || 'ECの処理に失敗しました。', response.status);
+    }
     return data;
 }
 export const commerceApi = {

@@ -26,6 +26,18 @@ export function EditorPage({ gardenId }) {
     const assetQuery = useQuery({ queryKey: ['assets'], queryFn: gardenApi.listAssets, staleTime: Infinity });
     const document = useEditorStore((state) => state.document);
     const commerce = useCommerce(document, assetQuery.data ?? []);
+    const entryProductId = new URLSearchParams(window.location.search).get('productId');
+    const selectedEntry = useRef(null);
+    useEffect(() => {
+        if (!entryProductId || document?.id !== gardenId || !commerce.products.data || !assetQuery.data
+            || selectedEntry.current === `${gardenId}:${entryProductId}`) return;
+        const product = commerce.products.data.find((item) => item.id === entryProductId);
+        const asset = product ? productAsset(product, assetQuery.data) : null;
+        if (asset) {
+            useEditorStore.getState().selectAsset(asset.id);
+            selectedEntry.current = `${gardenId}:${entryProductId}`;
+        }
+    }, [entryProductId, gardenId, document?.id, commerce.products.data, assetQuery.data]);
     const selectedObjectId = useEditorStore((state) => state.selectedObjectId);
     const selectedAssetId = useEditorStore((state) => state.selectedAssetId);
     const tool = useEditorStore((state) => state.tool);
@@ -225,6 +237,7 @@ export function EditorPage({ gardenId }) {
             <span>1目盛り = 1m</span>
           </div>
         </section>
+        {entryProductId && commerce.products.data && !commerce.products.data.some(item => item.id === entryProductId) && <p role="status">選択した商品は現在購入・新規配置できません。公開状態または店舗を確認してください。</p>}
         {!propertiesCollapsed && <CommercePanel document={document} assets={assets} selectedObject={selectedObject} disabled={isEditingDisabled || hasBoundaryDraft || assetQuery.isLoading || assetQuery.isError} commerce={commerce} onSelectObject={selectObject} onNavigate={requestNavigation} width={sidebarWidth} onWidthChange={setSidebarWidth}/>}
       </main>
       {leaveOpen && <Dialog title="変更を保存せずに戻りますか？" description="保存していない編集内容は破棄されます。" onClose={() => setLeaveOpen(false)} footer={<>

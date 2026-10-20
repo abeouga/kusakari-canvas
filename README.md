@@ -2,7 +2,7 @@
 
 ECと共通のCognitoログインを使う場合は[別PC向け認証セットアップ](docs/cognito-setup.md)を参照してください。接続設定は`config/cognito.development.json`、秘密情報は各PCのGit対象外`.env`で管理します。
 
-KusakariのガーデニングEC内で使う3D庭づくり機能（Kusakari Canvas）のローカル開発用MVPです。独立した購入サービスではありません。名前だけで庭を作成し、編集画面で形・寸法を設定して4種類の開発用GLBを配置します。FastAPI経由でMySQLへ保存して復元します。配置数量からECの商品候補を開き、選択した商品をECのカートへ追加できます。植物候補には条件別モックが残ります。Cognito認証はECのセッションを共用して明示的に有効化します。OpenAIを使う機能は各PCのAPIキーを別途設定する場合に限ります。写実的なモデルの完成を意味しません。
+KusakariのガーデニングEC内で使う3D庭づくり機能（Kusakari Canvas）のローカル開発用MVPです。独立した購入サービスではありません。名前だけで庭を作成し、編集画面で形・寸法を設定して、EC商品に紐付くモデルや既存GLBを配置します。FastAPI経由でMySQLへ保存して復元します。配置数量からECの商品候補を開き、選択した商品をECのカートへ追加できます。条件別の植物候補モックは提供しません。通常起動はECのCognitoセッションを必須とします。OpenAIを使う機能は各PCのAPIキーを別途設定する場合に限ります。写実的なモデルの完成を意味しません。
 
 起動・セットアップで使う環境変数は `KUSAKARI_CANVAS_*` です。Python配布パッケージは `kusakari-canvas-api`、import名は `kusakari_canvas_api` です。MySQLデータベースは `kusakari_canvas` / `kusakari_canvas_e2e`、ツールと専用MySQLの保存先は現在のWindowsユーザーの `%LOCALAPPDATA%\KusakariCanvas` です。`KUSAKARI_CANVAS_HOME` で保存先を変更できます。旧名称の環境変数・DB名・ユーザー領域は現行設定では参照しません。
 
@@ -158,10 +158,14 @@ E2Eの前に同じPowerShellで`KUSAKARI_CANVAS_E2E_DB_USER`と`KUSAKARI_CANVAS_
 
 ## 利用境界と制限
 
-dev/e2e用デモ所有者はサーバーが固定し、HTTP bodyからownerIdを受け取りません。FastAPIは127.0.0.1へbindします。一般ユーザー向け認証・認可はありません。このためLANや公開サーバーへbindして運用してはいけません。公開運用にはログイン、認可、所有者分離の実装が必要です。
+庭の所有者はECの認証済み会員IDです。HTTP bodyからownerIdを受け取りません。FastAPIは127.0.0.1へbindし、通信失敗や設定不足で固定所有者へ切り替えません。公開配備は別作業です。
 
 配置上限は200個、庭各辺は1〜50mです。AI、写真からの自動測量、高低差のある地形、成長予測、BOM/価格、衝突物理、Undo/Redo、多人数編集、スマートフォン専用UIは未実装です。モデル読み込みはGLBファイルが存在することを前提とし、失敗時は対象表示を維持しながら再試行・削除できます。
 
 ## EC連携・追加画面
 
 庭の複製、数量・施工面積の確認、条件別植物候補、現在の写真/3D配置のPNG出力を追加しています。[EC連携の仕様](docs/ec-integration.md) を参照してください。
+
+## EC購入フローの実Cognito検証
+
+隣接するkusakari-ecで `npm run test:business` を実行します。両アプリ・専用MySQL・実Cognitoで商品配置、保存、再読込、注文と権限を確認します。旧単体E2Eの認証省略前提は通常起動の条件ではありません。詳細は [EC連携](docs/ec-integration.md) を参照してください。

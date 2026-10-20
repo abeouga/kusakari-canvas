@@ -16,13 +16,14 @@ export async function authHeaders(method) {
   if (['GET', 'HEAD', 'OPTIONS'].includes((method || 'GET').toUpperCase())) return {};
   if (await authMode() === 'demo') return {};
   const response = await fetch(new URL('/api/auth/csrf', ecUrl), { credentials: 'include' });
+  if (response.status === 401) login();
   if (!response.ok) throw new Error('操作の確認情報を取得できません。画面を再読み込みしてください。');
   const csrf = await response.json();
   return csrf.headerName && csrf.token ? { [csrf.headerName]: csrf.token } : {};
 }
 
 export function login() {
-  const target = new URL('/api/auth/login', ecUrl);
+  const target = new URL('/account/login', ecUrl);
   target.searchParams.set('returnTo', window.location.href.split('#')[0]);
-  window.location.assign(target.href);
+  window.location.replace(target.href);
 }
