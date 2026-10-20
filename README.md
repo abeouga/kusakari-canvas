@@ -1,6 +1,8 @@
 # Kusakari Canvas 3D庭づくり機能 MVP
 
-KusakariのガーデニングEC内で使う3D庭づくり機能（Kusakari Canvas）のローカル開発用MVPです。独立した購入サービスではありません。名前だけで庭を作成し、編集画面で形・寸法を設定して4種類の開発用GLBを配置します。FastAPI経由でMySQLへ保存して復元します。配置数量からECの商品候補を開き、選択した商品をECのカートへ追加できます。植物候補は条件別モックです。認証、AI通信、BOM計算、写実的なモデルは含みません。
+ECと共通のCognitoログインを使う場合は[別PC向け認証セットアップ](docs/cognito-setup.md)を参照してください。接続設定は`config/cognito.development.json`、秘密情報は各PCのGit対象外`.env`で管理します。
+
+KusakariのガーデニングEC内で使う3D庭づくり機能（Kusakari Canvas）のローカル開発用MVPです。独立した購入サービスではありません。名前だけで庭を作成し、編集画面で形・寸法を設定して4種類の開発用GLBを配置します。FastAPI経由でMySQLへ保存して復元します。配置数量からECの商品候補を開き、選択した商品をECのカートへ追加できます。植物候補には条件別モックが残ります。Cognito認証はECのセッションを共用して明示的に有効化します。OpenAIを使う機能は各PCのAPIキーを別途設定する場合に限ります。写実的なモデルの完成を意味しません。
 
 起動・セットアップで使う環境変数は `KUSAKARI_CANVAS_*` です。Python配布パッケージは `kusakari-canvas-api`、import名は `kusakari_canvas_api` です。MySQLデータベースは `kusakari_canvas` / `kusakari_canvas_e2e`、ツールと専用MySQLの保存先は現在のWindowsユーザーの `%LOCALAPPDATA%\KusakariCanvas` です。`KUSAKARI_CANVAS_HOME` で保存先を変更できます。旧名称の環境変数・DB名・ユーザー領域は現行設定では参照しません。
 

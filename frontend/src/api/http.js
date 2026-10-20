@@ -1,4 +1,5 @@
 import { canvasUrl } from '../domain/urls';
+import { authHeaders } from './auth';
 export class ApiError extends Error {
     status;
     code;
@@ -12,7 +13,8 @@ export class ApiError extends Error {
 export async function requestJson(path, init) {
     const response = await fetch(canvasUrl(path), {
         ...init,
-        headers: { 'Content-Type': 'application/json', ...init?.headers },
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', ...await authHeaders(init?.method), ...init?.headers },
     });
     if (!response.ok) {
         const error = await response.json().catch(() => null);

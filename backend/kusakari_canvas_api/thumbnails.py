@@ -76,19 +76,20 @@ class ThumbnailRequest(ApiModel):
     dataUrl: str = Field(max_length=450000, repr=False)
 
 
-def thumbnail_router(owner: str, get_session, media: MediaStore | None = None) -> APIRouter:
+def thumbnail_router(get_owner, get_session, media: MediaStore | None = None) -> APIRouter:
     media = media or MediaStore()
     router = APIRouter(prefix="/api/gardens/{id}/thumbnail", tags=["thumbnails"])
     Db = Annotated[Session, Depends(get_session)]
+    Owner = Annotated[str, Depends(get_owner)]
 
     @router.get("")
-    def get(id: str, db: Db):
+    def get(id: str, db: Db, owner: Owner):
         content, source = read_thumbnail(db, owner, id, media)
         return Response(content, media_type="image/png", headers={
             "Cache-Control": "private, no-cache", "X-Thumbnail-Source": source})
 
     @router.post("", status_code=204)
-    def save(id: str, request: ThumbnailRequest, db: Db):
+    def save(id: str, request: ThumbnailRequest, db: Db, owner: Owner):
         image = decode_data_url(request.dataUrl, png_only=True, max_bytes=330000)
         if image.width > 640 or image.height > 400:
             raise ApiError(400, "THUMBNAIL_SIZE", "サムネイルは640×400px以内で指定してください。")

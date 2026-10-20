@@ -1,0 +1,6 @@
+{
+  "KUSAKARI_AUTH_MODE": "cognito",
+  "KUSAKARI_CANVAS_AUTH_EC_URL": "http://127.0.0.1:8086",
+  "VITE_KUSAKARI_EC_URL": "http://127.0.0.1:5186/",
+  "KUSAKARI_CANVAS_EC_URL": "http://127.0.0.1:5186/"
+}

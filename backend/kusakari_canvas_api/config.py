@@ -31,6 +31,7 @@ def load_local_settings(profile: str) -> None:
     if not path.is_file():
         return
     allowed = {prefix + suffix for suffix in ("USER", "PASSWORD", "URL")}
+    allowed.update({"KUSAKARI_AUTH_MODE", "KUSAKARI_CANVAS_AUTH_EC_URL"})
     if profile == "e2e":
         allowed.update({"KUSAKARI_CANVAS_E2E_OPENAI_API_KEY", "KUSAKARI_CANVAS_E2E_EC_URL"})
     else:

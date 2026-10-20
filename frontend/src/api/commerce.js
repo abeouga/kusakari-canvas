@@ -1,4 +1,5 @@
 import { ecUrl } from '../domain/shopping';
+import { authHeaders } from './auth';
 
 export class CommerceError extends Error {
     constructor(message, status) {
@@ -12,7 +13,7 @@ async function request(path, method = 'GET', payload) {
         response = await fetch(new URL(`/api${path}`, ecUrl), {
             method,
             credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...await authHeaders(method) },
             body: payload === undefined ? undefined : JSON.stringify(payload),
         });
     } catch {

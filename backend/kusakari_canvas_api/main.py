@@ -25,6 +25,7 @@ from .ai_schemas import (
     ProductReferencesRequest,
 )
 from .ai_service import generate_image
+from .auth import AuthBoundary
 from .calibration import solve_calibration
 from .config import Settings
 from .database import create_database_engine
@@ -55,6 +56,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     engine = create_database_engine(settings)
     sessions = sessionmaker(engine, expire_on_commit=False)
     media = MediaStore()
+    auth = AuthBoundary(settings)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -65,6 +67,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     raise ValueError("Run npm run migrate:api before starting the API directly.")
             yield
         finally:
+            await auth.close()
             media.close()
             engine.dispose()
 
@@ -94,6 +97,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             allowed_hosts = {"127.0.0.1", "localhost", urlparse(settings.public_origin).hostname}
             if (origin and origin != settings.public_origin) or (not health and request.url.hostname not in allowed_hosts):
                 return error_response(403, "ORIGIN_REJECTED", "許可されていない接続元です。")
+        rejected = await auth.authenticate(request)
+        if rejected is not None:
+            return rejected
         try:
             response = await call_next(request)
         except Exception as error:
@@ -134,8 +140,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             yield session
 
     Db = Annotated[Session, Depends(get_session)]
-    router.include_router(history_router(settings.owner_id, get_session, media))
-    router.include_router(thumbnail_router(settings.owner_id, get_session, media))
+    Owner = Annotated[str, Depends(auth.owner)]
+    router.include_router(history_router(auth.owner, get_session, media))
+    router.include_router(thumbnail_router(auth.owner, get_session, media))
+
+    @router.get("/api/auth/status")
+    def auth_status():
+        return {"mode": auth.mode}
 
     @router.get("/api/ai/status", response_model=AiStatus)
     def ai_status():
@@ -154,8 +165,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return candidates(ai_settings, storeId, assetId)
 
     @router.post("/api/gardens/{id}/ai-image", response_model=AiImageResponse)
-    def ai_image(id: str, request: AiImageRequest, db: Db):
-        return generate_image(db, ai_settings, settings.owner_id, id, request)
+    def ai_image(id: str, request: AiImageRequest, db: Db, owner: Owner):
+        return generate_image(db, ai_settings, owner, id, request)
 
     @router.post("/api/ai/product-references", response_model=list[AiCandidate])
     def automatic_references(request: ProductReferencesRequest):
@@ -182,34 +193,34 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             bad_request("INCOMPATIBLE_PLANT_DIMENSIONS", str(error))
 
     @router.get("/api/shopping-lists", response_model=list[shopping.ShoppingSummary])
-    def shopping_lists(db: Db):
-        return shopping.summaries(db, settings.owner_id)
+    def shopping_lists(db: Db, owner: Owner):
+        return shopping.summaries(db, owner)
 
     @router.get("/api/gardens/{id}/shopping-list", response_model=shopping.ShoppingList)
-    def shopping_list(id: str, db: Db):
-        return shopping.detail(db, settings.owner_id, id)
+    def shopping_list(id: str, db: Db, owner: Owner):
+        return shopping.detail(db, owner, id)
 
     @router.get("/api/gardens", response_model=list[GardenSummary])
-    def gardens(db: Db):
-        return service.list_gardens(db, settings.owner_id)
+    def gardens(db: Db, owner: Owner):
+        return service.list_gardens(db, owner)
 
     @router.post("/api/gardens", status_code=201, response_model=GardenDocument)
-    def create(request: CreateGardenRequest, response: Response, db: Db):
-        garden = service.create_garden(db, settings.owner_id, request)
+    def create(request: CreateGardenRequest, response: Response, db: Db, owner: Owner):
+        garden = service.create_garden(db, owner, request)
         response.headers["Location"] = f"{settings.api_prefix}/api/gardens/{garden.id}"
         return garden
 
     @router.get("/api/gardens/{id}", response_model=GardenDocument)
-    def get(id: str, db: Db):
-        return service.get_garden(db, settings.owner_id, id, media)
+    def get(id: str, db: Db, owner: Owner):
+        return service.get_garden(db, owner, id, media)
 
     @router.put("/api/gardens/{id}", response_model=GardenDocument)
-    def update(id: str, request: GardenDocumentRequest, db: Db):
-        return service.update_garden(db, settings.owner_id, id, request, media)
+    def update(id: str, request: GardenDocumentRequest, db: Db, owner: Owner):
+        return service.update_garden(db, owner, id, request, media)
 
     @router.delete("/api/gardens/{id}", status_code=204)
-    def delete(id: str, db: Db):
-        service.delete_garden(db, settings.owner_id, id)
+    def delete(id: str, db: Db, owner: Owner):
+        service.delete_garden(db, owner, id)
         return Response(status_code=204)
 
     app.include_router(router)

@@ -7,30 +7,31 @@ from . import history_service
 from .history_schemas import HistoryDetail, HistoryPage, HistorySaveRequest, HistorySummary
 
 
-def history_router(owner: str, get_session, media=None) -> APIRouter:
+def history_router(get_owner, get_session, media=None) -> APIRouter:
     router = APIRouter(prefix="/api/gardens/{id}/image-history", tags=["image-history"])
     Db = Annotated[Session, Depends(get_session)]
+    Owner = Annotated[str, Depends(get_owner)]
 
     @router.get("", response_model=HistoryPage)
-    def list_items(id: str, db: Db, limit: Annotated[int, Query(ge=1, le=50)] = 20,
+    def list_items(id: str, db: Db, owner: Owner, limit: Annotated[int, Query(ge=1, le=50)] = 20,
                    cursor: Annotated[str | None, Query(max_length=256)] = None):
         return history_service.list_history(db, owner, id, limit, cursor)
 
     @router.post("", response_model=HistorySummary)
-    def save(id: str, request: HistorySaveRequest, db: Db):
+    def save(id: str, request: HistorySaveRequest, db: Db, owner: Owner):
         return history_service.save_history(db, owner, id, request, media)
 
     @router.get("/{historyId}", response_model=HistoryDetail)
-    def get(id: str, historyId: str, db: Db):
+    def get(id: str, historyId: str, db: Db, owner: Owner):
         return history_service.get_history(db, owner, id, historyId, media)
 
     @router.get("/{historyId}/thumbnail")
-    def thumbnail(id: str, historyId: str, db: Db):
+    def thumbnail(id: str, historyId: str, db: Db, owner: Owner):
         content = history_service.get_history_thumbnail(db, owner, id, historyId, media)
         return Response(content, media_type="image/png", headers={"Cache-Control": "private, no-cache"})
 
     @router.delete("/{historyId}", status_code=204)
-    def delete(id: str, historyId: str, db: Db):
+    def delete(id: str, historyId: str, db: Db, owner: Owner):
         history_service.delete_history(db, owner, id, historyId)
         return Response(status_code=204)
 

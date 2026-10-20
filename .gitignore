@@ -35,3 +35,6 @@ test-results/
 .env.*
 !.env.example
 *.log
+*.pem
+*.key
+*accessKeys*.csv
