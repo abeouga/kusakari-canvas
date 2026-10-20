@@ -13,6 +13,7 @@ test('共通ヘッダー・ECへの移動確認・未保存の変更保護', asy
     await expect(header.locator('.kusakari-feature-name')).toHaveCount(0);
     await expect(header.getByRole('link', { name: 'Canvas', exact: true })).toBeVisible();
     await expect(header.getByRole('link', { name: '出店者', exact: true })).toHaveCount(0);
+    await expect(header.getByRole('link', { name: 'アカウント', exact: true })).toHaveCount(0);
     await expect(header.getByRole('link', { name: '注文履歴' })).toHaveAttribute('href', /\?panel=orders$/);
     await expect(header.getByRole('link', { name: 'ログイン', exact: true })).toHaveAttribute('href', /\?panel=login$/);
     await expect(header.getByRole('link', { name: /^カートを開く/ })).toHaveAttribute('href', /\/cart$/);
