@@ -1,7 +1,7 @@
 # 実装契約
 
 2026-10-19追記: ECのCognitoセッションを使用する認証モードと利用者別の所有者解決を追加しました。
-以下の初期MVPの認証省略はdev/e2eの限定デモに関する記録です。現在の認証仕様と未検証範囲は[cognito-auth.md](cognito-auth.md)を参照してください。実User Poolは未作成です。
+通常起動は実Cognitoに接続するECのセッションを使用します。設定不足・通信失敗では認証を省略しません。[cognito-auth.md](cognito-auth.md)と[EC連携](ec-integration.md)を参照してください。
 
 ## Context
 
@@ -10,7 +10,7 @@
 ## Decision
 
 - Frontend: React 19 + JavaScript/JSX + Vite、R3F 9 + Drei 10、Zustand、TanStack Query。Viteの `/api` proxyで同一オリジン通信します。
-- Backend: Python 3.12、FastAPI、Pydantic v2、同期SQLAlchemy 2、PyMySQL、MySQL、Alembic。`dev`/`e2e` profileのデモ利用者はサーバー側固定値で、`KUSAKARI_CANVAS_HOST=127.0.0.1` に制限します。移行判断と旧DB引き継ぎは`docs/fastapi-migration.md`に記録します。
+- Backend: Python 3.12、FastAPI、Pydantic v2、同期SQLAlchemy 2、PyMySQL、MySQL、Alembic。庭の所有者はECで本人確認した会員IDで、`KUSAKARI_CANVAS_HOST=127.0.0.1` に制限します。移行判断と旧DB引き継ぎは`docs/fastapi-migration.md`に記録します。
 - 保存形式: `{schemaVersion:1,id,revision,name,width,depth,objects,photo}`。`photo`は`null`または元画像・内部の変換基準四隅・多角形輪郭です。新しい輪郭の四隅は外接矩形から自動生成し、ユーザーが別途4点をクリックする入力段階はありません。旧保存データの基準は輪郭編集前まで保持します。`revision`は同時更新制御、`schemaVersion`は形式識別です。写真追加は既存形式の任意項目として扱います。
 - 単位: Three.js 1 unit = 1m。X/Zだけ庭の中心からの座標、配置Y=0、回転はY軸ラジアン、scaleはxyz同値の0.25..3です。
 - 配置アセットIDは `tree_oak`, `shrub_boxwood`, `brick_paver`, `bench_wood` とし、GLBはリポジトリへ同梱します。生成元はこのリポジトリの基本形状スクリプトです。
@@ -27,7 +27,7 @@
 
 ## Alternatives / Consequences
 
-GardenDocumentとThree.jsのランタイムを分離するため、表示実装を替えても保存形式を維持できます。シングルユーザー開発を簡単にするため認証は省きますが、ownerは必ずサーバーが決定し、デモprofile以外で起動できない構成にします。実利用には認証・認可の実装が別途必要です。
+GardenDocumentとThree.jsのランタイムを分離するため、表示実装を替えても保存形式を維持できます。ownerは必ずサーバーが決定し、別会員の庭・写真・履歴の参照・更新を拒否します。固定所有者は明示的な隔離試験設定以外で使用できません。
 
 ## データフローと失敗処理
 

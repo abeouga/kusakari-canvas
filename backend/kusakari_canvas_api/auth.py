@@ -11,9 +11,11 @@ from fastapi.responses import JSONResponse
 class AuthBoundary:
     def __init__(self, settings):
         self.settings = settings
-        self.mode = os.environ.get("KUSAKARI_AUTH_MODE", "demo")
+        self.mode = os.environ.get("KUSAKARI_AUTH_MODE", "cognito")
         if self.mode not in {"demo", "cognito"}:
             raise ValueError("KUSAKARI_AUTH_MODE must be demo or cognito.")
+        if self.mode == "demo" and not (settings.profile == "e2e" and os.environ.get("KUSAKARI_TEST_AUTH") == "true"):
+            raise ValueError("Cognito is required outside explicit isolated tests.")
         self.origin = os.environ.get("KUSAKARI_CANVAS_AUTH_EC_URL", "http://127.0.0.1:8086").rstrip("/")
         parsed = urlparse(self.origin)
         if (parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username or parsed.password

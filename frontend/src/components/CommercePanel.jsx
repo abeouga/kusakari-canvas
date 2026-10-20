@@ -51,6 +51,7 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
             draggable={!!asset && !disabled} onDragStart={(event) => startProductDrag(event, asset)}>
             {product && <img src={productImage(product.imageUrl)} alt="" draggable={false}/>}
             <div><strong>{product?.name ?? row.name}</strong><p data-testid="needed-quantity">必要数 {row.quantity}点</p>
+              {row.productId && commerce.products.isSuccess && !product && <p role="status">この店舗の販売対象ではないため購入できません。保存済みの配置は維持されます。</p>}
               {product && <p>商品小計の目安 {yen(product.priceYen * row.quantity)}</p>}
               <button type="button" disabled={disabled || !asset} onClick={() => useEditorStore.getState().selectAsset(asset.id)}>庭に配置</button>
             </div>

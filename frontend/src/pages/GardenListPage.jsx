@@ -1,3 +1,4 @@
+import { gardenEntryUrl } from '../domain/urls';
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { gardenApi } from "../api/gardens";
@@ -58,7 +59,7 @@ export function GardenListPage() {
     mutationFn: gardenApi.createGarden,
     onSuccess: async (document) => {
       await queryClient.invalidateQueries({ queryKey: ["gardens"] });
-      window.location.assign(canvasUrl(`/gardens/${encodeURIComponent(document.id)}`));
+      window.location.assign(gardenEntryUrl(`/gardens/${encodeURIComponent(document.id)}`));
     },
     onError: (error) =>
       setFormError(
@@ -187,7 +188,7 @@ export function GardenListPage() {
                       className="garden-card-open"
                       onClick={() =>
                         window.location.assign(
-                          canvasUrl(`/gardens/${encodeURIComponent(garden.id)}`),
+                          gardenEntryUrl(`/gardens/${encodeURIComponent(garden.id)}`),
                         )
                       }
                     >
@@ -274,4 +275,3 @@ export function GardenListPage() {
     </div>
   );
 }
-import { canvasUrl } from '../domain/urls';

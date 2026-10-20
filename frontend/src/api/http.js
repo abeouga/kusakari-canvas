@@ -1,5 +1,5 @@
 import { canvasUrl } from '../domain/urls';
-import { authHeaders } from './auth';
+import { authHeaders, login } from './auth';
 export class ApiError extends Error {
     status;
     code;
@@ -17,6 +17,7 @@ export async function requestJson(path, init) {
         headers: { 'Content-Type': 'application/json', ...await authHeaders(init?.method), ...init?.headers },
     });
     if (!response.ok) {
+        if (response.status === 401) login();
         const error = await response.json().catch(() => null);
         throw new ApiError(error?.message ?? 'サーバーへ接続できませんでした。', response.status, error?.code ?? 'REQUEST_FAILED');
     }

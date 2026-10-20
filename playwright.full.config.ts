@@ -27,7 +27,7 @@ export default defineConfig({
   webServer: [
     { ...servers[0], env: { ...servers[0].env, KUSAKARI_CANVAS_E2E_EC_URL: ecApi,
       KUSAKARI_CANVAS_E2E_EC_IMAGE_ORIGIN: ecWeb, KUSAKARI_CANVAS_E2E_OPENAI_API_KEY: ' ' } },
-    { command: 'node scripts/api.mjs e2e', cwd: '../kusakari-mvp', url: `${ecApi}/api/health`,
+    { command: 'node scripts/api.mjs e2e', cwd: '../kusakari-ec', url: `${ecApi}/api/health`,
       stdout: 'pipe',
       reuseExistingServer: false, timeout: 120000, env: {
         LOGGING_LEVEL_ROOT: 'WARN',
@@ -36,7 +36,7 @@ export default defineConfig({
         KUSAKARI_EC_E2E_WEB_ORIGIN: ecWeb, KUSAKARI_EC_E2E_CANVAS_ORIGIN: canvasWeb } },
     { ...servers[1], env: { ...servers[1].env, VITE_KUSAKARI_EC_URL: `${ecWeb}/` } },
     { command: `npm --workspace frontend run dev -- --host 127.0.0.1 --port ${process.env.KUSAKARI_EC_E2E_WEB_PORT} --strictPort`,
-      cwd: '../kusakari-mvp', url: ecWeb, reuseExistingServer: false, timeout: 60000,
+      cwd: '../kusakari-ec', url: ecWeb, reuseExistingServer: false, timeout: 60000,
       env: { KUSAKARI_EC_API_TARGET: ecApi, VITE_KUSAKARI_CANVAS_URL: `${canvasWeb}/` } },
   ],
 });
