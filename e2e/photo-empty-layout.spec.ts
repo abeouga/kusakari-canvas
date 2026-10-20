@@ -7,7 +7,7 @@ test('写真アップロード枠が左右の余白を保ち、クリックで�
   const garden = await response.json();
   await page.goto(`/gardens/${garden.id}`);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
-  await page.getByRole('button', { name: '写真＋設計', exact: true }).click();
+  await expect(page.getByRole('button', { name: '写真＋設計', exact: true })).toHaveAttribute('aria-pressed', 'true');
   const upload = page.locator('button.photo-empty');
   for (const width of [1440, 1280, 768, 390]) {
     await page.setViewportSize({ width, height: 960 });
@@ -22,7 +22,7 @@ test('写真アップロード枠が左右の余白を保ち、クリックで�
   }
   await page.setViewportSize({ width: 1280, height: 960 });
   await page.reload();
-  await page.getByRole('button', { name: '写真＋設計', exact: true }).click();
+  await expect(page.getByRole('button', { name: '写真＋設計', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(upload).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('photo-empty-reloaded.png'), fullPage: true });
   const saved = await request.get(`${api}/gardens/${garden.id}`);
@@ -59,7 +59,7 @@ test('写真アップロード枠が左右の余白を保ち、クリックで�
     return snapshot.photo?.dataUrl;
   }).toBe(dataUrl);
   await page.reload();
-  await page.getByRole('button', { name: '写真＋設計', exact: true }).click();
+  await expect(page.getByRole('button', { name: '写真＋設計', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.photo-stage image')).toBeVisible();
   await expect(page.locator('.photo-stage image')).toHaveAttribute('href', dataUrl);
   await page.screenshot({ path: testInfo.outputPath('photo-upload-reloaded.png'), fullPage: true });

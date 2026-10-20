@@ -47,7 +47,7 @@ export function EditorPage({ gardenId }) {
     const duplicateSelected = useEditorStore((state) => state.duplicateSelected);
     const deleteSelected = useEditorStore((state) => state.deleteSelected);
     const [retryRequest, setRetryRequest] = useState(null);
-    const [viewMode, setViewMode] = useState('3d');
+    const [viewMode, setViewMode] = useState('photo');
     const initializedGarden = useRef(null);
     const [sidebarWidth, setSidebarWidth] = useSidebarWidth();
     const [propertiesCollapsed, setPropertiesCollapsed] = useState(false);
@@ -65,7 +65,7 @@ export function EditorPage({ gardenId }) {
             useEditorStore.getState().hydrate(gardenQuery.data);
             if (initializedGarden.current !== gardenQuery.data.id) {
                 initializedGarden.current = gardenQuery.data.id;
-                setViewMode(gardenQuery.data.photo ? 'photo' : '3d');
+                setViewMode('photo');
             }
         }
     }, [gardenQuery.data]);
