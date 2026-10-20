@@ -52,3 +52,35 @@ Viteのチャンクサイズ、Three.jsのClock非推奨、FlywayのMySQL 8.4対
 - 実API JSON: 再実行レポートの `garden-api-json` 添付、および `artifacts/e2e/full-suite/results.json` 内の同名添付
 - 既存縮尺の画面・JSON: `artifacts/e2e/photo-scale-*.png`、`photo-scale-*.json`
 - 既存校正の証跡: `artifacts/e2e/photo-calibration-current/`
+
+## main取り込み後の確認（2026-10-20）
+
+`origin/main` の `9bc10ba` を `codex/dismiss-edge-measurement` へマージしました。
+Gitの競合はありません。外側操作の実装への変更もありません。
+
+mainでは認証境界・共通ヘッダーとECの参照ディレクトリが更新されています。
+このPCのECは `kusakari-mvp` にあるため、full E2E設定に
+`KUSAKARI_EC_DIRECTORY` による参照先指定を追加しました。
+未指定時はmainの既定値 `../kusakari-ec` を維持します。
+
+再現コマンド（PowerShell、Canvasルート）:
+
+```powershell
+$env:KUSAKARI_EC_DIRECTORY = 'C:\projects\school\kusakari-mvp'
+$env:KUSAKARI_AUTH_MODE = 'demo'
+$env:KUSAKARI_TEST_AUTH = 'true'
+npm run test:e2e -- edge-dismiss.spec.ts photo-scale.spec.ts photo-calibration.spec.ts site-header.spec.ts
+```
+
+認証省略はこの隔離E2Eのプロセスにだけ指定します。通常起動や.envの認証設定は変更しません。
+実API/MySQLを使う画面回帰の結果を、実Cognitoによるログイン成功の証拠として扱いません。
+
+CanvasのcheckJs・lint・フロントビルド・Python lint/compileと、ECの `npm run check` は成功しました。
+依存は取り込んだロックファイルから再インストールしました。
+更新時に使用中だったCanvas Viteだけを一時停止し、同じ5173番で復旧しました。
+ECの開発プロセスは停止していません。
+
+取り込み後の対象Chromium E2Eは8件すべて成功しました。
+外側操作（マウス・タッチ）、縮尺3ケース、校正2ケース、共通ヘッダー・EC移動・未保存保護を確認しました。
+再読み込み後の画面と実API JSONは `artifacts/e2e/full-suite/` のレポート・添付に保存しています。
+実Cognitoログイン、公開環境、全機能の受け入れ試験は今回の確認範囲に含みません。

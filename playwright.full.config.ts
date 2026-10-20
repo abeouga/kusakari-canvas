@@ -7,6 +7,7 @@ const canvasApi = process.env.KUSAKARI_CANVAS_E2E_API_URL!;
 const canvasWeb = `http://127.0.0.1:${process.env.KUSAKARI_CANVAS_E2E_WEB_PORT}`;
 const ecApi = `http://127.0.0.1:${process.env.KUSAKARI_EC_E2E_API_PORT}`;
 const ecWeb = process.env.KUSAKARI_EC_E2E_WEB_URL!;
+const ecDirectory = process.env.KUSAKARI_EC_DIRECTORY || '../kusakari-ec';
 if (!ecWeb || !canvasApi) throw new Error('Run via npm run test:e2e -- --config playwright.full.config.ts');
 process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY = '1';
 for (const [key, folder] of Object.entries({
@@ -27,7 +28,7 @@ export default defineConfig({
   webServer: [
     { ...servers[0], env: { ...servers[0].env, KUSAKARI_CANVAS_E2E_EC_URL: ecApi,
       KUSAKARI_CANVAS_E2E_EC_IMAGE_ORIGIN: ecWeb, KUSAKARI_CANVAS_E2E_OPENAI_API_KEY: ' ' } },
-    { command: 'node scripts/api.mjs e2e', cwd: '../kusakari-ec', url: `${ecApi}/api/health`,
+    { command: 'node scripts/api.mjs e2e', cwd: ecDirectory, url: `${ecApi}/api/health`,
       stdout: 'pipe',
       reuseExistingServer: false, timeout: 120000, env: {
         LOGGING_LEVEL_ROOT: 'WARN',
@@ -36,7 +37,7 @@ export default defineConfig({
         KUSAKARI_EC_E2E_WEB_ORIGIN: ecWeb, KUSAKARI_EC_E2E_CANVAS_ORIGIN: canvasWeb } },
     { ...servers[1], env: { ...servers[1].env, VITE_KUSAKARI_EC_URL: `${ecWeb}/` } },
     { command: `npm --workspace frontend run dev -- --host 127.0.0.1 --port ${process.env.KUSAKARI_EC_E2E_WEB_PORT} --strictPort`,
-      cwd: '../kusakari-ec', url: ecWeb, reuseExistingServer: false, timeout: 60000,
+      cwd: ecDirectory, url: ecWeb, reuseExistingServer: false, timeout: 60000,
       env: { KUSAKARI_EC_API_TARGET: ecApi, VITE_KUSAKARI_CANVAS_URL: `${canvasWeb}/` } },
   ],
 });
