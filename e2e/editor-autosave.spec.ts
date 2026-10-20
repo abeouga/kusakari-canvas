@@ -48,6 +48,7 @@ async function scene(page: Page, request: APIRequestContext, bench = true) {
     garden = await result.json();
   }
   await page.goto(`/gardens/${garden.id}`);
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText(`読み込み済み: ${garden.objects.length} / ${garden.objects.length}`);
   return garden;
 }
@@ -60,6 +61,7 @@ async function reloadedEvidence(page: Page, request: APIRequestContext, id: stri
   const stored = await read(request, id);
   await page.goto(`/gardens/${id}`);
   await page.reload();
+  if (!stored.photo) await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText(`読み込み済み: ${stored.objects.length} / ${stored.objects.length}`);
   expect(await read(request, id)).toEqual(stored);
   await writeFile(`${evidence}/${name}-garden.json`, JSON.stringify(stored, null, 2));

@@ -13,6 +13,7 @@ test('demand renderer: idle, camera, live drag, rotation cancellation, capture a
   page.on('pageerror', (e) => errors.push(e.message));
   try {
     await page.goto(`/gardens/${garden.id}?renderReview`);
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
     await seedLegacyObjects(page, ['bench_wood']);
     const canvas = page.getByTestId('garden-canvas').locator('canvas'), box = await canvas.boundingBox();
@@ -67,6 +68,7 @@ test('demand renderer: idle, camera, live drag, rotation cancellation, capture a
     await expect(image).toBeVisible();
     expect(await image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(100);
     await page.keyboard.press('Escape'); await page.reload();
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     expect(await request.get(`${api}/gardens/${garden.id}`).then((r) => r.json())).toEqual(stored);
     await page.screenshot({ path: `${evidence}/reloaded.png` });

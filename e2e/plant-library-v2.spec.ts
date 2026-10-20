@@ -93,6 +93,7 @@ test('30 plant products: actual GLBs, preview, drag, save, reload and exact purc
     expect(saved.status(), await saved.text()).toBe(200); garden = await saved.json();
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(`/gardens/${garden.id}`);
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText(`読み込み済み: ${garden.objects.length} / ${garden.objects.length}`, { timeout: 60000 });
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
     const card = page.getByTestId(`browse-${products[28].id}`);
@@ -103,6 +104,7 @@ test('30 plant products: actual GLBs, preview, drag, save, reload and exact purc
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const snapshot = await request.get(`${api}/gardens/${garden.id}`).then((r) => r.json());
     await page.reload();
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 33 / 33', { timeout: 60000 });
     expect(await request.get(`${api}/gardens/${garden.id}`).then((r) => r.json())).toEqual(snapshot);
     await page.screenshot({ path: `${evidence}/garden-after-reload.png` });

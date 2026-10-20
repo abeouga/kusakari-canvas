@@ -84,8 +84,10 @@ for (const mode of ['rectangle','legacy','calibrated']) test(`API validates boun
   const refused=await request.put(`${api}/gardens/${garden.id}`,{data:invalid});
   expect(refused.status()).toBe(400);expect(await readGarden(request,garden.id)).toEqual(garden);
   await page.goto(`/gardens/${garden.id}`);
+  if(mode==='rectangle') await page.getByRole('button',{name:'3D庭',exact:true}).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   await page.reload();
+  if(mode==='rectangle') await page.getByRole('button',{name:'3D庭',exact:true}).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   await mkdir(directory,{recursive:true});
   await page.screenshot({path:`${directory}/api-${mode}.png`,fullPage:true});

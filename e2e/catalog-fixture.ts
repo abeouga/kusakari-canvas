@@ -15,6 +15,7 @@ export async function seedLegacyObjects(page: Page, assetIds: string[]) {
   const response = await page.request.put(`${api}/gardens/${id}`, { data: { ...garden, objects } });
   expect(response.status(), await response.text()).toBe(200);
   await page.reload();
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await page.getByRole('button', { name: '上から見る', exact: true }).click();
   await page.getByTestId('object-row-0').click();
 }

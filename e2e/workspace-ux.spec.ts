@@ -11,6 +11,7 @@ test('S. 作業面・独立開閉・ダイアログのフォーカス・未保�
   try {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(`/gardens/${created.id}`);
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const canvas = page.locator('[data-testid="garden-canvas"] canvas');
     const initialBox = (await canvas.boundingBox())!;
@@ -33,6 +34,7 @@ test('S. 作業面・独立開閉・ダイアログのフォーカス・未保�
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const saved = await (await request.get(`${api}/gardens/${created.id}`)).json() as GardenDocument;
     await page.reload();
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     expect(await (await request.get(`${api}/gardens/${created.id}`)).json()).toEqual(saved);
     await mkdir(resolve('artifacts/e2e'), { recursive: true });
@@ -62,6 +64,7 @@ test('S. 作業面・独立開閉・ダイアログのフォーカス・未保�
     const moved = await (await request.get(`${api}/gardens/${created.id}`)).json();
     expect(moved.objects[0].position.x).toBe(1.7);
     await page.goto(`/gardens/${created.id}`);
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     // An unfinished photo boundary is the current unsaved navigation case.
     await page.getByRole('button', { name: '写真＋設計', exact: true }).click();

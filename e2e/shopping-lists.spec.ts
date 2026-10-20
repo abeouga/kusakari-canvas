@@ -70,6 +70,7 @@ test('two gardens have separate live lists; selection adds to the single EC cart
   page.on('pageerror', e => pageErrors.push(e.message));
   try {
     await page.goto(`/gardens/${a.id}`, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByLabel('商品を検索', { exact: true }).fill(product.name);
     const card = page.getByTestId(`browse-${product.id}`);
     await expect(card.getByRole('button', { name: 'カートに追加' })).toHaveCount(0);
@@ -89,6 +90,7 @@ test('two gardens have separate live lists; selection adds to the single EC cart
     await page.screenshot({ path: `${evidence}/canvas-list-a.png` });
 
     await page.goto(`/gardens/${b.id}`, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
     await expect(page.getByTestId(`shopping-line-${product.id}`)).toHaveCount(0);
     await page.getByRole('tab', { name: '商品一覧', exact: true }).click();
@@ -198,6 +200,7 @@ test('autosave failure retains placements, blocks EC navigation and supports ret
   const garden = await createGarden(request, '障害');
   try {
     await page.goto(`/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByLabel('商品を検索', { exact: true }).fill('ベンチ');
     await page.route('**/api/gardens/' + garden.id, async route => {
       if (route.request().method() === 'PUT') await route.abort('failed');
@@ -216,6 +219,7 @@ test('autosave failure retains placements, blocks EC navigation and supports ret
     await page.locator('.editor-alert').getByRole('button', { name: '再試行', exact: true }).click();
     await saved(page, 1);
     await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await saved(page, 1);
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
     await page.getByRole('button', { name: 'ECで買い物リストを確認', exact: true }).click();
@@ -231,6 +235,7 @@ test('autosave revision conflict preserves the local placement and stops repeate
   const garden = await createGarden(request, '障害');
   try {
     await page.goto(`/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     await page.getByLabel('商品を検索', { exact: true }).fill('ベンチ');
     const changed = await request.put(`${canvas}/gardens/${garden.id}`, { data: { ...garden, name: garden.name + ' 別画面更新' } });

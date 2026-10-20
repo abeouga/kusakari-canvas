@@ -9,6 +9,7 @@ test('garden options duplicate and delete with persisted independent data', asyn
   let copyId = '';
   try {
     await page.goto(`/gardens/${source.id}`);
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
     await selectTestPlant(page);
     const box = await page.locator('[data-testid="garden-canvas"] canvas').boundingBox();

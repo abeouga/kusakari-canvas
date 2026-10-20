@@ -29,6 +29,7 @@ test('共通ヘッダー・ECへの移動確認・未保存の変更保護', asy
     await page.getByRole('button', { name: '商品・買い物リストパネルを表示', exact: true }).click();
     await expect(panel).toBeVisible();
 
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByRole('button', { name: '土台設定', exact: true }).click();
     await page.getByLabel('幅 (m)', { exact: true }).fill('11');
     await page.getByRole('button', { name: '土台に適用', exact: true }).click();
