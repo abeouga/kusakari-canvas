@@ -117,7 +117,7 @@ export const useEditorStore = create((set, get) => ({
             return;
         const next = duplicateObject(state.document, state.selectedObjectId);
         if (!next) {
-            set({ editError: '複製できません。配置数の上限を確認してください。' });
+            set({ editError: '複製先が施工範囲外か、配置数の上限に達しています。' });
             return;
         }
         set({ document: next, selectedObjectId: next.objects[next.objects.length - 1].id, isDirty: true, editError: null, saveError: null });
@@ -156,7 +156,7 @@ export const useEditorStore = create((set, get) => ({
         } else {
             while (next.objects.filter((object) => object.assetId === assetId).length < quantity) {
                 const duplicated = duplicateObject(next, matching[0].id);
-                if (!duplicated) { set({ editError: '数量を増やせません。配置上限を確認してください。' }); return; }
+                if (!duplicated) { set({ editError: '数量を増やせません。複製先の施工範囲と配置上限を確認してください。' }); return; }
                 next = duplicated;
             }
         }

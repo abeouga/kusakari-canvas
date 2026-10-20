@@ -1,3 +1,4 @@
+import { outsideObjects } from '../domain/placementBounds';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { gardenApi } from '../api/gardens';
@@ -162,13 +163,20 @@ export function EditorPage({ gardenId }) {
                 : selectedObject && tool === 'rotate'
                     ? '円形ハンドルをドラッグして角度を調整'
                     : 'オブジェクトを選択して編集';
-    const statusText = isSaving ? '保存中…' : saveError ? '保存できませんでした' : isCalibrating ? 'カメラを設定中' : hasBoundaryDraft ? '輪郭を描画中' : isDirty ? '自動保存待ち' : '保存済み';
-    const savePending = isDirty || isSaving || isCalibrating || hasBoundaryDraft;
+    const outside = outsideObjects(document);
+    const statusText = isSaving ? '保存中…' : isCalibrating ? 'カメラを設定中' : hasBoundaryDraft ? '輪郭を描画中' : outside.length ? '施工範囲の修正が必要' : saveError ? '保存できませんでした' : isDirty ? '自動保存待ち' : '保存済み';
+    const savePending = outside.length > 0 || isDirty || isSaving || isCalibrating || hasBoundaryDraft;
     const isEditingDisabled = navigating || isTransformDragging || isCalibrating;
     const photoReady = !hasBoundaryDraft && !isCalibrating && (!document.photo || (validSurface(document.photo) && !calibratedBoundaryError(document.photo, document.width, document.depth)));
     const editorOverlay = <ObjectToolbar document={document} assets={assets} onNavigate={requestNavigation} selectedObject={selectedObject} selectedAsset={selectedAsset} tool={tool} photoMode={viewMode === 'photo'} disabled={isEditingDisabled || hasBoundaryDraft} onSetTool={setTool} onDuplicate={duplicateSelected} onDelete={deleteSelected}/>;
     return (<div className="editor-shell canvas-shell">
       <SiteHeader onNavigate={requestNavigation} disabled={navigating || isTransformDragging}/>
+      {outside.length > 0 && photoReady && <div className="editor-alert notice-error" role="alert" data-testid="outside-placements">
+        <span>施工範囲外の配置が{outside.length}個あります。移動または削除するまで保存できません。</span>
+        {outside.map((object, index) => <button key={object.id} type="button" disabled={isEditingDisabled} onClick={() => selectObject(object.id)}>
+          範囲外 {index + 1}: {assetForObject(object, assetMap)?.name ?? object.assetId}
+        </button>)}
+      </div>}
       {saveError && (<div className="editor-alert notice-error" role="alert">
           <span>{saveError}</span>
           <button type="button" onClick={save} disabled={isSaving || isTransformDragging}>再試行</button>

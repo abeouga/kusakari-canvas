@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { BufferGeometry, DoubleSide, Float32BufferAttribute, Shape, ShapeGeometry } from 'three';
 import { useEditorStore } from '../stores/editorStore';
-import { homography, pointInPolygon, unitCorners, validSurface } from '../domain/photoProjection';
-import { calibratedBoundaryError, groundPoint } from '../domain/calibratedProjection';
+import { pointInPolygon } from '../domain/photoProjection';
+import { containsAnchor, groundOutline } from '../domain/placementBounds';
 export function GardenGround({ document, selectedAsset, disabled, invisible = false }) {
     const press = useRef(null);
     const isDragging = useEditorStore((state) => state.isTransformDragging);
@@ -23,7 +23,7 @@ export function GardenGround({ document, selectedAsset, disabled, invisible = fa
             return;
         if (!selectedAsset || disabled || isDragging)
             return;
-        if (!pointInPolygon({ x: event.point.x, y: event.point.z }, outline.map((p) => ({ x: p.x, y: p.z }))))
+        if (!containsAnchor(document, event.point))
             return;
         event.stopPropagation();
         useEditorStore.getState().addAssetAt(selectedAsset, event.point.x, event.point.z);
@@ -46,28 +46,6 @@ export function GardenGround({ document, selectedAsset, disabled, invisible = fa
         <lineBasicMaterial color="#617452"/>
       </lineSegments>}
     </>);
-}
-export function groundOutline(document) {
-    const photo = document.photo;
-    if (photo && validSurface(photo)) {
-        if (photo.calibration && !calibratedBoundaryError(photo, document.width, document.depth)) {
-            const outline = photo.boundary.map((p) => groundPoint(photo, p));
-            if (outline.every((p) => p !== null))
-                return outline;
-        }
-        const inverse = homography(photo.corners, unitCorners);
-        if (inverse)
-            return photo.boundary.map((point) => {
-                const p = inverse(point);
-                return { x: (p.x - 0.5) * (photo.projectionSize?.width ?? document.width), z: (0.5 - p.y) * (photo.projectionSize?.depth ?? document.depth) };
-            });
-    }
-    return [
-        { x: -document.width / 2, z: document.depth / 2 },
-        { x: document.width / 2, z: document.depth / 2 },
-        { x: document.width / 2, z: -document.depth / 2 },
-        { x: -document.width / 2, z: -document.depth / 2 },
-    ];
 }
 function makeGrid(width, depth, outline) {
     const positions = [];

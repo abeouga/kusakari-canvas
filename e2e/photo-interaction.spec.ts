@@ -167,7 +167,7 @@ async function evidence(page: Page, garden: GardenDocument, name: string) {
   await page.screenshot({ path: `artifacts/e2e/photo-interaction/${name}-reloaded.png` });
 }
 
-test('photo movement clamps the anchor to garden bounds', async ({ page, request }) => {
+test('photo movement retains the last anchor inside construction bounds', async ({ page, request }) => {
   await page.goto('/');
   let garden = await createScene(request, [], await syntheticPhoto(page), [shrub(0, 0)]);
   const resized = await request.put(`${api}/gardens/${garden.id}`, { data: { ...garden, width: 10, depth: 8 } });
@@ -176,7 +176,8 @@ test('photo movement clamps the anchor to garden bounds', async ({ page, request
   const body = await point(page, garden, 0, 0.8, 0);
   await page.mouse.move(body.x, body.y); await page.mouse.down();
   await page.mouse.move(1500, body.y, { steps: 12 }); await page.mouse.up();
-  await expect.poll(async () => (await readGarden(request, garden.id)).objects[0].position.x).toBe(5);
+  await expect.poll(async () => (await readGarden(request, garden.id)).objects[0].position.x).toBeGreaterThan(0);
+  expect((await readGarden(request, garden.id)).objects[0].position.x).toBeLessThanOrEqual(5 + 1e-6);
   await page.reload(); await openScene(page, garden);
   await evidence(page, await readGarden(request, garden.id), 'bounds');
 });

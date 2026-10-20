@@ -3,8 +3,7 @@ import { useThree } from '@react-three/fiber';
 import { PerspectiveCamera, Plane, Vector2, Vector3 } from 'three';
 import { useEditorStore } from '../stores/editorStore';
 import { productDragType } from '../domain/productModels';
-import { pointInPolygon } from '../domain/photoProjection';
-import { groundOutline } from './GardenGround';
+import { containsAnchor } from '../domain/placementBounds';
 
 export function DropPlacement({ document, assets, disabled }) {
   const { gl, camera, raycaster } = useThree();
@@ -33,8 +32,7 @@ export function DropPlacement({ document, assets, disabled }) {
         raycaster.ray.origin.addScaledVector(raycaster.ray.direction, -camera.far);
       }
       const point = raycaster.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), 0), new Vector3());
-      const polygon = groundOutline(document).map((p) => ({ x: p.x, y: p.z }));
-      if (!point || !pointInPolygon({ x: point.x, y: point.z }, polygon)) {
+      if (!point || !containsAnchor(document, point)) {
         state.setEditError('庭の地面の範囲内へドロップしてください。');
         return;
       }

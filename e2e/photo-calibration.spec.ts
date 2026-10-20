@@ -36,7 +36,8 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
   const initial = await created.json() as GardenDocument;
   // Existing saved assets can be placed again from the current shopping list UI.
   // Seed only this starting fixture through the real API; all three measured placements use mouse input.
-  const seed = { ...shrub(-4.5, -3.5), assetId: 'tree_oak' };
+  // Keep the seed inside both the initial 10x8 and the later 8x6.4 construction boundary.
+  const seed = { ...shrub(-3.5, -3), assetId: 'tree_oak' };
   const seeded = await request.put(`${api}/gardens/${initial.id}`, { data: { ...initial, objects: [seed] } });
   expect(seeded.status()).toBe(200);
   {
