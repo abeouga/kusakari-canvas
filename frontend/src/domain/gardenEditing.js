@@ -1,3 +1,4 @@
+import { containsAnchor } from './placementBounds';
 import { MAX_PLACED_OBJECTS, MAX_OBJECT_SCALE, MIN_OBJECT_SCALE } from './limits';
 export function createPlacedObject(asset, x, z) {
     const object = {
@@ -20,7 +21,7 @@ export function addObject(document, object) {
         return null;
     if (!Number.isFinite(object.position.x) || !Number.isFinite(object.position.z))
         return null;
-    if (Math.abs(object.position.x) > document.width / 2 || Math.abs(object.position.z) > document.depth / 2)
+    if (!containsAnchor(document, object.position))
         return null;
     if (document.objects.some((placed) => placed.id === object.id))
         return null;
@@ -64,12 +65,9 @@ export function removeObject(document, objectId) {
 export function isValidTransform(document, transform) {
     const { position, rotation, scale } = transform;
     const finite = [...Object.values(position), ...Object.values(rotation), ...Object.values(scale)].every(Number.isFinite);
-    const halfWidth = document.width / 2;
-    const halfDepth = document.depth / 2;
     return finite
         && position.y === 0
-        && Math.abs(position.x) <= halfWidth
-        && Math.abs(position.z) <= halfDepth
+        && containsAnchor(document, position)
         && rotation.x === 0
         && rotation.z === 0
         && scale.x >= MIN_OBJECT_SCALE

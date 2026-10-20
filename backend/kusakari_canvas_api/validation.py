@@ -9,11 +9,17 @@ from PIL import Image
 
 from .calibration import validate_calibrated_photo
 from .errors import bad_request
+from .placement_bounds import EPSILON, contains_anchor, ground_outline
 from .plant_assembly import assemble
 from .schemas import GardenDocumentRequest, GardenPhoto, ImagePoint
 
 
 def validate_document(document: GardenDocumentRequest) -> None:
+    if document.photo is not None:
+        validate_photo(document.photo)
+        validate_calibrated_photo(document.photo, document.width, document.depth)
+        validate_projection_frame(document.photo, document.width, document.depth)
+    outline = ground_outline(document)
     ids: set[str] = set()
     for obj in document.objects:
         if obj.assetId == "plant_modular":
@@ -40,17 +46,14 @@ def validate_document(document: GardenDocumentRequest) -> None:
         p, r, s = obj.position, obj.rotation, obj.scale
         if any(not math.isfinite(v) for vector in (p, r, s) for v in (vector.x, vector.y, vector.z)):
             bad_request("NON_FINITE_NUMBER", "座標、回転、倍率には有限の数値を指定してください。")
-        if p.y != 0 or not -document.width / 2 <= p.x <= document.width / 2 \
-                or not -document.depth / 2 <= p.z <= document.depth / 2:
-            bad_request("OBJECT_POSITION_OUT_OF_BOUNDS", "配置位置は庭の範囲内でY=0にしてください。")
+        if p.y != 0 or not -document.width / 2 - EPSILON <= p.x <= document.width / 2 + EPSILON \
+                or not -document.depth / 2 - EPSILON <= p.z <= document.depth / 2 + EPSILON \
+                or not contains_anchor(outline, p.x, p.z):
+            bad_request("OBJECT_POSITION_OUT_OF_BOUNDS", "配置基準点は施工範囲内でY=0にしてください。")
         if r.x != 0 or r.z != 0:
             bad_request("INVALID_OBJECT_ROTATION", "オブジェクトはY軸回りだけ回転できます。")
         if not 0.25 <= s.x <= 3 or s.x != s.y or s.x != s.z:
             bad_request("INVALID_OBJECT_SCALE", "倍率は0.25〜3.0の一様な値にしてください。")
-    if document.photo is not None:
-        validate_photo(document.photo)
-        validate_calibrated_photo(document.photo, document.width, document.depth)
-        validate_projection_frame(document.photo, document.width, document.depth)
 
 
 def validate_projection_frame(photo: GardenPhoto, width: float, depth: float) -> None:
