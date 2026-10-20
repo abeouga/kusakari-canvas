@@ -77,6 +77,7 @@ export function ObjectToolbar({ document, assets, onNavigate, selectedObject, se
               <button type="button" data-testid="tool-rotate" aria-pressed={tool === 'rotate'} disabled={disabled} onClick={() => onSetTool('rotate')}><UiIcon name="rotate" size={15}/>回転</button>
               <button type="button" data-testid="tool-scale" aria-pressed={tool === 'scale'} disabled={disabled} onClick={() => onSetTool('scale')}><UiIcon name="scale" size={15}/>拡縮</button>
             </div>}
+      {editError && <p className="notice notice-error" role="alert">{editError}</p>}
       <details ref={details} className="object-details">
         <summary ref={trigger} data-testid="object-details-toggle" aria-disabled={disabled}
           onClick={(event) => { if (disabled) event.preventDefault(); }}>詳細</summary>
@@ -102,7 +103,7 @@ export function ObjectToolbar({ document, assets, onNavigate, selectedObject, se
               </label>
             </div>
             <p className="form-hint">{photoMode ? '数値で位置・回転・倍率を調整します。' : tool === 'rotate' ? '円形ハンドルをドラッグして回転します。' : tool === 'move' ? '配置物をドラッグして位置を調整します。' : `倍率は ${MIN_OBJECT_SCALE}〜${MAX_OBJECT_SCALE} の範囲で変更できます。`}</p>
-            {editError && <p className="notice notice-error" role="alert">{editError}</p>}
+
             <div className="object-actions">
               <button className="button button-secondary" type="button" disabled={disabled || document.objects.length >= 200} onClick={onDuplicate}><UiIcon name="copy" size={15}/>複製</button>
               <button className="button button-danger-subtle" type="button" disabled={disabled} onClick={onDelete}><UiIcon name="trash" size={15}/>削除</button>

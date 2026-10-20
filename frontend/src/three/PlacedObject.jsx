@@ -5,12 +5,14 @@ import { useEditorStore } from "../stores/editorStore";
 import { RotationRing } from "./RotationRing";
 import { GardenModel, SelectionOutline } from "./GardenModel";
 import { PlacementControls, handleOwnsPointer } from "./PlacementControls";
+import { containsAnchor } from "../domain/placementBounds";
 export function PlacedObject({ object, asset, disabled, photoMode = false, onModelLoaded, onModelFailed }) {
     const invalidate = useThree((state) => state.invalidate);
     const scene = useThree((state) => state.scene);
     const orbit = useThree((state) => /** @type {import('three-stdlib').OrbitControls | null} */ (state.controls));
     const group = useRef(null);
     const press = useRef(null);
+    const lastPosition = useRef(object.position);
     const [controlEpoch, setControlEpoch] = useState(0);
     const storedTool = useEditorStore((state) => state.tool);
     const tool = photoMode ? 'move' : storedTool;
@@ -50,9 +52,12 @@ export function PlacedObject({ object, asset, disabled, photoMode = false, onMod
         const document = useEditorStore.getState().document;
         if (!node || !document)
             return;
-        node.position.x = MathUtils.clamp(node.position.x, -document.width / 2, document.width / 2);
+        if (containsAnchor(document, node.position)) lastPosition.current = { x: node.position.x, y: 0, z: node.position.z };
+        else {
+            node.position.set(lastPosition.current.x, 0, lastPosition.current.z);
+            useEditorStore.getState().setEditError('施工範囲の外へは移動できません。');
+        }
         node.position.y = 0;
-        node.position.z = MathUtils.clamp(node.position.z, -document.depth / 2, document.depth / 2);
         node.rotation.x = 0;
         node.rotation.z = 0;
         if (tool === 'scale') {
@@ -68,6 +73,7 @@ export function PlacedObject({ object, asset, disabled, photoMode = false, onMod
         useEditorStore.getState().selectObject(object.id);
         if (tool !== 'move' || !group.current || !event.ray.intersectPlane(horizontalPlane, intersection))
             return;
+        lastPosition.current = object.position;
         press.current = { id: event.pointerId, x: event.clientX, y: event.clientY,
             target: event.target, offset: group.current.position.clone().sub(intersection), moved: false };
         if (orbit) orbit.enabled = false;
@@ -85,7 +91,8 @@ export function PlacedObject({ object, asset, disabled, photoMode = false, onMod
         start.moved = true;
         setDragging(true);
         intersection.add(start.offset);
-        group.current.position.set(MathUtils.clamp(intersection.x, -document.width / 2, document.width / 2), 0, MathUtils.clamp(intersection.z, -document.depth / 2, document.depth / 2));
+        group.current.position.set(intersection.x, 0, intersection.z);
+        constrainTransform();
         invalidate();
     }
     function finishObjectDrag(event) {
@@ -178,7 +185,7 @@ export function PlacedObject({ object, asset, disabled, photoMode = false, onMod
                 mode = 'translate';
                 showZ = true;
             }
-            editingControl = <PlacementControls key={controlEpoch} photoMode={photoMode} object={group} mode={mode} space="local" size={1} showX showY={false} showZ={showZ} enabled={!dragging || press.current === null} onMouseDown={() => setDragging(true)} onObjectChange={constrainTransform} onMouseUp={commit}/>;
+            editingControl = <PlacementControls key={controlEpoch} photoMode={photoMode} object={group} mode={mode} space="local" size={1} showX showY={false} showZ={showZ} enabled={!dragging || press.current === null} onMouseDown={() => { lastPosition.current = object.position; setDragging(true); }} onObjectChange={constrainTransform} onMouseUp={commit}/>;
         }
     }
     return (<>
