@@ -75,6 +75,7 @@ test('five natural models, v1/v2/v3 snapshots, placement, edits and reload retai
     const put = await request.put(`${api}/gardens/${garden.id}`, { data: garden });
     expect(put.status(), await put.text()).toBe(200);
     await page.goto(`/gardens/${garden.id}?renderReview`);
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     const cart = await page.request.get(`${ec}/api/cart`);
     expect(cart.status(), await cart.text()).toBe(200);
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 8 / 8', { timeout: 60000 });
@@ -88,7 +89,9 @@ test('five natural models, v1/v2/v3 snapshots, placement, edits and reload retai
     await page.getByTestId('object-details-toggle').click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const snapshot = await request.get(`${api}/gardens/${garden.id}`).then((r) => r.json());
-    await page.reload(); await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 9 / 9', { timeout: 60000 });
+    await page.reload();
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
+    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 9 / 9', { timeout: 60000 });
     expect(await request.get(`${api}/gardens/${garden.id}`).then((r) => r.json())).toEqual(snapshot);
     const bad = structuredClone(snapshot); bad.objects[0].modelComposition.parts[0].position[1] += 0.1;
     expect((await request.put(`${api}/gardens/${garden.id}`, { data: bad })).status()).toBe(400);

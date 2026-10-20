@@ -27,6 +27,7 @@ test('TREE50. Blender樹木50本の共有描画・独立編集・MySQL保存復�
     const stored = await request.put(`${api}/gardens/${garden.id}`, { data: { ...garden, objects } });
     expect(stored.ok()).toBe(true);
     await page.goto(`/gardens/${garden.id}`);
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 50 / 50');
     expect(downloads).toHaveLength(1);
     const model = await page.request.get('/models/tree-oak.glb');
@@ -85,6 +86,7 @@ test('TREE50. Blender樹木50本の共有描画・独立編集・MySQL保存復�
     await page.getByTestId('uniform-scale').fill('1.1');
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     await page.reload();
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 50 / 50');
     const restored = await (await request.get(`${api}/gardens/${garden.id}`)).json();
     expect(restored.objects).toHaveLength(50);

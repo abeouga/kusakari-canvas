@@ -78,6 +78,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
     expect(created.status()).toBe(201);
     garden = await created.json() as GardenDocument;
     await page.goto(`/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     const unsupported = page.getByTestId('browse-olive');
     await expect(unsupported).toContainText('3Dモデル未設定');
     await expect(unsupported.getByRole('button', { name: '庭に配置' })).toBeDisabled();
@@ -127,6 +128,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
     tampered.objects[0].modelComposition.parts[0].position[1] += 10;
     expect((await page.request.put(`${api}/gardens/${garden.id}`, { data: tampered })).status()).toBe(400);
     await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 8 / 8');
     await expect(page.getByRole('separator', { name: '商品サイドバーの幅' })).toHaveAttribute('aria-valuenow', width!);
     const reloaded = await page.request.get(`${api}/gardens/${garden.id}`).then((response) => response.json());
@@ -141,6 +143,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
     expect(changed.status()).toBe(200);
     expect((await changed.json()).modelComposition).not.toEqual(p.modelComposition);
     await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 8 / 8');
     expect(await page.request.get(`${api}/gardens/${garden.id}`).then((response) => response.json())).toEqual(snapshot);
     await test.step('Capture the reloaded 3D garden', () => page.screenshot({ path: `${evidence}/garden-after-reload.png`, fullPage: true }));

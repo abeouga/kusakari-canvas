@@ -26,6 +26,7 @@ test('3d body movement, rotation ring and scale handle survive saving and reload
   }] } });
   expect(stored.ok()).toBeTruthy(); garden = await stored.json();
   await page.goto(`/gardens/${garden.id}`);
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   await page.getByRole('button', { name: '上から見る', exact: true }).click();
   const body = await screen(page, garden, -0.35, 0.45, 0);
@@ -84,6 +85,7 @@ test('3d body movement, rotation ring and scale handle survive saving and reload
   expect(scale.x).toBeGreaterThan(1);
   expect(scale.y).toBe(scale.x); expect(scale.z).toBe(scale.x);
   await page.reload();
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   expect((await readGarden(request, garden.id)).objects).toEqual(garden.objects);
   await mkdir('artifacts/e2e/photo-interaction', { recursive: true });

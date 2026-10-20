@@ -32,6 +32,7 @@ async function createGarden(page: Page, name: string): Promise<string> {
 }
 
 async function placeTree(page: Page, x = 0.5, y = 0.5): Promise<void> {
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await page.getByRole('button', { name: '上から見る' }).click();
   await selectTestPlant(page);
   const canvas = page.locator('[data-testid="garden-canvas"] canvas');
@@ -92,6 +93,7 @@ test('A. 庭作成からGLB配置・変形・保存・再読み込みまで', as
   expect(stored.objects[0].scale).toEqual({ x: 1.25, y: 1.25, z: 1.25 });
 
   await page.reload();
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   await expect(page.getByTestId('position-x')).toHaveValue(String(Number(savedX.toFixed(2))));
   await expect(page.getByTestId('rotation-y')).toHaveValue('30');
@@ -109,6 +111,7 @@ test('A. 庭作成からGLB配置・変形・保存・再読み込みまで', as
   const card = page.locator('.garden-card').filter({ hasText: name });
   await expect(card.locator('.garden-card-open')).toBeVisible();
   await card.locator('.garden-card-open').click();
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.locator('h1')).toHaveText(name);
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   await expect(page.getByTestId('position-x')).toHaveValue(String(Number(savedX.toFixed(2))));
@@ -239,6 +242,7 @@ test('E. 古いrevisionの保存を競合として拒否しローカル編集を
 
 test('F. 保存済み旧4種類のGLBを読み込み・復元', async ({ page, request }) => {
   const id = await createGarden(page, `E2E catalog ${Date.now()}`);
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await page.getByRole('button', { name: '上から見る' }).click();
   const placements = ['tree_oak', 'shrub_boxwood', 'brick_paver', 'bench_wood'].map(assetId => ({ assetId }));
   await seedLegacyObjects(page, placements.map(p => p.assetId));
@@ -251,6 +255,7 @@ test('F. 保存済み旧4種類のGLBを読み込み・復元', async ({ page, r
     .toEqual(placements.map((placement) => placement.assetId).sort());
 
   await page.reload();
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 4 / 4');
   await page.getByRole('button', { name: '上から見る' }).click();
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-catalog.png'), fullPage: true });
@@ -258,6 +263,7 @@ test('F. 保存済み旧4種類のGLBを読み込み・復元', async ({ page, r
 
 test('G. GLB読み込み失敗後に再試行して復旧', async ({ page, request }) => {
   const id = await createGarden(page, `E2E model retry ${Date.now()}`);
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await page.getByRole('button', { name: '上から見る' }).click();
   await page.route('**/models/tree-oak.glb', (route) => route.abort('failed'));
   await seedLegacyObjects(page, ['tree_oak']);
@@ -277,6 +283,7 @@ test('G. GLB読み込み失敗後に再試行して復旧', async ({ page, reque
 
 test('H. 回転リングのドラッグを保存して再読み込みできる', async ({ page, request }) => {
   const id = await createGarden(page, `E2E rotation handle ${Date.now()}`);
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await page.getByRole('button', { name: '上から見る' }).click();
   await seedLegacyObjects(page, ['bench_wood']);
   const canvas = page.locator('[data-testid="garden-canvas"] canvas');
@@ -329,6 +336,7 @@ test('H. 回転リングのドラッグを保存して再読み込みできる',
   expect(stored.objects[0].rotation.z).toBe(0);
 
   await page.reload();
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   await expect(page.getByTestId('rotation-y')).toHaveValue(String(degrees));
   await page.getByRole('button', { name: '上から見る' }).click();

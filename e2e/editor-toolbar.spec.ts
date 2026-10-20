@@ -7,6 +7,7 @@ test('editor controls preserve state and the merged canvas toolbar fits narrow s
   const garden = await (await request.post(`${api}/gardens`, { data: { name: `E2E toolbar ${Date.now()}` } })).json();
   try {
     await page.goto(`/gardens/${garden.id}`);
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     await expect(page.locator('.document-bar')).toHaveCount(0);
     const bar = page.locator('.canvas-tools');
@@ -53,6 +54,7 @@ test('editor controls preserve state and the merged canvas toolbar fits narrow s
     await expect(bar.getByRole('button', { name: '買い物リストをECで確認', exact: true })).toHaveCount(0);
     await expect(bar.getByTestId('save-status')).toHaveText('保存済み');
     await page.reload();
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 2 / 2');
     const saved = await (await request.get(`${api}/gardens/${garden.id}`)).json();
     expect(saved.objects).toHaveLength(2);

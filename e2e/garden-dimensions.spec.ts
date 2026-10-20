@@ -18,6 +18,7 @@ test('Q. 名前だけで作成・土台寸法を編集・縮小検証・MySQL保
   await page.waitForURL(/\/gardens\//);
   const id = new URL(page.url()).pathname.split('/').at(-1)!;
   try {
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByRole('button', { name: '土台設定', exact: true }).click();
     await expect(page.getByLabel('幅 (m)', { exact: true })).toHaveValue('10');
     await expect(page.getByLabel('奥行き (m)', { exact: true })).toHaveValue('8');
@@ -54,6 +55,7 @@ test('Q. 名前だけで作成・土台寸法を編集・縮小検証・MySQL保
     const stale = await request.put(`${api}/gardens/${id}`, { data: { ...saved, revision: 0, width: 16 } });
     expect(stale.status()).toBe(409);
     await page.reload();
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByRole('button', { name: '土台設定', exact: true }).click();
     await expect(page.getByLabel('幅 (m)', { exact: true })).toHaveValue('14');
     await expect(page.getByLabel('奥行き (m)', { exact: true })).toHaveValue('12');

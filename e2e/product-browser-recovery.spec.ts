@@ -11,6 +11,7 @@ test('EC接続失敗を表示し、再取得後に商品を配置・保存・復
   const cartUrl = ((process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286') + '/api/cart');
   await page.route(cartUrl, (route) => route.abort('failed'));
   await page.goto(`/gardens/${garden.id}`);
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   const browser = page.getByRole('region', { name: 'ECの商品一覧' });
   await expect(browser.getByRole('alert')).toContainText('ECへ接続できません');
   await expect(browser.getByText('商品を読み込んでいます…')).toHaveCount(0);
@@ -29,6 +30,7 @@ test('EC接続失敗を表示し、再取得後に商品を配置・保存・復
   const saved = await (await request.get(`${api}/gardens/${garden.id}`)).json();
   expect(saved.objects).toHaveLength(1);
   await page.reload();
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   await expect(browser.locator('.browse-product').first()).toBeVisible();
   const reloaded = await (await request.get(`${api}/gardens/${garden.id}`)).json();

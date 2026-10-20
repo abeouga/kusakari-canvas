@@ -72,6 +72,7 @@ async function openHistory(page: Page) {
 async function persisted(page: Page, request: APIRequestContext, id: string, name: string) {
   const stored = await readGarden(request, id);
   await page.reload();
+  if (!stored.photo) await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('completion-menu-toggle')).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByTestId('model-loaded')).toHaveText(`読み込み済み: ${stored.objects.length} / ${stored.objects.length}`);
   expect(await readGarden(request, id)).toEqual(stored);
@@ -223,6 +224,7 @@ test('paged gallery retains historical images when the current photo is removed'
   const { garden, url, items } = await seed(page, request, 22);
   expect((await request.put(`${api}/gardens/${garden.id}`, { data: { ...garden, photo: null } })).status()).toBe(200);
   await page.goto(`/gardens/${garden.id}`);
+  await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('completion-menu-toggle')).toHaveText('完成イメージ');
   await openHistory(page);
   await expect(page.locator('.history-card')).toHaveCount(20);
