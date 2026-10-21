@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { edgeLength } from '../domain/polygonEdges';
 import { useEditorStore } from '../stores/editorStore';
 import { UiIcon } from './UiIcon';
@@ -20,6 +20,18 @@ export function EdgeMeasurementPopover({ document, selection, onClose }) {
   const measurable = Number.isFinite(length) && length > 0.000001;
   const entered = typeof document.photo.edgeLengths?.[selection.index] === 'number';
   const remaining = document.photo.boundary.length - (document.photo.edgeLengths ?? []).filter((item) => typeof item === 'number').length;
+
+  useEffect(() => {
+    const element = panel.current;
+    const ownerDocument = element.ownerDocument;
+    function dismissOutside(event) {
+      if (!event.isPrimary || event.button !== 0 || element.contains(event.target)) return;
+      // 背景操作とそのフォーカスを維持し、未適用値だけを破棄します。
+      onClose();
+    }
+    ownerDocument.addEventListener('pointerdown', dismissOutside, true);
+    return () => ownerDocument.removeEventListener('pointerdown', dismissOutside, true);
+  }, [onClose]);
 
   useLayoutEffect(() => {
     input.current?.focus();
