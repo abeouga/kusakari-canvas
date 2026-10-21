@@ -70,26 +70,60 @@ def solve_calibration(request: CalibrationRequest) -> PhotoCalibration:
     )
 
 
-def validate_calibrated_photo(photo: GardenPhoto, width: float, depth: float) -> None:
-    calibration = photo.calibration
-    if calibration is None:
-        return
-    # Recompute on save: never accept an arbitrary client-supplied camera matrix.
-    calibration = solve_calibration(CalibrationRequest(
-        imageWidth=photo.imageWidth, imageHeight=photo.imageHeight, points=calibration.points,
-        referenceWidth=calibration.referenceWidth, referenceDepth=calibration.referenceDepth,
-        focalLengthPx=calibration.focalLengthPx if calibration.focalSource == 'manual' else None,
-    ))
-    r = np.array(calibration.rotation).reshape(3, 3)
-    t = np.array(calibration.translation)
-    f = calibration.focalLengthPx
-    origin = -r.T @ t
+# Same tolerance as frontend/src/domain/edgeCalibration.js.
+EDGE_LENGTH_TOLERANCE = 0.01
+
+
+def ground_points(photo: GardenPhoto, rotation: np.ndarray, translation: np.ndarray, focal: float) -> list[np.ndarray]:
+    origin = -rotation.T @ translation
+    result = []
     for point in photo.boundary:
-        ray = r.T @ np.array([(point.x - 0.5) * photo.imageWidth / f,
-                              (point.y - 0.5) * photo.imageHeight / f, 1])
+        ray = rotation.T @ np.array([(point.x - 0.5) * photo.imageWidth / focal,
+                                     (point.y - 0.5) * photo.imageHeight / focal, 1])
         if ray[1] >= -1e-8:
             reject('庭の輪郭が地平線を越えています。地面上に描き直してください。')
-        ground = origin - ray * origin[1] / ray[1]
+        result.append(origin - ray * origin[1] / ray[1])
+    return result
+
+
+def verify_edge_calibration(photo: GardenPhoto, calibration: PhotoCalibration) -> None:
+    """Edge cameras are solved in the editor; check every constraint instead of trusting the matrix."""
+    lengths = photo.edgeLengths
+    if lengths is None or any(length is None for length in lengths):
+        reject('全辺の長さを入力してから写真のパースを求めてください。')
+    r = np.array(calibration.rotation).reshape(3, 3)
+    t = np.array(calibration.translation)
+    if not np.allclose(r @ r.T, np.eye(3), atol=1e-6) or np.linalg.det(r) <= 0:
+        reject('カメラの姿勢が不正です。辺の長さを入力し直してください。')
+    fov = math.degrees(2 * math.atan(photo.imageHeight / 2 / calibration.focalLengthPx))
+    if not 15 <= fov <= 110 or calibration.focalSource != 'estimated':
+        reject('画角が対応範囲（縦15〜110度）を外れています。辺の長さを確認してください。')
+    if (-r.T @ t)[1] <= 0.05:
+        reject('地面より上のカメラを求められません。辺の長さを確認してください。')
+    ground = ground_points(photo, r, t, calibration.focalLengthPx)
+    for i, length in enumerate(lengths):
+        actual = float(np.linalg.norm((ground[(i + 1) % len(ground)] - ground[i])[[0, 2]]))
+        if abs(actual / length - 1) > EDGE_LENGTH_TOLERANCE:
+            reject('辺の長さと写真のパースが一致しません。辺の長さを入力し直してください。')
+
+
+def validate_calibrated_photo(photo: GardenPhoto, width: float, depth: float) -> None:
+    calibration = photo.calibration
+    if photo.edgeLengths is not None and len(photo.edgeLengths) != len(photo.boundary):
+        reject('辺の長さの数が庭の輪郭と一致しません。')
+    if calibration is None:
+        return
+    if calibration.method == 'edges':
+        verify_edge_calibration(photo, calibration)
+    else:
+        # Recompute on save: never accept an arbitrary client-supplied camera matrix.
+        calibration = solve_calibration(CalibrationRequest(
+            imageWidth=photo.imageWidth, imageHeight=photo.imageHeight, points=calibration.points,
+            referenceWidth=calibration.referenceWidth, referenceDepth=calibration.referenceDepth,
+            focalLengthPx=calibration.focalLengthPx if calibration.focalSource == 'manual' else None,
+        ))
+    r = np.array(calibration.rotation).reshape(3, 3)
+    for ground in ground_points(photo, r, np.array(calibration.translation), calibration.focalLengthPx):
         if abs(ground[0]) > width / 2 + 0.05 or abs(ground[2]) > depth / 2 + 0.05:
             reject('庭の輪郭が庭の実寸範囲を超えています。写真上の輪郭または基準点を調整してください。')
     photo.calibration = calibration

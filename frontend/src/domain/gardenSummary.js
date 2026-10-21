@@ -30,5 +30,6 @@ export function groundSummary(document) {
   }
   let label = "カメラ未設定・土台寸法からの概算";
   if (photo.calibration) label = "写真の基準実寸とカメラ設定に基づく推定";
+  if (photo.calibration?.method === 'edges') label = "写真上の辺の実寸から求めたパースに基づく推定";
   return { area: Math.abs(sum) / 2, perimeter, label };
 }

@@ -18,6 +18,8 @@ export function EdgeMeasurementPopover({ document, selection, onClose }) {
   const [position, setPosition] = useState({ left: selection.left, top: selection.top });
   const locked = useEditorStore((state) => state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null);
   const measurable = Number.isFinite(length) && length > 0.000001;
+  const entered = typeof document.photo.edgeLengths?.[selection.index] === 'number';
+  const remaining = document.photo.boundary.length - (document.photo.edgeLengths ?? []).filter((item) => typeof item === 'number').length;
 
   useLayoutEffect(() => {
     input.current?.focus();
@@ -68,21 +70,21 @@ export function EdgeMeasurementPopover({ document, selection, onClose }) {
       setError('辺の長さは0より大きい数値で入力してください。');
       return;
     }
-    // 表示用の丸めだけで縮尺を変更しないよう、未変更の入力は実測値を使います。
-    let requestedLength = Number(value);
-    if (value === formatLength(length)) requestedLength = length;
+    const requestedLength = Number(value);
     const previousDocument = useEditorStore.getState().document;
     const cause = useEditorStore.getState().setPhotoEdgeLength(selection.index, requestedLength);
     if (cause) {
       setError(cause);
       return;
     }
-    setValue(formatLength(edgeLength(useEditorStore.getState().document, selection.index)));
-    if (previousDocument === useEditorStore.getState().document) {
+    const next = useEditorStore.getState().document;
+    setValue(formatLength(edgeLength(next, selection.index)));
+    if (previousDocument === next) {
       setNotice('長さは変更されていません。');
       return;
     }
-    setNotice('長さを適用しました。自動保存されます。');
+    const left = next.photo.edgeLengths.filter((item) => item === null).length;
+    setNotice(left ? `長さを記録しました。残り${left}辺の長さを入力すると、写真のパースを求めます。` : '長さを適用し、写真のパースを求めました。自動保存されます。');
   }
 
   return <section ref={panel} className="edge-popover" role="dialog" aria-label="選択した辺の長さ" style={position}
@@ -93,7 +95,7 @@ export function EdgeMeasurementPopover({ document, selection, onClose }) {
       <button type="button" className="icon-button" aria-label="辺の計測を閉じる" onClick={close}><UiIcon name="close" size={17}/></button>
     </header>
     <div className="edge-measurement">
-      <span>{document.photo.calibration ? '現在の実寸' : '現在の概算'}</span>
+      <span>{entered ? '入力した実寸' : document.photo.calibration ? '現在の実寸' : '現在の概算'}</span>
       <output data-testid="edge-measurement" aria-label="辺の計測値">{measurable ? `${length.toFixed(2)} m` : '計測できません'}</output>
     </div>
     <form onSubmit={apply} noValidate>
@@ -101,8 +103,8 @@ export function EdgeMeasurementPopover({ document, selection, onClose }) {
         <input ref={input} type="text" inputMode="decimal" maxLength={32} value={value} disabled={locked || !measurable}
           onChange={(event) => { setValue(event.target.value); setError(''); setNotice(''); }} />
       </label>
-      <p>写真上の輪郭を固定し、庭全体の縮尺を変更します。ほかの辺も同じ割合で変わります。</p>
-      {!document.photo.calibration && <p className="edge-warning">カメラ未設定のため、パースは現在の概算を使用します。</p>}
+      <p>写真上の輪郭とほかの辺の長さは変えずに、全辺の実寸から写真のパースを求めます。</p>
+      {remaining > 0 && <p className="edge-warning">全{document.photo.boundary.length}辺のうち{remaining}辺が未入力です。全辺を入力するとパースを求めます。</p>}
       {!measurable && <p className="notice-error">地面上の位置を求められません。カメラ設定を確認してください。</p>}
       {error && <p role="alert" className="notice-error">{error}</p>}
       {notice && <p role="status">{notice}</p>}

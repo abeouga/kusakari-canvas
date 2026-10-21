@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .plant_schemas import PlantComposition
 
@@ -67,16 +67,31 @@ class CalibrationRequest(ApiModel):
     focalLengthPx: float | None = Field(default=None, gt=0, le=100000)
 
 
+def _absent(value) -> bool:
+    return value is None
+
+
 class PhotoCalibration(ApiModel):
+    """A camera from a reference rectangle, or ('edges') from the outline and GardenPhoto.edgeLengths."""
     version: Literal[1] = 1
-    points: list[ImagePoint] = Field(min_length=4, max_length=4)
-    referenceWidth: float = Field(ge=0.1, le=50)
-    referenceDepth: float = Field(ge=0.1, le=50)
+    method: Literal['rectangle', 'edges'] = Field(default='rectangle', exclude_if=lambda value: value == 'rectangle')
+    points: Annotated[list[ImagePoint], Field(min_length=4, max_length=4)] | None = Field(default=None, exclude_if=_absent)
+    referenceWidth: float | None = Field(default=None, ge=0.1, le=50, exclude_if=_absent)
+    referenceDepth: float | None = Field(default=None, ge=0.1, le=50, exclude_if=_absent)
     focalLengthPx: float = Field(gt=0, le=100000)
     focalSource: Literal['estimated', 'manual']
     rotation: list[float] = Field(min_length=9, max_length=9)
     translation: list[float] = Field(min_length=3, max_length=3)
     reprojectionErrorPx: float = Field(ge=0)
+
+    @model_validator(mode="after")
+    def single_reference(self):
+        rectangle = [self.points, self.referenceWidth, self.referenceDepth]
+        if self.method == 'rectangle' and any(_absent(value) for value in rectangle):
+            raise ValueError("rectangle calibration requires points and reference size")
+        if self.method == 'edges' and any(not _absent(value) for value in rectangle):
+            raise ValueError("edge calibration cannot include a reference rectangle")
+        return self
 
 
 class PhotoProjectionSize(ApiModel):
@@ -92,6 +107,8 @@ class GardenPhoto(ApiModel):
     boundary: list[ImagePoint]
     # Absent optional extensions must not change the JSON shape of legacy photos.
     calibration: PhotoCalibration | None = Field(default=None, exclude_if=lambda value: value is None)
+    # Measured length per boundary edge (boundary[i] -> boundary[i + 1]); null until entered.
+    edgeLengths: Annotated[list[Annotated[float, Field(ge=0.01, le=100)] | None], Field(min_length=3, max_length=64)] | None =         Field(default=None, exclude_if=lambda value: value is None)
     projectionSize: PhotoProjectionSize | None = Field(default=None, exclude_if=lambda value: value is None)
 
 

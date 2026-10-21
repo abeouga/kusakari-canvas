@@ -33,9 +33,11 @@ export interface ImagePoint {
 
 export interface PhotoCalibration {
     version: 1;
-    points: ImagePoint[];
-    referenceWidth: number;
-    referenceDepth: number;
+    // 'edges' は輪郭と GardenPhoto.edgeLengths から求めたカメラで、基準長方形の項目を持たない。
+    method?: 'rectangle' | 'edges';
+    points?: ImagePoint[];
+    referenceWidth?: number;
+    referenceDepth?: number;
     focalLengthPx: number;
     focalSource: 'estimated' | 'manual';
     rotation: number[];
@@ -50,6 +52,8 @@ export interface GardenPhoto {
     corners: ImagePoint[];
     boundary: ImagePoint[];
     calibration?: PhotoCalibration | null;
+    // boundary[i]→boundary[i+1] の辺について利用者が入力した実寸（m）。未入力はnull。
+    edgeLengths?: (number | null)[];
     projectionSize?: { width: number; depth: number } | null;
 }
 

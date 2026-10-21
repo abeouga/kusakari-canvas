@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { addObject, changeObjectTransform, createPlacedObject, duplicateObject, removeObject } from '../domain/gardenEditing';
 import { validSurface, withPhotoBoundary } from '../domain/photoProjection';
 import { dimensionError } from '../domain/gardenDimensions';
-import { scalePhotoFromEdge } from '../domain/photoScale';
+import { applyEdgeLength, withEdgeLengthsForBoundary } from '../domain/edgeCalibration';
 export const useEditorStore = create((set, get) => ({
     document: null,
     selectedObjectId: null,
@@ -53,7 +53,7 @@ export const useEditorStore = create((set, get) => ({
         const state = get();
         if (!state.document?.photo || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null)
             return 'カメラ設定・輪郭編集・配置物の移動が終わってから変更してください。';
-        const result = scalePhotoFromEdge(state.document, index, length);
+        const result = applyEdgeLength(state.document, index, length);
         if (result.error)
             return result.error;
         if (result.document !== state.document)
@@ -64,6 +64,11 @@ export const useEditorStore = create((set, get) => ({
         const state = get();
         if (!state.document)
             return;
+        // 基準長方形でカメラを設定し直した場合、辺の入力値はそのカメラと一致しないため破棄します。
+        if (photo?.edgeLengths && photo.calibration && photo.calibration.method !== 'edges' && photo.calibration !== state.document.photo?.calibration)
+            photo = { ...photo, edgeLengths: undefined };
+        if (photo && photo.boundary !== state.document.photo?.boundary)
+            photo = withEdgeLengthsForBoundary(photo);
         set({ document: { ...state.document, photo }, isDirty: true, saveError: null,
             photoBoundaryDraft: !photo || photo.dataUrl !== state.document.photo?.dataUrl ? null : state.photoBoundaryDraft });
     },
@@ -78,7 +83,7 @@ export const useEditorStore = create((set, get) => ({
         const photo = state.document?.photo;
         if (!state.document || !photo || state.photoBoundaryDraft === null)
             return false;
-        const next = withPhotoBoundary(photo, state.photoBoundaryDraft);
+        const next = withEdgeLengthsForBoundary(withPhotoBoundary(photo, state.photoBoundaryDraft));
         if (!validSurface(next))
             return false;
         set({ document: { ...state.document, photo: next }, photoBoundaryDraft: null, isDirty: true, saveError: null });
