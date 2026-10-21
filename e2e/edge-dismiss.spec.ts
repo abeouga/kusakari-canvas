@@ -121,8 +121,11 @@ for (const touch of [false, true]) {
       const afterResponse = await request.get(`${api}/gardens/${initial.id}`);
       expect(afterResponse.status()).toBe(200);
       const after = await afterResponse.json() as GardenDocument;
-      expect(after.width).toBeCloseTo(12.5, 4);
-      expect(after.depth).toBeCloseTo(10, 4);
+      // Only the entered edge is recorded; the garden size and camera wait for the remaining edges.
+      expect(after.photo!.edgeLengths).toEqual([12.5, null, null, null]);
+      expect(after.width).toBe(before.width);
+      expect(after.depth).toBe(before.depth);
+      expect(after.photo!.calibration).toBeUndefined();
       expect(after.photo!.boundary).toEqual(before.photo!.boundary);
       expect(after.revision).toBeGreaterThan(before.revision);
       await page.reload();
