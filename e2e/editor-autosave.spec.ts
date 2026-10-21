@@ -163,12 +163,15 @@ test('dimensions, photo upload, confirmed boundary, edge length and photo remova
   const withPhoto = await saved(page, request, garden.id, resized.revision + 1);
   expect(withPhoto.photo!.dataUrl).toBe(photo.dataUrl);
   expect(withPhoto.photo!.boundary).toHaveLength(4);
+  // 輪郭の確定後は「輪郭と寸法」の編集が開いている。
   await page.getByTestId('photo-edge-0').click();
   const edge = page.getByRole('dialog', { name: '選択した辺の長さ' });
   await edge.getByLabel('辺の長さ（m）').fill('12');
   await edge.getByRole('button', { name: '長さを適用' }).click();
   const scaled = await saved(page, request, garden.id, withPhoto.revision + 1);
-  expect(scaled.width).not.toBe(withPhoto.width);
+  // 辺ごとの実寸入力では入力した辺だけが記録され、全辺がそろうまで庭の寸法は変わらない。
+  expect(scaled.photo!.edgeLengths).toEqual([12, null, null, null]);
+  expect(scaled.width).toBe(withPhoto.width);
   expect(scaled.photo!.boundary).toEqual(withPhoto.photo!.boundary);
   await page.keyboard.press('Escape');
   await reloadedEvidence(page, request, garden.id, 'photo-and-dimensions');

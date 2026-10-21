@@ -74,6 +74,8 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
     await expect(page.getByTestId('photo-ground')).toHaveAttribute('points', uncalibrated!);
     await expect(page.getByTestId('photo-model-canvas')).toBeVisible();
     await expect(page.getByTestId('photo-vertex-number')).toHaveCount(0);
+    // 輪郭の確定後は寸法の編集が開いているため、配置に切り替える。
+    await page.getByRole('button', { name: '配置', exact: true }).click();
     // Real pointer rays must recover the same metric coordinates, even after resize.
     await page.setViewportSize({ width: 1280, height: 960 });
     const ids: string[] = [];
@@ -129,6 +131,7 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     expect(await (await request.get(`${api}/gardens/${initial.id}`)).json()).toEqual(saved);
     const outline = await page.getByTestId('photo-ground').getAttribute('points');
+    await page.getByRole('button', { name: '輪郭と寸法' }).click();
     await page.getByTestId('photo-edge-0').click();
     await expect(page.getByRole('dialog', { name: '選択した辺の長さ' })).toContainText('現在の実寸');
     expect(parseFloat((await page.getByTestId('edge-measurement').textContent())!)).toBeCloseTo(10, 1);
@@ -159,6 +162,7 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
     expect(edited.width).toBe(saved.width);
     expect(edited.depth).toBe(saved.depth);
     await page.reload();
+    await page.getByRole('button', { name: '輪郭と寸法' }).click();
     await page.getByTestId('photo-edge-0').click();
     expect(parseFloat((await page.getByTestId('edge-measurement').textContent())!)).toBeCloseTo(8, 1);
     await expect(page.getByTestId('photo-ground')).toHaveAttribute('points', outline!);

@@ -34,6 +34,8 @@ for (const touch of [false, true]) {
       const before = await seeded.json() as GardenDocument;
       await page.reload();
       await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+      const outlineMode = page.getByRole('button', { name: '輪郭と寸法' });
+      await press(outlineMode);
       const writes: string[] = [];
       page.on('request', (event) => {
         if (event.method() === 'PUT' && new URL(event.url()).pathname === `/api/gardens/${initial.id}`) writes.push(event.url());
@@ -82,7 +84,7 @@ for (const touch of [false, true]) {
       if (!touch) await expect(ground).toBeFocused();
       await press(ground);
 
-      for (const method of ['辺の計測を閉じる', '取消', 'Escape']) {
+      for (const method of ['辺の計測を閉じる', 'Escape']) {
         await press(edge);
         await field.fill('15');
         if (method === 'Escape') await field.press('Escape');
@@ -98,6 +100,7 @@ for (const touch of [false, true]) {
       const unchanged = await unchangedResponse.json();
       expect(unchanged).toEqual(before);
       await page.reload();
+      await press(outlineMode);
       await press(edge);
       await expect(field).toHaveValue(originalValue);
       await page.screenshot({ path: testInfo.outputPath('discard-reloaded.png'), fullPage: true });
@@ -129,6 +132,7 @@ for (const touch of [false, true]) {
       expect(after.photo!.boundary).toEqual(before.photo!.boundary);
       expect(after.revision).toBeGreaterThan(before.revision);
       await page.reload();
+      await press(outlineMode);
       await press(edge);
       await expect(page.getByTestId('edge-measurement')).toHaveText('12.50 m');
       await expect(field).toHaveValue('12.5');

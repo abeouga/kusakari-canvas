@@ -26,35 +26,46 @@
 .photo-empty .upload-format { font-size: 10px; margin-top: 12px; color: #9baa90; }
 .upload-symbol { display: grid; place-items: center; width: 62px; height: 62px; border: 1px solid #dce6d2; border-radius: 16px; background: #ecf2e6; color: #6c8958; }
 .is-dragging-file { outline: 3px solid #739663; outline-offset: -4px; }
+.photo-mode { display: inline-flex; padding: 2px; margin-right: 8px; border: 1px solid #dce5d6; border-radius: 7px; background: #eef2ea; }
+.photo-mode button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 4px 11px; border: 0; border-radius: 5px; background: transparent; color: #5f7255; font-size: 12px; cursor: pointer; }
+.photo-mode button[aria-pressed='true'] { background: #fff; color: #244d3d; font-weight: 600; box-shadow: 0 1px 3px #24351f1f; }
+.photo-mode button:focus-visible { outline: 2px solid #225f51; outline-offset: 1px; }
+.mode-badge { min-width: 30px; padding: 1px 6px; border-radius: 9px; background: #f7ecd6; color: #8a6a2f; font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.mode-badge.is-complete { background: #dcefe0; color: #225f51; }
+.edge-toolbar { flex-wrap: wrap; gap: 6px 14px; padding: 5px 14px; background: #eef5ef; color: #4f6a55; }
+.edge-toolbar .edge-progress { display: inline-flex; gap: 5px; align-items: baseline; }
+.edge-toolbar .edge-progress strong { color: #225f51; font-size: 13px; font-variant-numeric: tabular-nums; }
+.edge-toolbar .edge-perspective { color: #3f5e4b; }
+.edge-toolbar .edge-hint { color: #7a8c72; }
+.edge-toolbar .button { display: inline-flex; align-items: center; gap: 5px; min-height: 28px; padding: 4px 10px; font-size: 11px; }
+.edge-toolbar .button-secondary { margin-left: auto; }
 .photo-edges .edge-visible { stroke: #f0e3b5; stroke-width: 2; }
 .photo-edges .edge-hit { stroke: transparent; stroke-width: 6; fill: transparent; cursor: pointer; }
 .photo-edge:hover .edge-visible, .photo-edge.selected .edge-visible, .photo-edge:focus-within .edge-visible { stroke: #fff; stroke-width: 4; }
-.edge-label { opacity: 0; transition: opacity 100ms; }
-.photo-edge:hover .edge-label, .photo-edge.selected .edge-label, .photo-edge:focus-within .edge-label { opacity: 1; }
-.photo-edge.entered .edge-label { opacity: 1; }
-.edge-label rect { fill: #fff; stroke: #d0dcd2; stroke-width: 1; }
-.photo-edge.entered .edge-label rect { stroke: #225f51; stroke-width: 1.5; }
-.edge-label text { font: 13px 'DM Sans', 'Noto Sans JP', sans-serif; fill: #244d3d; }
-.edge-popover { position: absolute; z-index: 20; width: 280px; max-width: calc(100% - 24px); max-height: calc(100% - 24px); overflow: auto; padding: 18px; border: 1px solid #d7e0d3; border-radius: 10px; background: #fff; box-shadow: 0 10px 36px #24351f24, 0 2px 6px #24351f0b; }
-.edge-popover header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 18px; }
-.edge-popover header .icon-button { margin: -5px -6px 0 0; }
-.popover-caption { display: flex; align-items: center; gap: 6px; color: #839079; font-size: 10px; }
-.edge-popover h3 { margin-top: 7px; font-size: 16px; }
-.edge-measurement { display: grid; gap: 7px; font-size: 11px; }
-.edge-measurement output { font-size: 23px; font-weight: 500; font-variant-numeric: tabular-nums; color: #244d3d; }
-.edge-popover p { margin: 12px 0; color: #627357; font-size: 12px; line-height: 1.75; }
-.edge-popover .edge-warning { padding: 9px 10px; background: #f9f5eb; color: #806b3a; border-radius: 5px; font-size: 11px; }
+.edge-label rect { fill: #ffffffe6; stroke: #c9b98a; stroke-width: 1; stroke-dasharray: 3 2; }
+.photo-edge.entered .edge-label rect { fill: #fff; stroke: #225f51; stroke-width: 1.5; stroke-dasharray: none; }
+.photo-edge.selected .edge-label rect { stroke: #225f51; stroke-width: 2; }
+.edge-label text { font: 12px 'DM Sans', 'Noto Sans JP', sans-serif; fill: #6e6144; }
+.photo-edge.entered .edge-label text { fill: #1f4a3b; font-weight: 600; }
+.edge-popover { position: absolute; z-index: 20; width: 248px; max-width: calc(100% - 24px); max-height: calc(100% - 24px); overflow: auto; padding: 12px 14px 13px; border: 1px solid #d7e0d3; border-radius: 10px; background: #fff; box-shadow: 0 10px 30px #24351f24, 0 2px 6px #24351f0b; }
+.edge-popover header { display: flex; justify-content: space-between; align-items: start; gap: 8px; margin-bottom: 10px; }
+.edge-popover header nav { display: flex; gap: 0; margin: -4px -6px 0 0; }
+.edge-popover header .icon-button { width: 28px; height: 28px; }
+.popover-caption { display: flex; align-items: center; gap: 4px; margin-top: 3px; color: #839079; font-size: 10px; }
+.edge-popover h3 { margin: 0; font-size: 14px; }
+.edge-popover form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.edge-length-field { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 0 10px; border: 1px solid #cfdacb; border-radius: 6px; background: #fff; }
+.edge-length-field:focus-within { border-color: #225f51; box-shadow: 0 0 0 2px #225f5126; }
+.edge-length-field input { width: 100%; min-width: 0; padding: 7px 0; border: 0; outline: none; background: transparent; font-size: 16px; font-variant-numeric: tabular-nums; }
+.edge-length-field > span { color: #6f7f66; font-size: 13px; }
+.edge-popover .button { min-height: 36px; padding: 6px 14px; font-size: 12px; }
+.edge-measurement { display: flex; justify-content: space-between; align-items: baseline; margin: 9px 0 0; color: #7a8a70; font-size: 11px; }
+.edge-measurement output { font-size: 12px; font-variant-numeric: tabular-nums; color: #4d5f45; }
+.edge-measurement.is-entered span { color: #225f51; font-weight: 600; }
+.edge-popover p { margin: 8px 0 0; font-size: 11px; line-height: 1.6; }
+.edge-popover .edge-notice { color: #225f51; }
 .edge-popover p.notice-error { color: var(--danger); }
-.edge-popover footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #e8eee2; }
-.edge-popover .button { min-height: 34px; padding: 7px 13px; font-size: 11px; }
-.edge-length-field { display: grid; gap: 7px; margin-top: 16px; font-size: 12px; }
-.edge-length-field input { width: 100%; min-width: 0; font-size: 16px; }
 @media (max-width: 768px) {
-  .edge-popover footer {
-    position: sticky;
-    bottom: -18px;
-    background: white;
-    margin-bottom: -18px;
-    padding-bottom: 18px;
-  }
+  .edge-toolbar .edge-hint { display: none; }
+  .edge-toolbar .button-secondary { margin-left: 0; }
 }

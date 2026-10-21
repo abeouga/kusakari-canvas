@@ -47,6 +47,13 @@ async function screenPoint(page: Page, x: number, y: number) {
   }, { x, y });
 }
 
+// 確定済みの頂点は「輪郭と寸法」の編集中だけ表示される。
+async function showOutline(page: Page) {
+  await page.locator('svg.photo-stage').waitFor();
+  const mode = page.getByRole('button', { name: '輪郭と寸法' });
+  if (await mode.isVisible() && await mode.getAttribute('aria-pressed') !== 'true') await mode.click();
+}
+
 async function clickImage(page: Page, x: number, y: number) {
   const point = await screenPoint(page, x, y);
   await page.mouse.click(point.x, point.y);
@@ -109,10 +116,12 @@ test('I. 仮線追従・始点で6点輪郭確定・配置・保存復元・3D�
   const previousEnd = await page.getByTestId('photo-preview-edge').getAttribute('x2');
   await moveImage(page, 0.7, 0.65);
   expect(await page.getByTestId('photo-preview-edge').getAttribute('x2')).not.toBe(previousEnd);
+  await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(1);
   for (const [index, [x, y]] of outline.slice(1).entries()) {
     await clickImage(page, x, y);
     if (index === 2) {
+      await showOutline(page);
       await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(4);
       await expect(page.getByTestId('photo-ground')).toHaveCount(0);
       await expect(page.getByTestId('save-status')).toHaveText('輪郭を描画中');
@@ -129,6 +138,7 @@ test('I. 仮線追従・始点で6点輪郭確定・配置・保存復元・3D�
   await start.click();
   await expect(page.getByTestId('photo-ground')).toBeVisible();
   await expect(page.getByTestId('photo-preview-edge')).toHaveCount(0);
+  await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(6);
   await expect(page.getByRole('button', { name: '輪郭を確定', exact: true })).toHaveCount(0);
   await selectTestPlant(page);
@@ -143,6 +153,7 @@ test('I. 仮線追従・始点で6点輪郭確定・配置・保存復元・3D�
   await page.reload();
   await expect(page.getByRole('button', { name: '写真＋設計' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.photo-stage image')).toBeVisible();
+  await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(6);
   await expect(page.getByTestId('photo-ground')).toBeVisible();
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-photo-polygon.png'), fullPage: true });
@@ -179,6 +190,7 @@ test('J. 未完成・交差輪郭を拒否し、戻す・始点確定・取消�
   await expect(page.getByTestId('save-status')).toHaveText('輪郭を描画中');
   await start.click();
   await expect(page.locator('.photo-workspace').getByRole('alert')).toContainText('3〜64点');
+  await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(2);
   await clickImage(page, 0.25, 0.3);
   await clickImage(page, 0.65, 0.7);
@@ -189,6 +201,7 @@ test('J. 未完成・交差輪郭を拒否し、戻す・始点確定・取消�
   await expect(page.getByTestId('save-status')).toHaveText('輪郭を描画中');
   await page.getByRole('button', { name: '最後の点を戻す' }).click();
   await expect(page.locator('.photo-workspace').getByRole('alert')).toHaveCount(0);
+  await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(3);
   await start.click();
   await expect(page.getByTestId('photo-ground')).toBeVisible();
@@ -196,7 +209,9 @@ test('J. 未完成・交差輪郭を拒否し、戻す・始点確定・取消�
   const saved = await saveArtifact(request, id, 'garden-photo-triangle.json');
   expect(saved.photo?.boundary).toHaveLength(3);
   await page.reload();
+  await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(3);
+  await showOutline(page);
   await page.getByRole('button', { name: '庭の領域を書き直す' }).click();
   for (const [x, y] of outline.slice(0, 4)) await clickImage(page, x, y);
   await expect(finish).toHaveCount(0);
@@ -206,20 +221,24 @@ test('J. 未完成・交差輪郭を拒否し、戻す・始点確定・取消�
   expect(await gardenJson(request, id)).toEqual(saved);
   await page.getByRole('button', { name: '輪郭の描画を取消' }).click();
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+  await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(3);
   await expect(page.getByTestId('photo-ground')).toBeVisible();
   await expect(page.getByTestId('photo-preview-edge')).toHaveCount(0);
   expect(await gardenJson(request, id)).toEqual(saved);
+  await showOutline(page);
   await page.getByRole('button', { name: '庭の領域を書き直す' }).click();
   for (const [x, y] of outline.slice(0, 4)) await clickImage(page, x, y);
   let unloadDialog = false;
   page.once('dialog', async (dialog) => { unloadDialog = dialog.type() === 'beforeunload'; await dialog.accept(); });
   await page.reload();
   expect(unloadDialog).toBe(true);
+  await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(3);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   expect(await gardenJson(request, id)).toEqual(saved);
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-photo-triangle.png'), fullPage: true });
+  await showOutline(page);
   await page.getByRole('button', { name: '庭の領域を書き直す' }).click();
   await clickImage(page, ...outline[0] as [number, number]);
   await page.getByLabel('庭の写真を選択').setInputFiles({ name: 'garden.png', mimeType: 'image/png', buffer: Buffer.from(imageDataUrl.split(',')[1], 'base64') });
@@ -261,6 +280,7 @@ for (const [name, vertices] of [
       expect(saved.photo!.boundary[index].y).toBeCloseTo(y, 2);
     }
     await page.reload();
+    await showOutline(page);
     await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(vertices.length);
     await expect(page.getByTestId('photo-ground')).toBeVisible();
     await page.screenshot({ path: resolve(artifactDirectory, `garden-photo-${name}.png`), fullPage: true });
@@ -276,9 +296,11 @@ test('L. 旧投影データを復元し、元の四隅を越える輪郭へ描�
   expect(response.ok()).toBeTruthy();
   page.once('dialog', (dialog) => dialog.accept());
   await page.reload();
+  await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(6);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   expect((await gardenJson(request, id)).photo).toEqual(legacy.photo);
+  await showOutline(page);
   await page.getByRole('button', { name: '庭の領域を書き直す' }).click();
   for (const [x, y] of [[0.03, 0.95], [0.97, 0.95], [0.97, 0.05], [0.03, 0.05]]) await clickImage(page, x, y);
   await page.getByTestId('photo-vertex-1').click();
@@ -289,6 +311,7 @@ test('L. 旧投影データを復元し、元の四隅を越える輪郭へ描�
   expect(saved.photo!.boundary).toHaveLength(4);
   expect(saved.photo!.corners[0].x).toBeCloseTo(0.03, 2);
   await page.reload();
+  await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(4);
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-photo-legacy-redraw.png'), fullPage: true });
 });
@@ -297,6 +320,7 @@ test('M. 始点近くでも別の頂点のクリックでは自動確定しな�
   await page.setViewportSize({ width: 1120, height: 900 });
   const { id } = await preparePhoto(page);
   for (const [x, y] of [[0.3, 0.8], [0.7, 0.8], [0.7, 0.3], [0.32125, 0.797]]) await clickImage(page, x, y);
+  await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(4);
   await expect(page.getByTestId('save-status')).toHaveText('輪郭を描画中');
   await expect(page.getByTestId('photo-ground')).toHaveCount(0);
@@ -305,6 +329,7 @@ test('M. 始点近くでも別の頂点のクリックでは自動確定しな�
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   expect((await saveArtifact(request, id, 'garden-photo-close-vertices.json')).photo!.boundary).toHaveLength(4);
   await page.reload();
+  await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(4);
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-photo-close-vertices.png'), fullPage: true });
 });
@@ -383,6 +408,7 @@ test('N. 木の3D・写真相互配置、固定カメラ、頂点番号非表示
   await expect(page.getByTestId('object-row-1')).toBeVisible();
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-photo-trees-3d.png'), fullPage: true });
   await page.getByRole('button', { name: '写真＋設計' }).click();
+  await showOutline(page);
   await page.getByRole('button', { name: '庭の領域を書き直す' }).click();
   await clickImage(page, 0.1, 0.9);
   await expect(page.getByTestId('photo-vertex-number')).toHaveCount(1);
@@ -392,6 +418,7 @@ test('N. 木の3D・写真相互配置、固定カメラ、頂点番号非表示
   await expect(page.getByTestId('photo-vertex-number')).toHaveCount(0);
   await expect(page.getByTestId('photo-model-canvas')).toHaveAttribute('data-object-count', '2');
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+  await showOutline(page);
   await page.getByRole('button', { name: '庭の領域を書き直す' }).click();
   for (const [x, y] of [[0.1, 0.9], [0.9, 0.9], [0.9, 0.15], [0.1, 0.15]]) await clickImage(page, x, y);
   await page.getByTestId('photo-vertex-1').click();

@@ -8,18 +8,22 @@ function formatLength(length) {
   return String(Number(length.toFixed(6)));
 }
 
-export function EdgeMeasurementPopover({ document, selection, onClose }) {
+export function EdgeMeasurementPopover({ document, selection, onClose, onNavigate }) {
+  const photo = document.photo;
+  const count = photo.boundary.length;
   const length = edgeLength(document, selection.index);
   const panel = useRef(null);
   const input = useRef(null);
-  const [value, setValue] = useState(() => formatLength(length));
+  // 未入力の辺は概算を候補として示すだけにし、入力欄は空にします。
+  const [value, setValue] = useState(() => (typeof photo.edgeLengths?.[selection.index] === 'number' ? formatLength(length) : ''));
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
+  const [notice, setNotice] = useState(selection.notice ?? '');
   const [position, setPosition] = useState({ left: selection.left, top: selection.top });
   const locked = useEditorStore((state) => state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null);
   const measurable = Number.isFinite(length) && length > 0.000001;
-  const entered = typeof document.photo.edgeLengths?.[selection.index] === 'number';
-  const remaining = document.photo.boundary.length - (document.photo.edgeLengths ?? []).filter((item) => typeof item === 'number').length;
+  const entries = photo.edgeLengths ?? [];
+  const entered = typeof entries[selection.index] === 'number';
+  const enteredCount = entries.filter((item) => typeof item === 'number').length;
 
   useEffect(() => {
     const element = panel.current;
@@ -42,9 +46,8 @@ export function EdgeMeasurementPopover({ document, selection, onClose }) {
     const element = panel.current;
     const container = element.parentElement;
     const svg = container.querySelector('svg.photo-stage');
-    const photo = document.photo;
     const a = photo.boundary[selection.index];
-    const b = photo.boundary[(selection.index + 1) % photo.boundary.length];
+    const b = photo.boundary[(selection.index + 1) % count];
     function place() {
       const matrix = svg.getScreenCTM();
       if (!matrix) return;
@@ -63,7 +66,7 @@ export function EdgeMeasurementPopover({ document, selection, onClose }) {
     observer.observe(element);
     place();
     return () => observer.disconnect();
-  }, [document.photo, selection.index]);
+  }, [photo, selection.index, count]);
 
   function close() {
     onClose();
@@ -82,9 +85,8 @@ export function EdgeMeasurementPopover({ document, selection, onClose }) {
       setError('辺の長さは0より大きい数値で入力してください。');
       return;
     }
-    const requestedLength = Number(value);
     const previousDocument = useEditorStore.getState().document;
-    const cause = useEditorStore.getState().setPhotoEdgeLength(selection.index, requestedLength);
+    const cause = useEditorStore.getState().setPhotoEdgeLength(selection.index, Number(value));
     if (cause) {
       setError(cause);
       return;
@@ -95,35 +97,47 @@ export function EdgeMeasurementPopover({ document, selection, onClose }) {
       setNotice('長さは変更されていません。');
       return;
     }
-    const left = next.photo.edgeLengths.filter((item) => item === null).length;
-    setNotice(left ? `長さを記録しました。残り${left}辺の長さを入力すると、写真のパースを求めます。` : '長さを適用し、写真のパースを求めました。自動保存されます。');
+    const pending = next.photo.edgeLengths.map((item, index) => (item === null ? index : -1)).filter((index) => index >= 0);
+    if (pending.length) {
+      // 続けて入力できるよう、次の未入力の辺へ移ります。
+      const following = pending.find((index) => index > selection.index) ?? pending[0];
+      onNavigate(following, `辺${selection.index + 1}を記録しました。残り${pending.length}辺を入力すると、写真のパースを求めます。`);
+      return;
+    }
+    setNotice('全辺の実寸から写真のパースを求めました。自動保存されます。');
   }
 
+  let caption = '現在の概算';
+  if (entered) caption = '入力済み';
+  else if (photo.calibration) caption = '現在の実寸';
   return <section ref={panel} className="edge-popover" role="dialog" aria-label="選択した辺の長さ" style={position}
     onPointerDown={(event) => event.stopPropagation()}
     onKeyDown={(event) => { event.stopPropagation(); if (event.key === 'Escape') { event.preventDefault(); close(); } }}>
     <header>
-      <div><span className="popover-caption"><UiIcon name="ruler" size={14}/>実寸を入力</span><h3>辺{selection.index + 1}の長さ</h3></div>
-      <button type="button" className="icon-button" aria-label="辺の計測を閉じる" onClick={close}><UiIcon name="close" size={17}/></button>
+      <div>
+        <h3>辺{selection.index + 1}の長さ</h3>
+        <span className="popover-caption"><UiIcon name="ruler" size={12}/>{enteredCount}/{count}辺 入力済み</span>
+      </div>
+      <nav aria-label="辺の切替">
+        <button type="button" className="icon-button" aria-label="前の辺" onClick={() => onNavigate((selection.index + count - 1) % count)}><UiIcon name="back" size={15}/></button>
+        <button type="button" className="icon-button" aria-label="次の辺" onClick={() => onNavigate((selection.index + 1) % count)}><UiIcon name="arrow" size={15}/></button>
+        <button type="button" className="icon-button" aria-label="辺の計測を閉じる" onClick={close}><UiIcon name="close" size={15}/></button>
+      </nav>
     </header>
-    <div className="edge-measurement">
-      <span>{entered ? '入力した実寸' : document.photo.calibration ? '現在の実寸' : '現在の概算'}</span>
-      <output data-testid="edge-measurement" aria-label="辺の計測値">{measurable ? `${length.toFixed(2)} m` : '計測できません'}</output>
-    </div>
     <form onSubmit={apply} noValidate>
-      <label className="edge-length-field">辺の長さ（m）
-        <input ref={input} type="text" inputMode="decimal" maxLength={32} value={value} disabled={locked || !measurable}
+      <span className="edge-length-field">
+        <input ref={input} type="text" inputMode="decimal" maxLength={32} aria-label="辺の長さ（m）" placeholder={measurable ? length.toFixed(2) : ''} value={value} disabled={locked || !measurable}
           onChange={(event) => { setValue(event.target.value); setError(''); setNotice(''); }} />
-      </label>
-      <p>写真上の輪郭とほかの辺の長さは変えずに、全辺の実寸から写真のパースを求めます。</p>
-      {remaining > 0 && <p className="edge-warning">全{document.photo.boundary.length}辺のうち{remaining}辺が未入力です。全辺を入力するとパースを求めます。</p>}
-      {!measurable && <p className="notice-error">地面上の位置を求められません。カメラ設定を確認してください。</p>}
-      {error && <p role="alert" className="notice-error">{error}</p>}
-      {notice && <p role="status">{notice}</p>}
-      <footer>
-        <button type="button" className="button button-secondary" onClick={close}>取消</button>
-        <button type="submit" className="button button-primary" disabled={locked || !measurable}>長さを適用</button>
-      </footer>
+        <span aria-hidden="true">m</span>
+      </span>
+      <button type="submit" className="button button-primary" aria-label="長さを適用" disabled={locked || !measurable}>適用</button>
     </form>
+    <p className={`edge-measurement${entered ? ' is-entered' : ''}`}>
+      <span>{caption}</span>
+      <output data-testid="edge-measurement" aria-label="辺の計測値">{measurable ? `${length.toFixed(2)} m` : '計測できません'}</output>
+    </p>
+    {!measurable && <p className="notice-error">地面上の位置を求められません。カメラ設定を確認してください。</p>}
+    {error && <p role="alert" className="notice-error">{error}</p>}
+    {notice && <p role="status" className="edge-notice">{notice}</p>}
   </section>;
 }

@@ -118,6 +118,7 @@ test('redrawing a smaller boundary pauses persistence until the excluded placeme
   const photo=await syntheticPhoto(page);
   const garden=await createScene(request,[],photo,[shrub(2,-1)]);
   await openScene(page,garden);
+  await page.getByRole('button',{name:'輪郭と寸法'}).click();
   await page.getByRole('button',{name:'庭の領域を書き直す'}).click();
   for (const [x,y] of [[.1,.9],[.9,.9],[.9,.5],[.5,.5],[.5,.1],[.1,.1]]) {
     const point=await page.locator('.photo-stage').evaluate((element,p)=>{

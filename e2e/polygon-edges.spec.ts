@@ -33,6 +33,7 @@ for (const fixedProjection of [false, true]) {
       expect(response.status()).toBe(200);
       const saved = await response.json() as GardenDocument;
       await page.reload();
+      await page.getByRole('button', { name: '輪郭と寸法' }).click();
       await expect(page.getByTestId('photo-edge-5')).toBeVisible();
       const outline = await page.getByTestId('photo-ground').getAttribute('points');
       const vertices = await page.locator('[data-testid^="photo-vertex-"]').evaluateAll((elements) =>
@@ -65,7 +66,7 @@ for (const fixedProjection of [false, true]) {
         return box.x >= stage.x && box.y >= stage.y && box.x + box.width <= stage.x + stage.width && box.y + box.height <= stage.y + stage.height;
       }).toBe(true);
       await page.screenshot({ path: resolve(directory, 'edge-measurement-1024-' + mode + '.png'), fullPage: true });
-      await popup.getByRole('button', { name: '取消', exact: true }).click();
+      await popup.getByRole('button', { name: '辺の計測を閉じる' }).click();
       await expect(page.getByTestId('photo-edge-4')).toBeFocused();
       const camera = page.getByRole('button', { name: '写真のカメラを設定' });
       await camera.click();
@@ -80,6 +81,7 @@ for (const fixedProjection of [false, true]) {
       await page.getByRole('button', { name: '写真＋設計', exact: true }).click();
       await expect(page.getByTestId('photo-ground')).toHaveAttribute('points', outline!);
       await page.reload();
+      await page.getByRole('button', { name: '輪郭と寸法' }).click();
       await page.getByTestId('photo-edge-5').click();
       await expect(page.getByTestId('edge-measurement')).toHaveText('8.00 m');
       await expect(page.getByTestId('photo-ground')).toHaveAttribute('points', outline!);

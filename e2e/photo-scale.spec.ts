@@ -86,6 +86,12 @@ for (const mode of ['legacy', 'fixed-projection', 'calibrated']) {
       const before = await seed.json() as GardenDocument;
       await page.reload();
       await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
+      // 配置中は頂点と辺の操作を出さない。「輪郭と寸法」に切り替えて編集する。
+      await expect(page.locator('[data-testid^="photo-vertex-"]')).toHaveCount(0);
+      await expect(page.locator('[data-testid^="photo-edge-"]')).toHaveCount(0);
+      const outlineMode = page.getByRole('button', { name: '輪郭と寸法' });
+      await expect(outlineMode).toContainText('0/4');
+      await outlineMode.click();
       const ground = await page.getByTestId('photo-ground').getAttribute('points');
       const vertices = await page.locator('[data-testid^="photo-vertex-"]').evaluateAll(nodes => nodes.map(node => [node.getAttribute('cx'), node.getAttribute('cy')]));
       const popup = page.getByRole('dialog', { name: '選択した辺の長さ' });
@@ -98,7 +104,7 @@ for (const mode of ['legacy', 'fixed-projection', 'calibrated']) {
       await page.keyboard.press('Escape');
       await page.getByTestId('photo-edge-0').click();
       await field.fill('12.5');
-      await popup.getByRole('button', { name: '取消', exact: true }).click();
+      await popup.getByRole('button', { name: '辺の計測を閉じる' }).click();
       await expect(page.getByTestId('save-status')).toHaveText('保存済み');
       await page.getByTestId('photo-edge-0').click();
       for (const invalid of ['', '0', '-1', 'abc', 'Infinity', '9999', '.000001']) {
@@ -109,14 +115,21 @@ for (const mode of ['legacy', 'fixed-projection', 'calibrated']) {
       await expect(page.getByTestId('save-status')).toHaveText('保存済み');
       await page.keyboard.press('Escape');
 
-      // 1辺ずつ入力する。入力した辺以外の表示値は一切変わらない。
+      // 1辺ずつ入力する。入力した辺以外の表示値は一切変わらない。未入力の辺が残る間は次の辺へ進む。
       const truth = [10, 8, 10, 8];
       for (const [index, length] of truth.entries()) {
         const previous = await edgeLabels(page);
         await openEdge(page, index);
         await field.fill(String(length));
         await field.press('Enter');
-        await expect(page.getByTestId('edge-measurement')).toHaveText(`${length.toFixed(2)} m`);
+        if (index < 3) {
+          await expect(popup.getByRole('heading')).toHaveText(`辺${index + 2}の長さ`);
+          await expect(field).toBeFocused();
+          await expect(field).toHaveValue('');
+          await expect(page.getByTestId('edge-progress')).toContainText(`${index + 1}/4辺`);
+        } else {
+          await expect(page.getByTestId('edge-measurement')).toHaveText(`${length.toFixed(2)} m`);
+        }
         await expect(popup.locator('p[role="status"]')).toContainText(index < 3 ? `残り${3 - index}辺` : '写真のパースを求めました');
         await page.keyboard.press('Escape');
         const current = await edgeLabels(page);
@@ -169,6 +182,8 @@ for (const mode of ['legacy', 'fixed-projection', 'calibrated']) {
 
       await page.reload();
       await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
+      await expect(outlineMode).toContainText('4/4');
+      await outlineMode.click();
       expect(await edgeLabels(page)).toEqual(['11.00 m', ...labels.slice(1)]);
       await expect(page.getByTestId('photo-ground')).toHaveAttribute('points', ground!);
       expect(await page.locator('[data-testid^="photo-vertex-"]').evaluateAll(nodes => nodes.map(node => [node.getAttribute('cx'), node.getAttribute('cy')]))).toEqual(vertices);

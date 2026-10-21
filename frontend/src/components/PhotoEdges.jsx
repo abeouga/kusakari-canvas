@@ -1,14 +1,12 @@
 import { edgeLength } from '../domain/polygonEdges';
-export function PhotoEdges({ document, selected, disabled, onSelect }) {
+export function PhotoEdges({ document, unit, selected, disabled, onSelect }) {
     const photo = document.photo;
-    // ラベルは画像の画素単位で描くため、画像幅に比例させて画面上の大きさを揃えます。
-    const labelScale = photo.imageWidth / 1000;
     return <g className="photo-edges">{photo.boundary.map((a, index) => {
             const b = photo.boundary[(index + 1) % photo.boundary.length];
             const length = edgeLength(document, index);
             const x = (a.x + b.x) * photo.imageWidth / 2, y = (a.y + b.y) * photo.imageHeight / 2;
             const dx = (b.x - a.x) * photo.imageWidth, dy = (b.y - a.y) * photo.imageHeight;
-            const size = Math.max(1, Math.hypot(dx, dy)), nx = -dy / size * 7, ny = dx / size * 7;
+            const size = Math.max(1, Math.hypot(dx, dy)), nx = -dy / size * 8 * unit, ny = dx / size * 8 * unit;
             const hit = [[a.x * photo.imageWidth + nx, a.y * photo.imageHeight + ny], [b.x * photo.imageWidth + nx, b.y * photo.imageHeight + ny],
                 [b.x * photo.imageWidth - nx, b.y * photo.imageHeight - ny], [a.x * photo.imageWidth - nx, a.y * photo.imageHeight - ny]].map((p) => p.join(',')).join(' ');
             function select(element) {
@@ -28,11 +26,11 @@ export function PhotoEdges({ document, selected, disabled, onSelect }) {
                 e.stopPropagation();
                 select(e.currentTarget);
             } }}/>
-      <g className="edge-label" pointerEvents="none" transform={`translate(${x},${y - 14 * labelScale}) scale(${labelScale})`}>
-        <rect x="-39" y="-15" width="78" height="27" rx="5"/>
-        <text textAnchor="middle" y="3">{length?.toFixed(2) ?? '—'} m</text>
+      <g className="edge-label" pointerEvents="none" transform={`translate(${x},${y - 16 * unit}) scale(${unit})`}>
+        <rect x="-33" y="-12" width="66" height="22" rx="4"/>
+        <text textAnchor="middle" y="4">{length?.toFixed(2) ?? '—'} m</text>
       </g>
-      {selected === index && <circle cx={a.x * photo.imageWidth} cy={a.y * photo.imageHeight} r="9" fill="#fff" stroke="#225f51" strokeWidth="3" pointerEvents="none"/>}
+      {selected === index && <circle cx={a.x * photo.imageWidth} cy={a.y * photo.imageHeight} r={6 * unit} fill="#fff" stroke="#225f51" strokeWidth={2 * unit} pointerEvents="none"/>}
     </g>;
         })}</g>;
 }
