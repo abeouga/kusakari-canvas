@@ -31,8 +31,6 @@
 .garden-canvas canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .canvas-corner-label { position: absolute; top: 18px; left: 22px; display: grid; place-items: center; width: 25px; height: 25px; border: 1px solid #c5cfc1; border-radius: 50%; color: #7e8c78; font-size: 10px; pointer-events: none; }
 .canvas-loading, .canvas-unavailable { flex: 1; display: grid; place-content: center; text-align: center; padding: 24px; color: var(--muted); font-size: 13px; }
-.canvas-footer { display: flex; align-items: center; flex: 0 0 30px; padding: 0 18px; gap: 18px; color: #879185; background: #f7f8f5; font-size: 10px; border-top: 1px solid #e0e5db; }
-.canvas-tool-hint { margin-right: auto; color: #6d7a6b; white-space: nowrap; }
 .catalog-panel { grid-column: 1; grid-row: 2; padding: 0 18px 14px; border-top: 1px solid var(--line); background: #fff; min-width: 0; }
 .catalog-panel.is-collapsed { padding-bottom: 0; }
 .catalog-heading { display: flex; align-items: center; gap: 18px; height: 42px; }
@@ -95,7 +93,6 @@
   .catalog-panel { padding-left: 12px; padding-right: 12px; }
   .asset-card { flex-basis: 155px; }
   .asset-preview { width: 51px; height: 59px; }
-  .canvas-footer > span:last-child { display: none; }
   .transform-section { padding: 18px 16px; }
 }
 @media (max-height: 760px) { .asset-preview { height: 52px; } .catalog-heading { height: 36px; } }

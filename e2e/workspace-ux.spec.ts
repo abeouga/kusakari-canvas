@@ -18,7 +18,8 @@ test('S. 作業面・独立開閉・ダイアログのフォーカス・未保�
     await page.getByRole('button', { name: '商品・買い物リストパネルを隠す', exact: true }).click();
     await expect(page.locator('#properties-panel')).toHaveCount(0);
     await expect.poll(async () => (await canvas.boundingBox())!.width).toBeGreaterThan(initialBox.width);
-    await expect(page.getByTestId('object-toolbar')).toBeVisible();
+    // 選択も写真の操作もない3D表示では、表示領域を覆う空のツールバーを出さない。
+    await expect(page.getByTestId('object-toolbar')).toHaveCount(0);
     await page.getByRole('button', { name: '商品・買い物リストパネルを表示', exact: true }).click();
     await expect(page.locator('#properties-panel')).toBeVisible();
     await expect.poll(async () => (await canvas.boundingBox())!.width).toBe(initialBox.width);

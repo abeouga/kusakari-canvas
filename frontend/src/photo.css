@@ -1,13 +1,8 @@
 .photo-workspace { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; background: #e7ebe4; overflow: hidden; }
-.photo-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; min-height: 44px; padding: 4px 14px; background: #fafbf8; border-bottom: 1px solid #e4e9df; flex-shrink: 0; }
-.photo-controls .text-button { font-size: 12px; }
-.photo-controls .photo-remove { color: #707d6a; font-size: 11px; margin-left: 4px; }
-.photo-controls .button { font-size: 11px; padding: 6px 10px; min-height: 30px; }
-.photo-display-controls { display: flex; align-items: center; margin-left: auto; gap: 13px; padding: 0 6px; }
-.photo-display-controls label { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #65775c; }
-.photo-display-controls input { width: 12px; height: 12px; }
-.photo-guidance { display: flex; align-items: center; gap: 12px; min-height: 33px; padding: 5px 20px; background: #f4f6ef; color: #687b5b; font-size: 11px; border-bottom: 1px solid #e1e7dc; flex-shrink: 0; }
+.photo-guidance { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-height: 33px; padding: 5px 20px; background: #f4f6ef; color: #687b5b; font-size: 11px; border-bottom: 1px solid #e1e7dc; flex-shrink: 0; }
 .photo-guidance.is-drawing { background: #f7f1e4; color: #896c38; }
+.photo-guidance .button { min-height: 28px; padding: 4px 10px; font-size: 11px; }
+.photo-guidance.is-drawing .button:first-of-type { margin-left: auto; }
 .drawing-count { font-weight: 600; }
 .photo-workspace > .notice-error { padding: 7px 20px; background: #fdf5ee; flex-shrink: 0; }
 .photo-stage-shell { flex: 1; position: relative; min-height: 0; overflow: hidden; }
@@ -26,17 +21,30 @@
 .photo-empty .upload-format { font-size: 10px; margin-top: 12px; color: #9baa90; }
 .upload-symbol { display: grid; place-items: center; width: 62px; height: 62px; border: 1px solid #dce6d2; border-radius: 16px; background: #ecf2e6; color: #6c8958; }
 .is-dragging-file { outline: 3px solid #739663; outline-offset: -4px; }
-.photo-mode { display: inline-flex; padding: 2px; margin-right: 8px; border: 1px solid #dce5d6; border-radius: 7px; background: #eef2ea; }
-.photo-mode button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 4px 11px; border: 0; border-radius: 5px; background: transparent; color: #5f7255; font-size: 12px; cursor: pointer; }
+/* 写真の操作は表示領域右上のツールバー（.object-toolbar）に並べる。 */
+.object-toolbar { align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.photo-mode { display: inline-flex; gap: 2px; padding: 2px; border-radius: 6px; background: #eef2ea; }
+.photo-mode button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 4px 9px; border: 0; border-radius: 5px; background: transparent; color: #5f7255; font-size: 12px; white-space: nowrap; cursor: pointer; }
 .photo-mode button[aria-pressed='true'] { background: #fff; color: #244d3d; font-weight: 600; box-shadow: 0 1px 3px #24351f1f; }
-.photo-mode button:focus-visible { outline: 2px solid #225f51; outline-offset: 1px; }
+.photo-mode button:focus-visible, .toolbar-icons button:focus-visible, .toolbar-icons label:has(input:focus-visible) { outline: 2px solid #225f51; outline-offset: 1px; }
+.toolbar-icons { display: inline-flex; gap: 1px; padding-left: 5px; border-left: 1px solid #e3e9de; }
+.toolbar-icons button, .toolbar-icons label { position: relative; display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: #5f7255; cursor: pointer; }
+.toolbar-icons button:hover:not(:disabled), .toolbar-icons label:hover { background: #f0f4ec; color: #244d3d; }
+.toolbar-icons button:disabled { opacity: .45; cursor: default; }
+/* 入力欄はラベル全体に重ねて透明にし、チェックボックスとして操作・読み上げできるようにする。 */
+.display-toggles input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.display-toggles label:has(input:checked) { background: #e4efe6; color: #225f51; }
+.display-toggles label:has(input:not(:checked)) { color: #a3ae9b; }
+.display-toggles label:has(input:disabled) { opacity: .45; }
+.toolbar-text-button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 4px 10px; border: 1px solid #cfdacb; border-radius: 6px; background: #fff; color: #244d3d; font-size: 12px; white-space: nowrap; }
+.object-details > summary { display: inline-flex; align-items: center; gap: 5px; }
+.object-toolbar:has(.toolbar-icons) .object-details { padding-left: 5px; border-left: 1px solid #e3e9de; }
 .mode-badge { min-width: 30px; padding: 1px 6px; border-radius: 9px; background: #f7ecd6; color: #8a6a2f; font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .mode-badge.is-complete { background: #dcefe0; color: #225f51; }
-.edge-toolbar { flex-wrap: wrap; gap: 6px 14px; padding: 5px 14px; background: #eef5ef; color: #4f6a55; }
+.edge-toolbar { flex-wrap: wrap; gap: 6px 14px; padding: 5px 10px 5px 14px; background: #eef5ef; color: #4f6a55; }
 .edge-toolbar .edge-progress { display: inline-flex; gap: 5px; align-items: baseline; }
 .edge-toolbar .edge-progress strong { color: #225f51; font-size: 13px; font-variant-numeric: tabular-nums; }
 .edge-toolbar .edge-perspective { color: #3f5e4b; }
-.edge-toolbar .edge-hint { color: #7a8c72; }
 .edge-toolbar .button { display: inline-flex; align-items: center; gap: 5px; min-height: 28px; padding: 4px 10px; font-size: 11px; }
 .edge-toolbar .button-secondary { margin-left: auto; }
 .photo-edges .edge-visible { stroke: #f0e3b5; stroke-width: 2; }
@@ -66,6 +74,11 @@
 .edge-popover .edge-notice { color: #225f51; }
 .edge-popover p.notice-error { color: var(--danger); }
 @media (max-width: 768px) {
-  .edge-toolbar .edge-hint { display: none; }
+  .photo-mode .toolbar-label, .object-details .toolbar-label { display: none; }
+  .object-toolbar { gap: 3px; padding: 3px; }
+  .toolbar-icons { padding-left: 3px; }
+  .toolbar-icons button, .toolbar-icons label { width: 28px; height: 28px; }
+  .photo-mode button { padding: 4px 7px; }
+  .object-toolbar:has(.toolbar-icons) .object-details > summary { padding: 7px 6px; }
   .edge-toolbar .button-secondary { margin-left: 0; }
 }

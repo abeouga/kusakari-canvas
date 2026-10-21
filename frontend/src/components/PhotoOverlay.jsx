@@ -6,8 +6,9 @@ import { PhotoCalibrationEditor } from './PhotoCalibrationEditor';
 import { calibratedBoundaryError, projectionCorners } from '../domain/calibratedProjection';
 import { PhotoEdges } from './PhotoEdges';
 import { EdgeMeasurementPopover } from './EdgeMeasurementPopover';
+import { groundSummary } from '../domain/gardenSummary';
 import { UiIcon } from './UiIcon';
-export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retryRequest, onModelLoaded, onModelFailed, editorOverlay, captureRef }) {
+export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retryRequest, onModelLoaded, onModelFailed, renderOverlay, captureRef }) {
     const svg = useRef(null);
     const fileInput = useRef(null);
     const cameraButton = useRef(null);
@@ -36,8 +37,8 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
     const editMode = editingEdges && boundaryValid && !drawingBoundary;
     const edgeCount = photo?.boundary.length ?? 0;
     const enteredCount = (photo?.edgeLengths ?? []).filter((length) => typeof length === 'number').length;
-    let perspective = '概算（全辺の入力で推定）';
-    if (photo?.calibration) perspective = photo.calibration.method === 'edges' ? '辺の実寸から推定済み' : '基準長方形のカメラ設定';
+    let perspective = '概算';
+    if (photo?.calibration) perspective = photo.calibration.method === 'edges' ? '辺の実寸から推定' : 'カメラ設定';
     useLayoutEffect(() => {
         const element = svg.current;
         if (!element)
@@ -188,6 +189,26 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
             setError('');
         }
     }
+    const summary = editMode ? groundSummary(document) : null;
+    // 写真の操作は表示領域の右上のツールバーに置き、写真の上の帯を設けません。
+    // 輪郭の描画中は写真の隅を覆わないよう、ツールバーを出しません（戻す・取消は描画中の帯にあります）。
+    const photoTools = photo && !drawingBoundary && <>
+      {boundaryValid && <div className="photo-mode" role="group" aria-label="写真の操作">
+        <button type="button" aria-pressed={!editingEdges} aria-label="配置モード" title="配置" onClick={() => setMode(false)}><UiIcon name="place" size={15}/><span className="toolbar-label">配置</span></button>
+        <button type="button" aria-pressed={editingEdges} aria-label="輪郭と寸法" title="輪郭と寸法" onClick={() => setMode(true)}><UiIcon name="outline" size={15}/><span className="toolbar-label">輪郭と寸法</span><span className={`mode-badge${enteredCount === edgeCount ? ' is-complete' : ''}`}>{enteredCount}/{edgeCount}</span></button>
+      </div>}
+      {!boundaryValid && <button type="button" className="toolbar-text-button" disabled={disabled} onClick={startBoundary}><UiIcon name="polygon" size={15}/>庭の領域を描く</button>}
+      <div className="toolbar-icons" role="group" aria-label="写真">
+        <button type="button" aria-label="写真を変更" title="写真を変更" disabled={disabled} onClick={() => fileInput.current?.click()}><UiIcon name="photo-change" size={16}/></button>
+        <button ref={cameraButton} type="button" aria-label="写真のカメラを設定" title="写真のカメラを設定" disabled={disabled} aria-haspopup="dialog" onClick={() => { setSelectedEdge(null); useEditorStore.getState().setCalibrating(true); }}><UiIcon name="camera" size={16}/></button>
+        <button type="button" aria-label="写真を外す" title="写真を外す" disabled={disabled} onClick={() => { useEditorStore.getState().setPhoto(null); setSelectedEdge(null); setPointer(null); setError(''); }}><UiIcon name="photo-remove" size={16}/></button>
+      </div>
+      <div className="toolbar-icons display-toggles" role="group" aria-label="表示">
+        <label title="地面"><input type="checkbox" aria-label="地面" checked={groundVisible} onChange={(event) => setGroundVisible(event.target.checked)}/><UiIcon name="ground" size={16}/></label>
+        <label title="グリッド"><input type="checkbox" aria-label="グリッド" checked={gridVisible} onChange={(event) => setGridVisible(event.target.checked)}/><UiIcon name="grid" size={16}/></label>
+        <label title="配置物"><input type="checkbox" aria-label="配置" disabled={disabled} checked={objectsVisible} onChange={(event) => setObjectsVisible(event.target.checked)}/><UiIcon name="tree" size={16}/></label>
+      </div>
+    </>;
     const pixels = (p) => ({ x: p.x * photo.imageWidth, y: p.y * photo.imageHeight });
     const projected = (p) => pixels(project(p));
     const boundaryPoints = draft ?? photo?.boundary ?? [];
@@ -207,23 +228,9 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
     return <div className={`photo-workspace${isFileDragging ? ' is-dragging-file' : ''}`} onDragEnter={handleFileDragEnter} onDragOver={handleFileDragOver} onDragLeave={handleFileDragLeave} onDrop={handleFileDrop}>
     {calibrating && photo && <PhotoCalibrationEditor document={document} photo={photo} returnFocus={cameraButton} onClose={() => useEditorStore.getState().setCalibrating(false)}/>}
     <input ref={fileInput} type="file" accept="image/jpeg,image/png" disabled={disabled} aria-label="庭の写真を選択" onChange={(event) => { void readPhoto(event.target.files?.[0]); event.target.value = ''; }} hidden/>
-    {photo && <div className="photo-controls">
-      {!drawingBoundary && boundaryValid && <div className="photo-mode" role="group" aria-label="写真の操作">
-        <button type="button" aria-pressed={!editingEdges} onClick={() => setMode(false)}><UiIcon name="move" size={15}/>配置</button>
-        <button type="button" aria-pressed={editingEdges} onClick={() => setMode(true)}><UiIcon name="ruler" size={15}/>輪郭と寸法<span className={`mode-badge${enteredCount === edgeCount ? ' is-complete' : ''}`}>{enteredCount}/{edgeCount}</span></button>
-      </div>}
-      {!drawingBoundary && <button ref={cameraButton} type="button" className="text-button" disabled={disabled} aria-haspopup="dialog" onClick={() => { setSelectedEdge(null); useEditorStore.getState().setCalibrating(true); }}><UiIcon name="camera" size={16}/>写真のカメラを設定</button>}
-      {!drawingBoundary && !boundaryValid && <button type="button" className="text-button" disabled={disabled} onClick={startBoundary}><UiIcon name="polygon" size={16}/>庭の領域を描く</button>}
-      <button type="button" className="text-button photo-remove" disabled={disabled} onClick={() => { useEditorStore.getState().setPhoto(null); setSelectedEdge(null); setPointer(null); setError(''); }}>写真を外す</button>
-      {drawingBoundary && draft.length > 0 && <button type="button" className="button button-secondary" disabled={disabled} onClick={() => { useEditorStore.getState().setPhotoBoundaryDraft(draft.slice(0, -1)); setError(''); }}>最後の点を戻す</button>}
-      {drawingBoundary && <button type="button" className="button button-secondary" disabled={disabled} onClick={() => { useEditorStore.getState().setPhotoBoundaryDraft(null); setPointer(null); setError(''); }}>輪郭の描画を取消</button>}
-      <div className="photo-display-controls"><label><input type="checkbox" checked={groundVisible} onChange={(event) => setGroundVisible(event.target.checked)}/> 地面</label>
-      <label><input type="checkbox" checked={gridVisible} onChange={(event) => setGridVisible(event.target.checked)}/> グリッド</label>
-      <label><input type="checkbox" disabled={disabled} checked={objectsVisible} onChange={(event) => setObjectsVisible(event.target.checked)}/> 配置</label></div>
-    </div>}
     {error && <p role="alert" className="notice-error">{error}</p>}
     {calibrationError && <p role="alert" className="notice-error">{calibrationError}</p>}
-    {!photo && editorOverlay}
+    {!photo && renderOverlay(null)}
     {!photo ? <button type="button" className="photo-empty" disabled={disabled} onClick={() => fileInput.current?.click()}>
       <span className="upload-symbol"><UiIcon name="photo" size={32}/></span>
       <strong>庭の写真から設計する</strong>
@@ -233,16 +240,18 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
     </button> : <>
       {drawingBoundary && <div className="photo-guidance photo-hint is-drawing" aria-live="polite">
         <span className="drawing-count">{draft.length}/64点</span><span>頂点を順にクリック。3点以上で始点につなぐと確定します。</span>
+        {draft.length > 0 && <button type="button" className="button button-secondary" disabled={disabled} onClick={() => { useEditorStore.getState().setPhotoBoundaryDraft(draft.slice(0, -1)); setError(''); }}>最後の点を戻す</button>}
+        <button type="button" className="button button-secondary" disabled={disabled} onClick={() => { useEditorStore.getState().setPhotoBoundaryDraft(null); setPointer(null); setError(''); }}>輪郭の描画を取消</button>
       </div>}
       {editMode && <div className="photo-guidance edge-toolbar" role="toolbar" aria-label="輪郭と寸法の編集">
         <span className="edge-progress" data-testid="edge-progress"><strong>{enteredCount}/{edgeCount}辺</strong>入力済み</span>
         <span className="edge-perspective">パース：{perspective}</span>
-        <span className="edge-hint">辺をクリックして実寸を入力・頂点をドラッグして輪郭を調整</span>
-        <button type="button" className="button button-secondary" disabled={disabled} onClick={startBoundary}><UiIcon name="polygon" size={14}/>庭の領域を書き直す</button>
+        {summary.area !== null && <span className="edge-area" data-testid="ground-summary">面積 {summary.area.toFixed(2)} m²・外周 {summary.perimeter.toFixed(2)} m</span>}
+        <button type="button" className="button button-secondary" disabled={disabled} onClick={startBoundary}><UiIcon name="redraw" size={14}/>庭の領域を書き直す</button>
         <button type="button" className="button button-primary" onClick={() => setMode(false)}><UiIcon name="check" size={14}/>完了</button>
       </div>}
       <div className="photo-stage-shell">
-      {editorOverlay}
+      {renderOverlay(photoTools)}
       <svg ref={svg} className="photo-stage" viewBox={`0 0 ${photo.imageWidth} ${photo.imageHeight}`} onClick={onImageClick} onPointerMove={(event) => { if (disabled)
             return; const p = imagePoint(event.clientX, event.clientY); if (!p)
             return; if (dragging !== null)

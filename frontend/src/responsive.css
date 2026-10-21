@@ -20,8 +20,6 @@
   .canvas-column { flex: none; height: 540px; }
   .canvas-tools { flex: none; flex-wrap: wrap; gap: 8px; padding: 10px; }
   .camera-actions { flex-wrap: wrap; margin-left: 0; }
-  .canvas-footer { flex-wrap: wrap; flex-basis: auto; gap: 5px; padding: 8px; }
-  .canvas-tool-hint { white-space: normal; }
   .catalog-panel { order: 1; padding: 10px; }
   .catalog-heading { gap: 10px; }
   .catalog-heading > span { display: none; }
@@ -29,6 +27,5 @@
   .photo-toolbar { flex-wrap: wrap; height: auto; }
   .calibration-layout { grid-template-columns: minmax(0, 1fr); }
   .calibration-settings { max-height: none; }
-  .plan-quantity-row { gap: 8px; }
   .plan-actions button { flex: 1 1 145px; min-height: 44px; }
 }

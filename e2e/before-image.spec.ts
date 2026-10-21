@@ -235,13 +235,15 @@ for (const variant of variants) {
       // Locator screenshots include overlapping HTML. Keep keyboard focus identical
       // so the restored launcher's focus ring is not mistaken for changed WebGL pixels.
       await page.getByRole('checkbox', { name: '地面', exact: true }).focus();
-      const hiddenViewBefore = await page.locator('.photo-models canvas').screenshot();
+      // 表示切替はキャンバスに重なるツールバーにあるため、フォーカス・ホバー表示を比較から除く。
+      const toolbarMask = { mask: [page.getByTestId('object-toolbar')] };
+      const hiddenViewBefore = await page.locator('.photo-models canvas').screenshot(toolbarMask);
       const hidden = await captureImage(page);
       expect((await comparePixels(page, baseline, hidden)).differences).toBe(0);
       await expect(page.getByRole('checkbox', { name: '配置', exact: true })).not.toBeChecked();
       await expect(page.getByTestId('photo-model-canvas')).toHaveAttribute('data-object-count', '0');
       await page.getByRole('checkbox', { name: '地面', exact: true }).focus();
-      const hiddenViewAfter = await page.locator('.photo-models canvas').screenshot();
+      const hiddenViewAfter = await page.locator('.photo-models canvas').screenshot(toolbarMask);
       await mkdir(artifactDirectory, { recursive: true });
       await writeFile(resolve(artifactDirectory, `hidden-${variant.name}-before.png`), hiddenViewBefore);
       await writeFile(resolve(artifactDirectory, `hidden-${variant.name}-after.png`), hiddenViewAfter);

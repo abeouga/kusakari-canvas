@@ -34,9 +34,6 @@
 
 .photo-workspace { position: relative; }
 
-.construction-details { margin-bottom: 12px; border-bottom: 1px solid #dce4da; padding-bottom: 10px; }
-.construction-details > summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
-.construction-details .plan-quantity-row { flex-wrap: wrap; gap: 8px; }
 
 .canvas-column { container-type: inline-size; }
 .canvas-tools { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }

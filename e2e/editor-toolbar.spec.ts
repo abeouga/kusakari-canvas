@@ -30,11 +30,10 @@ test('editor controls preserve state and the merged canvas toolbar fits narrow s
       if (width >= 1280) expect(bounds!.height).toBeLessThanOrEqual(70);
     }
     await page.setViewportSize({ width: 1440, height: 960 });
-    await page.getByTestId('object-details-toggle').click();
-    if (!await page.locator('.construction-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.locator('.construction-details > summary').click();
-    await expect(page.locator('.construction-details')).toContainText('配置したものはありません');
-    await page.keyboard.press('Escape');
-    await expect(page.getByTestId('object-details-toggle')).toBeFocused();
+    // 詳細は配置物を選択した時だけ表示し、数量・施工範囲や商品検索は置かない。
+    await expect(page.getByTestId('object-details-toggle')).toHaveCount(0);
+    await expect(page.locator('.construction-details')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'この数量で商品を探す' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: '植物候補を相談', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
     await selectTestPlant(page);
@@ -42,12 +41,11 @@ test('editor controls preserve state and the merged canvas toolbar fits narrow s
     await page.mouse.click(canvas!.x + canvas!.width / 2, canvas!.y + canvas!.height / 2);
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     await page.keyboard.press('Escape');
-    await page.getByTestId('object-details-toggle').click();
-    if (!await page.locator('.construction-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.locator('.construction-details > summary').click();
-    await expect(page.locator('.construction-details')).toContainText('1点');
-    await expect(page.locator('.construction-details input')).toHaveCount(0);
-    await page.keyboard.press('Escape');
     await page.getByTestId('object-row-0').click();
+    await page.getByTestId('object-details-toggle').click();
+    await expect(page.locator('.object-details-content')).toContainText('X座標');
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('object-details-toggle')).toBeFocused();
     await page.getByTestId('object-details-toggle').click();
     await page.getByRole('button', { name: '複製', exact: true }).click();
     await page.keyboard.press('Escape');

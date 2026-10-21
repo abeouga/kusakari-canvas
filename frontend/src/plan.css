@@ -26,21 +26,6 @@
   background: #365d3d;
   color: white;
 }
-.plan-quantity-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-  border-bottom: 1px solid #e2e7db;
-  padding: 14px 0;
-}
-.plan-quantity-row input {
-  width: 80px;
-  display: block;
-  padding: 8px;
-  border: 1px solid #c2cfb9;
-  border-radius: 5px;
-}
 .plan-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -83,11 +68,4 @@
   .ec-return-link {
     font-size: 11px;
   }
-}
-
-.plan-footprint {
-  display: block;
-  margin-top: 5px;
-  color: #71816a;
-  font-size: 11px;
 }

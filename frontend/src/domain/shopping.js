@@ -38,24 +38,3 @@ export function placementRows(document, assets) {
   }
   return rows;
 }
-
-export function shoppingUrl(rows) {
-  if (rows.length === 0) throw new Error("庭に素材を配置してください。");
-  const items = [];
-  for (const row of rows) {
-    if (!row.materialCode)
-      throw new Error(`${row.name}には対応商品がありません。`);
-    if (row.quantity > 99)
-      throw new Error("一度に購入候補へ渡せる数量は、素材ごとに99点までです。");
-    items.push({
-      materialCode: row.materialCode,
-      quantity: row.quantity,
-      unit: "piece",
-    });
-  }
-  const url = new URL("/materials", ecUrl);
-  url.hash = new URLSearchParams({
-    "canvas-items": JSON.stringify(items),
-  }).toString();
-  return url.href;
-}

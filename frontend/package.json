@@ -8,14 +8,15 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@kusakari/site-header": "file:../vendor/kusakari-site-header-0.1.9.tgz",
     "@react-three/drei": "10.7.9",
     "@react-three/fiber": "9.8.1",
     "@tanstack/react-query": "5.104.0",
+    "lucide-react": "1.52.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "three": "0.186.1",
-    "zustand": "5.0.15",
-    "@kusakari/site-header": "file:../vendor/kusakari-site-header-0.1.9.tgz"
+    "zustand": "5.0.15"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "6.1.1",

@@ -168,19 +168,12 @@ export function EditorPage({ gardenId }) {
     const assetMap = new Map(assets.map((asset) => [asset.id, asset]));
     const selectedObject = document.objects.find((object) => object.id === selectedObjectId) ?? null;
     const selectedAsset = selectedObject ? assetForObject(selectedObject, assetMap) ?? null : null;
-    const canvasHint = hasBoundaryDraft ? '庭の輪郭をクリックで描き、始点につないで確定'
-        : selectedAssetId
-            ? `${assetMap.get(selectedAssetId)?.name ?? '素材'}を配置中 · 地面をクリック / Escで終了`
-            : selectedObject && viewMode === 'photo' ? '矢印または配置物をドラッグして移動 · 詳細で回転・倍率を調整'
-                : selectedObject && tool === 'rotate'
-                    ? '円形ハンドルをドラッグして角度を調整'
-                    : 'オブジェクトを選択して編集';
     const outside = outsideObjects(document);
     const statusText = isSaving ? '保存中…' : isCalibrating ? 'カメラを設定中' : hasBoundaryDraft ? '輪郭を描画中' : outside.length ? '施工範囲の修正が必要' : saveError ? '保存できませんでした' : isDirty ? '自動保存待ち' : '保存済み';
     const savePending = outside.length > 0 || isDirty || isSaving || isCalibrating || hasBoundaryDraft;
     const isEditingDisabled = navigating || isTransformDragging || isCalibrating;
     const photoReady = !hasBoundaryDraft && !isCalibrating && (!document.photo || (validSurface(document.photo) && !calibratedBoundaryError(document.photo, document.width, document.depth)));
-    const editorOverlay = <ObjectToolbar document={document} assets={assets} onNavigate={requestNavigation} selectedObject={selectedObject} selectedAsset={selectedAsset} tool={tool} photoMode={viewMode === 'photo'} disabled={isEditingDisabled || hasBoundaryDraft} onSetTool={setTool} onDuplicate={duplicateSelected} onDelete={deleteSelected}/>;
+    const renderOverlay = (leading) => <ObjectToolbar document={document} leading={leading} selectedObject={selectedObject} selectedAsset={selectedAsset} tool={tool} photoMode={viewMode === 'photo'} disabled={isEditingDisabled || hasBoundaryDraft} onSetTool={setTool} onDuplicate={duplicateSelected} onDelete={deleteSelected}/>;
     return (<div className="editor-shell canvas-shell">
       <SiteHeader onNavigate={requestNavigation} disabled={navigating || isTransformDragging}/>
       {outside.length > 0 && photoReady && <div className="editor-alert notice-error" role="alert" data-testid="outside-placements">
@@ -228,14 +221,11 @@ export function EditorPage({ gardenId }) {
           {dimensionsOpen && viewMode === '3d' && !document.photo && <Dialog title="土台のサイズ" description="庭の中心を基準に、幅と奥行きを変更します。" closeLabel="土台設定を閉じる" onClose={() => setDimensionsOpen(false)}>
             <GardenDimensions key={`${document.id}:${document.width}:${document.depth}`} document={document} disabled={isEditingDisabled || hasBoundaryDraft}/>
           </Dialog>}
-          {viewMode === 'photo' ? <PhotoOverlay document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={isEditingDisabled} retryRequest={retryRequest} onModelLoaded={markModelLoaded} onModelFailed={markModelFailed} editorOverlay={editorOverlay} captureRef={captureRef}/> : assetQuery.isLoading ? (<div className="canvas-loading" role="status">アセット一覧を読み込んでいます…</div>) : (<GardenCanvas document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={isEditingDisabled || hasBoundaryDraft} retryRequest={retryRequest} onModelLoaded={markModelLoaded} onModelFailed={markModelFailed} editorOverlay={editorOverlay} captureRef={captureRef}/>)}
+          {viewMode === 'photo' ? <PhotoOverlay document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={isEditingDisabled} retryRequest={retryRequest} onModelLoaded={markModelLoaded} onModelFailed={markModelFailed} renderOverlay={renderOverlay} captureRef={captureRef}/> : assetQuery.isLoading ? (<div className="canvas-loading" role="status">アセット一覧を読み込んでいます…</div>) : (<GardenCanvas document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={isEditingDisabled || hasBoundaryDraft} retryRequest={retryRequest} onModelLoaded={markModelLoaded} onModelFailed={markModelFailed} editorOverlay={renderOverlay(null)} captureRef={captureRef}/>)}
           <CompletionImageAction key={document.id} garden={document} assets={assets} photoMode={viewMode === 'photo'} captureRef={captureRef}
             storeId={commerce.cart.data?.storeId} disabled={isEditingDisabled || hasBoundaryDraft} drawingBoundary={hasBoundaryDraft}/>
-          <div className="canvas-footer">
-            <span className="canvas-tool-hint" aria-live="polite">{canvasHint}</span>
-            <span data-testid="model-loaded">読み込み済み: {loadedModelIds.length} / {document.objects.length}</span>
-            <span>1目盛り = 1m</span>
-          </div>
+          {/* 操作説明のフッターは表示しない。モデルの読み込み状況だけを支援技術へ伝えます。 */}
+          <span className="visually-hidden" role="status" data-testid="model-loaded">読み込み済み: {loadedModelIds.length} / {document.objects.length}</span>
         </section>
         {entryProductId && commerce.products.data && !commerce.products.data.some(item => item.id === entryProductId) && <p role="status">選択した商品は現在購入・新規配置できません。公開状態または店舗を確認してください。</p>}
         {!propertiesCollapsed && <CommercePanel document={document} assets={assets} selectedObject={selectedObject} disabled={isEditingDisabled || hasBoundaryDraft || assetQuery.isLoading || assetQuery.isError} commerce={commerce} onSelectObject={selectObject} onNavigate={requestNavigation} width={sidebarWidth} onWidthChange={setSidebarWidth}/>}

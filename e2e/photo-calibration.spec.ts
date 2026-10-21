@@ -75,7 +75,7 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
     await expect(page.getByTestId('photo-model-canvas')).toBeVisible();
     await expect(page.getByTestId('photo-vertex-number')).toHaveCount(0);
     // 輪郭の確定後は寸法の編集が開いているため、配置に切り替える。
-    await page.getByRole('button', { name: '配置', exact: true }).click();
+    await page.getByRole('button', { name: '配置モード' }).click();
     // Real pointer rays must recover the same metric coordinates, even after resize.
     await page.setViewportSize({ width: 1280, height: 960 });
     const ids: string[] = [];
@@ -170,10 +170,8 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
     await page.screenshot({ path: resolve(artifacts, 'camera-calibrated-measurement.png'), fullPage: true });
     await writeFile(resolve(artifacts, 'camera-calibrated-measurement.json'), JSON.stringify(edited, null, 2));
     await page.keyboard.press('Escape');
-    await page.getByTestId('object-details-toggle').click();
-    await page.locator('.construction-details > summary').click();
-    await expect(page.locator('.construction-details')).toContainText('m²');
-    await page.keyboard.press('Escape');
+    // 面積・外周は「輪郭と寸法」の帯に表示する。
+    await expect(page.getByTestId('ground-summary')).toContainText('m²');
     await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
     if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();

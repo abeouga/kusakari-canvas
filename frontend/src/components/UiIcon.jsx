@@ -1,31 +1,19 @@
-const paths = {
-    leaf: 'M19 4C10 3 4 7 5 13s10 8 13 1c1-3 1-7 1-10ZM5 20l10-11M9 15l-1-5m1 5 5 1',
-    back: 'm14 6-6 6 6 6M8 12h13',
-    close: 'm6 6 12 12M18 6 6 18',
-    plus: 'M12 5v14M5 12h14',
-    photo: 'M4 4h16v16H4ZM4 16l5-5 4 4 3-3 4 4M15 8h.01',
-    cube: 'm12 3 9 5v9l-9 5-9-5V8Zm0 10L3 8m9 5 9-5m-9 5v9M7.5 5.5l9 5',
-    panel: 'M3 4h18v16H3ZM15 4v16',
-    chevron: 'm7 10 5 5 5-5',
-    camera: 'M4 7h4l2-3h4l2 3h4v13H4ZM16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
-    polygon: 'm6 4 14 3-3 13-14-6Zm0 0h.01M20 7h.01M17 20h.01M3 14h.01',
-    ruler: 'm4 16 12-12 4 4L8 20Zm6-6 3 3m0-6 3 3M7 13l3 3',
-    top: 'M4 8h16v12H4ZM12 3v10m-3-3 3 3 3-3',
-    home: 'm3 11 9-8 9 8M5 9v12h14V9M9 21v-7h6v7',
-    trash: 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7',
-    copy: 'M8 8h13v13H8ZM16 8V3H3v13h5',
-    move: 'M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3m12-6 3 3-3 3',
-    rotate: 'M20 8a8 8 0 1 0 0 8M20 3v5h-5',
-    scale: 'M4 14v6h6M14 4h6v6M4 20l7-7m2-2 7-7',
-    check: 'm5 12 4 4L19 6',
-    clock: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M12 7v5l3 2',
-    alert: 'm12 3 10 18H2ZM12 9v5m0 3h.01',
-    arrow: 'M4 12h16m-6-6 6 6-6 6',
-    sparkles: 'm12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4ZM20 2v4m-2-2h4',
-    history: 'M3 11a9 9 0 1 1 2.3 7M3 4v7h7M12 7v5l3 2',
-    settings: 'M4 7h16M4 17h16M8 4v6m8 4v6',
-    download: 'M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5',
+import {
+    ArrowDownToLine, ArrowLeft, ArrowRight, Box, Camera, Check, ChevronDown, Clock, Copy, Download, Grid3x3, History, House,
+    Image, ImageOff, ImageUp, Layers, Leaf, MousePointer2, Move, PanelRight, PencilRuler, PenLine, Pentagon, Plus, RotateCw,
+    Ruler, Scaling, SlidersHorizontal, Sparkles, Square, Trash2, TreeDeciduous, TriangleAlert, X,
+} from 'lucide-react';
+
+// 画面内の名前とlucide-reactのアイコンの対応。呼び出し側は用途の名前だけを指定します。
+const icons = {
+    leaf: Leaf, back: ArrowLeft, close: X, plus: Plus, photo: Image, cube: Box, panel: PanelRight, chevron: ChevronDown,
+    camera: Camera, polygon: Pentagon, ruler: Ruler, top: ArrowDownToLine, home: House, trash: Trash2, copy: Copy, move: Move,
+    rotate: RotateCw, scale: Scaling, check: Check, clock: Clock, alert: TriangleAlert, arrow: ArrowRight, sparkles: Sparkles,
+    history: History, settings: SlidersHorizontal, download: Download, place: MousePointer2, outline: PencilRuler,
+    redraw: PenLine, 'photo-change': ImageUp, 'photo-remove': ImageOff, layers: Layers, ground: Square, grid: Grid3x3,
+    tree: TreeDeciduous,
 };
 export function UiIcon({ name, size = 18 }) {
-    return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]}/></svg>;
+    const Icon = icons[name];
+    return <Icon size={size} strokeWidth={1.75} aria-hidden="true"/>;
 }
