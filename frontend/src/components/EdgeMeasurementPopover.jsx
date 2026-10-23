@@ -81,12 +81,14 @@ export function EdgeMeasurementPopover({ document, selection, onClose, onNavigat
     setError('');
     setNotice('');
     if (locked) return;
-    if (value.trim() === '' || !/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(value.trim())) {
+    // 未入力で適用した場合は、候補として示している現在の長さで確定します。
+    const text = value.trim() === '' ? formatLength(length) : value.trim();
+    if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) {
       setError('辺の長さは0より大きい数値で入力してください。');
       return;
     }
     const previousDocument = useEditorStore.getState().document;
-    const cause = useEditorStore.getState().setPhotoEdgeLength(selection.index, Number(value));
+    const cause = useEditorStore.getState().setPhotoEdgeLength(selection.index, Number(text));
     if (cause) {
       setError(cause);
       return;
@@ -102,13 +104,11 @@ export function EdgeMeasurementPopover({ document, selection, onClose, onNavigat
       // 続けて入力できるよう、次の未入力の辺へ移ります。
       const following = pending.find((index) => index > selection.index) ?? pending[0];
       onNavigate(following, `辺${selection.index + 1}を記録しました。残り${pending.length}辺を入力すると、写真のパースを求めます。`);
-      return;
     }
-    setNotice('全辺の実寸から写真のパースを求めました。自動保存されます。');
   }
 
   let caption = '現在の概算';
-  if (entered) caption = '入力済み';
+  if (entered) caption = '';
   else if (photo.calibration) caption = '現在の実寸';
   return <section ref={panel} className="edge-popover" role="dialog" aria-label="選択した辺の長さ" style={position}
     onPointerDown={(event) => event.stopPropagation()}
@@ -133,7 +133,7 @@ export function EdgeMeasurementPopover({ document, selection, onClose, onNavigat
       <button type="submit" className="button button-primary" aria-label="長さを適用" disabled={locked || !measurable}>適用</button>
     </form>
     <p className={`edge-measurement${entered ? ' is-entered' : ''}`}>
-      <span>{caption}</span>
+      {caption && <span>{caption}</span>}
       <output data-testid="edge-measurement" aria-label="辺の計測値">{measurable ? `${length.toFixed(2)} m` : '計測できません'}</output>
     </p>
     {!measurable && <p className="notice-error">地面上の位置を求められません。カメラ設定を確認してください。</p>}

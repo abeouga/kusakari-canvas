@@ -3,7 +3,8 @@ import { homography, unitCorners, validCorners, validSurface, withPhotoBoundary 
 import { useEditorStore } from '../stores/editorStore';
 import { PhotoCanvas } from '../three/PhotoCanvas';
 import { PhotoCalibrationEditor } from './PhotoCalibrationEditor';
-import { calibratedBoundaryError, projectionCorners } from '../domain/calibratedProjection';
+import { calibratedBoundaryError, cameraAlignedGrid, projectionCorners } from '../domain/calibratedProjection';
+import { groundOutline } from '../domain/placementBounds';
 import { PhotoEdges } from './PhotoEdges';
 import { EdgeMeasurementPopover } from './EdgeMeasurementPopover';
 import { groundSummary } from '../domain/gardenSummary';
@@ -219,7 +220,10 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
     const closing = drawingBoundary && draft.length >= 3 && pointer !== null && nearStart(pointer);
     const previewEnd = pointer ? pixels(closing ? draft[0] : pointer) : null;
     const grid = [];
-    if (valid && project) {
+    if (valid && photo.calibration) {
+        grid.push(...cameraAlignedGrid(photo, groundOutline(document)).map(({ a, b }) => ({ a: pixels(a), b: pixels(b) })));
+    }
+    else if (valid && project) {
         for (let x = 0; x <= document.width; x += 1)
             grid.push({ a: projected({ x: x / document.width, y: 0 }), b: projected({ x: x / document.width, y: 1 }) });
         for (let z = 0; z <= document.depth; z += 1)

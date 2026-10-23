@@ -115,6 +115,7 @@ function acceptable(fit) {
 }
 
 // 現在のカメラから開始し、収束しない場合だけ粗い格子から開始値を選び直します。
+// 許容誤差内に収まる解がなければ、入力値に最も近い（残差最小の）カメラを強制的に採用します。
 function fitCamera(photo, targets, previous) {
   const starts = previous ? [previous] : [];
   const grid = [];
@@ -125,11 +126,13 @@ function fitCamera(photo, targets, previous) {
     }
   }
   starts.push(...grid.sort((a, b) => a.cost - b.cost).slice(0, 5).map((item) => item.params));
+  let best = null;
   for (const start of starts) {
     const fit = refine(photo, targets, start);
     if (acceptable(fit)) return fit;
+    if (fit && (!best || sumOfSquares(fit.residuals) < sumOfSquares(best.residuals))) best = fit;
   }
-  return null;
+  return best;
 }
 
 function dot(a, b) {
@@ -183,7 +186,7 @@ export function applyEdgeLength(document, edgeIndex, requestedLength) {
   const previous = cameraParams(photo);
   const fit = fitCamera(photo, entries, previous?.params);
   if (!fit) {
-    return { error: 'この長さでは、写真上の輪郭とほかの辺の長さを保ったままパースを再現できません。入力値を確認してください。' };
+    return { error: '写真上の輪郭からパースを求められません。輪郭を確認してください。' };
   }
   const yaw = previous?.yaw ?? 0;
   const points = groundPoints(photo, fit.params, yaw, fit.height);

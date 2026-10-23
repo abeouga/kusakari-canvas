@@ -7,6 +7,7 @@ import { SiteHeader } from "../components/SiteHeader";
 import { Dialog } from "../components/Dialog";
 import { UiIcon } from "../components/UiIcon";
 import { GardenCardMenu } from "../components/GardenCardMenu";
+import { GardenThumbnail } from "../components/GardenThumbnail";
 export function GardenListPage() {
   const queryClient = useQueryClient();
   const gardens = useQuery({
@@ -192,14 +193,9 @@ export function GardenListPage() {
                         )
                       }
                     >
-                      <span className="garden-thumb" aria-hidden="true">
-                        <UiIcon name="polygon" size={30} />
-                      </span>
+                      <GardenThumbnail garden={garden} />
                       <span className="garden-card-copy">
                         <strong>{garden.name}</strong>
-                        <span>
-                          {garden.width} × {garden.depth} m
-                        </span>
                         <span>
                           最終保存{" "}
                           {new Date(garden.updatedAt).toLocaleString("ja-JP")}

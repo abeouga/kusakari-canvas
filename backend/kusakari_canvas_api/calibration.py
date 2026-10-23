@@ -70,10 +70,6 @@ def solve_calibration(request: CalibrationRequest) -> PhotoCalibration:
     )
 
 
-# Same tolerance as frontend/src/domain/edgeCalibration.js.
-EDGE_LENGTH_TOLERANCE = 0.01
-
-
 def ground_points(photo: GardenPhoto, rotation: np.ndarray, translation: np.ndarray, focal: float) -> list[np.ndarray]:
     origin = -rotation.T @ translation
     result = []
@@ -87,7 +83,9 @@ def ground_points(photo: GardenPhoto, rotation: np.ndarray, translation: np.ndar
 
 
 def verify_edge_calibration(photo: GardenPhoto, calibration: PhotoCalibration) -> None:
-    """Edge cameras are solved in the editor; check every constraint instead of trusting the matrix."""
+    """Edge cameras are the editor's closest fit to the entered lengths, which one photo cannot always
+    reproduce exactly. Check that the camera is physically valid instead of trusting the matrix;
+    the horizon and garden-range checks follow in validate_calibrated_photo."""
     lengths = photo.edgeLengths
     if lengths is None or any(length is None for length in lengths):
         reject('全辺の長さを入力してから写真のパースを求めてください。')
@@ -100,11 +98,6 @@ def verify_edge_calibration(photo: GardenPhoto, calibration: PhotoCalibration) -
         reject('画角が対応範囲（縦15〜110度）を外れています。辺の長さを確認してください。')
     if (-r.T @ t)[1] <= 0.05:
         reject('地面より上のカメラを求められません。辺の長さを確認してください。')
-    ground = ground_points(photo, r, t, calibration.focalLengthPx)
-    for i, length in enumerate(lengths):
-        actual = float(np.linalg.norm((ground[(i + 1) % len(ground)] - ground[i])[[0, 2]]))
-        if abs(actual / length - 1) > EDGE_LENGTH_TOLERANCE:
-            reject('辺の長さと写真のパースが一致しません。辺の長さを入力し直してください。')
 
 
 def validate_calibrated_photo(photo: GardenPhoto, width: float, depth: float) -> None:

@@ -46,6 +46,9 @@ export function useGardenAutosave(gardenId, document, dirty, saving, dragging, c
             ? '施工範囲外の配置を移動または削除してください。'
             : reason instanceof ApiError && reason.status === 409
             ? '別の保存結果と競合しました。編集内容は保持されています。再読み込み前に変更内容を確認してください。'
+            // 入力検証の拒否は通信障害ではないため、サーバーの理由をそのまま示します。
+            : reason instanceof ApiError && reason.status >= 400 && reason.status < 500 && reason.status !== 401
+            ? `保存できませんでした。${reason.message} 編集内容はこの画面に保持されています。`
             : '自動保存できませんでした。編集内容はこの画面に保持されています。接続を確認して再試行してください。';
           useEditorStore.getState().setSaveError(message);
         }

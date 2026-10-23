@@ -34,6 +34,25 @@ export function groundPoint(photo, point) {
     const distance = -origin[1] / direction[1];
     return { x: origin[0] + direction[0] * distance, z: origin[2] + direction[2] * distance };
 }
+// 写真上のグリッドをカメラの向きに合わせた1m間隔で返します。世界座標の軸はカメラの方位と一致しないことがあり、
+// 軸に沿うと写真上で斜めの格子になるためです。線は写真上の正規化座標で、輪郭の外接範囲だけを覆います。
+export function cameraAlignedGrid(photo, outline) {
+    const c = photo.calibration;
+    const fx = c.rotation[6], fz = c.rotation[8], length = Math.hypot(fx, fz);
+    if (length < 1e-6 || outline.length < 3)
+        return [];
+    const forward = { x: fx / length, z: fz / length }, right = { x: -forward.z, z: forward.x };
+    const along = (axis) => outline.map((p) => p.x * axis.x + p.z * axis.z);
+    const range = (values) => [Math.min(...values), Math.max(...values)];
+    const [r0, r1] = range(along(right)), [f0, f1] = range(along(forward));
+    const world = (r, f) => projectWorld(photo, { x: right.x * r + forward.x * f, y: 0, z: right.z * r + forward.z * f });
+    const lines = [];
+    for (let r = Math.ceil(r0); r <= r1; r += 1)
+        lines.push({ a: world(r, f0), b: world(r, f1) });
+    for (let f = Math.ceil(f0); f <= f1; f += 1)
+        lines.push({ a: world(r0, f), b: world(r1, f) });
+    return lines.filter(({ a, b }) => a && b);
+}
 export function calibratedBoundaryError(photo, width, depth) {
     if (!photo.calibration)
         return null;

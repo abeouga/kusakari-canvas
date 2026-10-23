@@ -71,7 +71,12 @@ test('Q. 名前だけで作成・土台寸法を編集・縮小検証・MySQL保
     const shrunk = await (await request.get(`${api}/gardens/${id}`)).json() as GardenDocument;
     expect(shrunk.width).toBe(12.5); expect(shrunk.objects).toEqual(saved.objects);
     await page.getByRole('button', { name: '← 庭一覧', exact: true }).click();
-    await expect(page.locator('.garden-card').filter({ hasText: saved.name })).toContainText('12.5 × 12 m');
+    const card = page.locator('.garden-card').filter({ hasText: saved.name });
+    await expect(card).toBeVisible();
+    await expect(card).not.toContainText('×');
+    // 一覧カードは実APIの庭サムネイルを読み込んで表示する。
+    const thumbnail = card.getByAltText(`${saved.name}のサムネイル`);
+    await expect.poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth)).toBeGreaterThan(0);
   } finally {
     expect((await request.delete(`${api}/gardens/${id}`)).status()).toBe(204);
   }

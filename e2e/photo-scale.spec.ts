@@ -107,7 +107,8 @@ for (const mode of ['legacy', 'fixed-projection', 'calibrated']) {
       await popup.getByRole('button', { name: '辺の計測を閉じる' }).click();
       await expect(page.getByTestId('save-status')).toHaveText('保存済み');
       await page.getByTestId('photo-edge-0').click();
-      for (const invalid of ['', '0', '-1', 'abc', 'Infinity', '9999', '.000001']) {
+      // 空欄の適用は候補の長さで確定する仕様のため、不正値には含めない（後段で検証）。
+      for (const invalid of ['0', '-1', 'abc', 'Infinity', '9999', '.000001']) {
         await field.fill(invalid);
         await popup.getByRole('button', { name: '長さを適用' }).click();
         await expect(popup.getByRole('alert')).toBeVisible();
@@ -130,7 +131,8 @@ for (const mode of ['legacy', 'fixed-projection', 'calibrated']) {
         } else {
           await expect(page.getByTestId('edge-measurement')).toHaveText(`${length.toFixed(2)} m`);
         }
-        await expect(popup.locator('p[role="status"]')).toContainText(index < 3 ? `残り${3 - index}辺` : '写真のパースを求めました');
+        if (index < 3) await expect(popup.locator('p[role="status"]')).toContainText(`残り${3 - index}辺`);
+        else await expect(popup.locator('p[role="status"]')).toHaveCount(0);
         await page.keyboard.press('Escape');
         const current = await edgeLabels(page);
         expect(current[index]).toBe(`${length.toFixed(2)} m`);
@@ -163,17 +165,27 @@ for (const mode of ['legacy', 'fixed-projection', 'calibrated']) {
       await page.keyboard.press('Escape');
       expect(await edgeLabels(page)).toEqual(['11.00 m', ...labels.slice(1)]);
       await expect(page.getByTestId('photo-ground')).toHaveAttribute('points', ground!);
-      // 1枚の写真の水平面として成立しない組合せは拒否し、元の状態を保つ。
+      // 1枚の写真の水平面として厳密には成立しない組合せも、入力値に最も近いパースで強制的に適用する。
       await openEdge(page, 2);
       await field.fill('9');
       await field.press('Enter');
-      await expect(popup.getByRole('alert')).toContainText('パースを再現できません');
+      await expect(popup.getByRole('alert')).toHaveCount(0);
+      await expect(page.getByTestId('edge-measurement')).toHaveText('9.00 m');
       await page.keyboard.press('Escape');
-      expect(await edgeLabels(page)).toEqual(['11.00 m', ...labels.slice(1)]);
+      const forced = ['11.00 m', labels[1], '9.00 m', labels[3]];
+      expect(await edgeLabels(page)).toEqual(forced);
+      // 値を入力せずに適用すると、候補として示している現在の長さで確定する。
+      await openEdge(page, 1);
+      await field.fill('');
+      await field.press('Enter');
+      await expect(popup.getByRole('alert')).toHaveCount(0);
+      await expect(popup.locator('p[role="status"]')).toContainText('長さは変更されていません');
+      await page.keyboard.press('Escape');
+      expect(await edgeLabels(page)).toEqual(forced);
       await expect(page.getByTestId('save-status')).toHaveText('保存済み');
       const after = await (await request.get(`${api}/gardens/${initial.id}`)).json() as GardenDocument;
-      expect(after.photo!.edgeLengths).toEqual([11, 8, 10, 8]);
-      groundLengths(after.photo!).lengths.forEach((length, i) => expect(length).toBeCloseTo([11, 8, 10, 8][i], 3));
+      expect(after.photo!.edgeLengths).toEqual([11, 8, 9, 8]);
+      expect(after.photo!.calibration!.method).toBe('edges');
       expect(after.photo!.boundary).toEqual(before.photo!.boundary);
       expect(after.photo!.dataUrl).toBe(before.photo!.dataUrl);
       const lastAnchor = imageAnchor(after);
@@ -184,7 +196,7 @@ for (const mode of ['legacy', 'fixed-projection', 'calibrated']) {
       await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
       await expect(outlineMode).toContainText('4/4');
       await outlineMode.click();
-      expect(await edgeLabels(page)).toEqual(['11.00 m', ...labels.slice(1)]);
+      expect(await edgeLabels(page)).toEqual(forced);
       await expect(page.getByTestId('photo-ground')).toHaveAttribute('points', ground!);
       expect(await page.locator('[data-testid^="photo-vertex-"]').evaluateAll(nodes => nodes.map(node => [node.getAttribute('cx'), node.getAttribute('cy')]))).toEqual(vertices);
       await mkdir(directory, { recursive: true });
