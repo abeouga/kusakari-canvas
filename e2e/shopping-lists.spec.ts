@@ -56,7 +56,7 @@ function legacyCandidate(productId: string, remove = false) {
     : `INSERT INTO material_products(material_code,product_id) VALUES('garden.bench','${productId}');`;
   const result = spawnSync(process.execPath, ['--input-type=module', '-e',
     "import { sql } from './e2e/database.js'; sql(process.argv[1]);", statement], {
-    cwd: fileURLToPath(new URL('../../kusakari-mvp/', import.meta.url)), encoding: 'utf8',
+    cwd: fileURLToPath(new URL('../../kusakari-ec/', import.meta.url)), encoding: 'utf8',
   });
   if (result.status !== 0) throw new Error('Dedicated legacy candidate fixture failed: ' + result.stderr);
 }
