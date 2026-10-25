@@ -2,6 +2,7 @@ import { defineConfig } from '@playwright/test';
 import base from './playwright.config';
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { authStatePath } from './e2e/auth-session.js';
 
 const canvasApi = process.env.KUSAKARI_CANVAS_E2E_API_URL!;
 const canvasWeb = `http://127.0.0.1:${process.env.KUSAKARI_CANVAS_E2E_WEB_PORT}`;
@@ -20,14 +21,16 @@ mkdirSync(javaTemp, { recursive: true });
 export default defineConfig({
   ...base,
   globalSetup: './e2e/full-setup.ts',
+  globalTeardown: './e2e/full-teardown.ts',
   timeout: 120000,
-  use: { ...base.use, channel: 'chromium', actionTimeout: 15000 },
+  use: { ...base.use, channel: 'chromium', actionTimeout: 15000, storageState: authStatePath },
   reporter: [['list'], ['json', { outputFile: 'artifacts/e2e/full-suite/results.json' }],
     ['html', { outputFolder: 'artifacts/e2e/full-suite/report', open: 'never' }]],
   outputDir: 'artifacts/e2e/full-suite/test-results',
   webServer: [
     { ...servers[0], env: { ...servers[0].env, KUSAKARI_CANVAS_E2E_EC_URL: ecApi,
-      KUSAKARI_CANVAS_E2E_EC_IMAGE_ORIGIN: ecWeb, KUSAKARI_CANVAS_E2E_OPENAI_API_KEY: ' ' } },
+      KUSAKARI_CANVAS_E2E_EC_IMAGE_ORIGIN: ecWeb, KUSAKARI_CANVAS_E2E_OPENAI_API_KEY: ' ',
+      KUSAKARI_AUTH_MODE: 'cognito', KUSAKARI_CANVAS_AUTH_EC_URL: ecApi } },
     { command: 'node scripts/api.mjs e2e', cwd: ecDirectory, url: `${ecApi}/api/health`,
       stdout: 'pipe',
       reuseExistingServer: false, timeout: 120000, env: {

@@ -1,5 +1,5 @@
 import { selectTestPlant } from './catalog-fixture';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { api } from './api-url.js';
 

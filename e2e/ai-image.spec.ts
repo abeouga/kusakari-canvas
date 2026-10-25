@@ -1,7 +1,7 @@
 import { createTestProduct, productPlacement } from './catalog-fixture';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './test.js';
 import { api } from './api-url.js';
 import { artifacts, capture, compare, createScene, expectSameImage, openScene, readGarden,
   removeScenes, shrub, syntheticPhoto } from './occlusion-helpers.js';

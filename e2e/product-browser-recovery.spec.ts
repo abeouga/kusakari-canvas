@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.js';
 import { createTestProduct } from './catalog-fixture';
 
 test('EC接続失敗を表示し、再取得後に商品を配置・保存・復元できる', async ({ page, request }, testInfo) => {

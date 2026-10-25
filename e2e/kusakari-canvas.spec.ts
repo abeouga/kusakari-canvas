@@ -1,7 +1,7 @@
 import { selectTestPlant, seedLegacyObjects } from './catalog-fixture';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { expect, test, type Page, type APIRequestContext } from '@playwright/test';
+import { expect, test, type Page, type APIRequestContext } from './test.js';
 import { api as apiBase } from './api-url.js';
 import type { GardenDocument } from '../frontend/src/types/garden.js';
 

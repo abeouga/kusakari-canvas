@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { api } from './api-url';
 import { createScene, openScene, readGarden, syntheticPhoto } from './occlusion-helpers';

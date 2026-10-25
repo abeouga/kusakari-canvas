@@ -1,5 +1,5 @@
 import { seedLegacyObjects } from './catalog-fixture';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api'), evidence = 'artifacts/plant-v4/interaction';

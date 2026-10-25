@@ -1,5 +1,5 @@
 import { openPlantSettings, publishProduct } from './seller-wizard';
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './test.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import type { GardenDocument, PlantComposition } from '../frontend/src/types/garden';

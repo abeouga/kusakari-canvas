@@ -1,4 +1,4 @@
-import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
+import { test, expect, type APIRequestContext, type Page } from './test.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
@@ -153,7 +153,7 @@ test('partial transfer, duplicate requests, cart limits, stale gardens and inval
     const detail = await request.get(`${ec}/api/shopping-lists/${garden.id}`).then(r => r.json());
     expect(detail.items).toHaveLength(2);
     const selected = detail.items.map((line: Line) => ({ key: line.key, productId: line.products[0].id }));
-    const input = { cartRevision: cart.revision, gardenRevision: saved.revision, items: selected };
+    const input = { cartRevision: cart.revision, gardenRevision: saved.revision, listRevision: detail.listRevision, items: selected };
     expect((await request.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1 } })).ok()).toBeTruthy();
     const url = `${ec}/api/cart/shopping-lists/${garden.id}/items`;
     const concurrent = await Promise.all([request.post(url, { data: input }), request.post(url, { data: input })]);
@@ -177,12 +177,15 @@ test('partial transfer, duplicate requests, cart limits, stale gardens and inval
     const full = await request.put(`${ec}/api/cart/items/${bench.products[0].id}`, { data: { revision: result.cart.revision, quantity: 99 } });
     expect(full.ok()).toBeTruthy();
     const limit = await request.post(url, { data: { gardenRevision: current.revision, cartRevision: (await full.json()).revision,
+      listRevision: currentList.listRevision,
       items: [{ key: bench.key, productId: bench.products[0].id }] } }).then(r => r.json());
     expect(limit.added).toHaveLength(0);
     expect(limit.skipped[0].code).toBe('QUANTITY_LIMIT');
     expect((await request.delete(`${ec}/api/products/${product.id}`)).ok()).toBeTruthy();
     const archivedCart = await request.get(`${ec}/api/cart`).then(r => r.json());
+    const archivedList = await request.get(`${ec}/api/shopping-lists/${garden.id}`).then(r => r.json());
     const archived = await request.post(url, { data: { gardenRevision: current.revision, cartRevision: archivedCart.revision,
+      listRevision: archivedList.listRevision,
       items: [{ key: `product:${product.id}`, productId: product.id }] } }).then(r => r.json());
     expect(archived.skipped[0].code).toBe('PRODUCT_ARCHIVED');
     expect(archived.cart.revision).toBe(archivedCart.revision);
@@ -275,8 +278,9 @@ test('a full cart skips a new product without changing its existing fifty produc
       expect(added.ok()).toBeTruthy();
       cart = await added.json();
     }
+    const list = await request.get(`${ec}/api/shopping-lists/${garden.id}`).then(r => r.json());
     const result = await request.post(`${ec}/api/cart/shopping-lists/${garden.id}/items`, {
-      data: { gardenRevision: saved.revision, cartRevision: cart.revision, items: [{ key: 'asset:bench_wood', productId: 'canvas-bench' }] },
+      data: { gardenRevision: saved.revision, cartRevision: cart.revision, listRevision: list.listRevision, items: [{ key: 'asset:bench_wood', productId: 'canvas-bench' }] },
     }).then(r => r.json());
     expect(result.added).toHaveLength(0);
     expect(result.skipped[0].code).toBe('CART_LIMIT');

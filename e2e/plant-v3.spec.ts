@@ -1,5 +1,5 @@
 import { openPlantSettings, publishProduct } from './seller-wizard';
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { plantPresetsV3, referenceProfiles } from '../scripts/plant-library-v3-presets.mjs';

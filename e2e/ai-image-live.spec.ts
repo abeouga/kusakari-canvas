@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.js';
 import { api } from './api-url.js';
 import { artifacts, capture, createScene, openScene, readGarden, removeScenes, shrub, syntheticPhoto } from './occlusion-helpers.js';
 

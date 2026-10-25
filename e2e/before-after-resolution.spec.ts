@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.js';
 import { api } from './api-url';
 import { createScene, openScene, readGarden, removeScenes, shrub, syntheticPhoto } from './occlusion-helpers';
 

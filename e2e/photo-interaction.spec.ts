@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './test.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { PerspectiveCamera, Vector3 } from 'three';
 import { api } from './api-url';

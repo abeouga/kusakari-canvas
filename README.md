@@ -127,7 +127,7 @@ npm run test:e2e -- --list
 npm run test:e2e -- --config playwright.full.config.ts e2e/editor-toolbar.spec.ts
 ```
 
-標準コマンドと対象指定は、どちらもCanvas API/WebとEC API/Webの4サービスに別々の空きポートを割り当てます。画面・テスト・APIの商品連携で同じ接続先を使います。ECリポジトリを隣接する `../kusakari-ec` に配置し、両リポジトリの依存関係とJava/Python/MySQLの実行環境を用意してください。EC側にも専用DB `kusakari_e2e` の接続設定が必要です（ECのREADMEと `.env.example` を参照）。既存の開発プロセスは停止・再利用しません。
+標準コマンドと対象指定は、どちらもCanvas API/WebとEC API/Webの4サービスに別々の空きポートを割り当てます。画面・テスト・APIの商品連携で同じ接続先を使います。ECリポジトリを隣接する `../kusakari-ec` に配置し、両リポジトリの依存関係とJava/Python/MySQLの実行環境を用意してください。EC側にも専用DB `kusakari_e2e` の接続設定が必要です（ECのREADMEと `.env.example` を参照）。既存の開発プロセスは停止・再利用しません。full設定は開始時に実Cognitoのテストアカウント `test.seller@example.com` でECにログインし（パスワードは隣接する `../kusakari-terraform/.env.test-accounts`）、EC専用DB上でそのアカウントを店舗1の出店者にします。各テストは新しいカートで開始し、終了時にログアウトします。
 
 通常検証では有料AI生成キーを無効にし、有料AI・DB障害注入の専用ケースはスキップします。`--config` を明示するとその設定を優先しますが、従来の `playwright.config.ts` はCanvasのみを起動するため、ECの商品fixtureを使うテストには使用しないでください。
 

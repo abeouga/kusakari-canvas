@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './test.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { PerspectiveCamera, Vector3 } from 'three';
 import { api } from './api-url';

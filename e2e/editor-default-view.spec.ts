@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { expect, test, type Page, type TestInfo } from './test.js';
 import { api } from './api-url';
 import { readGarden } from './occlusion-helpers';
 

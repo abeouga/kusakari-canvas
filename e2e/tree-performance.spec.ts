@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.js';
 import type { Mesh, MeshStandardMaterial } from 'three';
 import { api } from './api-url.js';
 

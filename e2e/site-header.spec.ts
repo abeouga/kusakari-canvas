@@ -1,5 +1,5 @@
 import { mkdir, writeFile } from 'node:fs/promises';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.js';
 import { api } from './api-url.js';
 
 test('共通ヘッダー・ECへの移動確認・未保存の変更保護', async ({ page, request }) => {

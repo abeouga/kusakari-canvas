@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.js';
 import { api } from './api-url.js';
 import { capture, createScene, openScene, readGarden, removeScenes, shrub } from './occlusion-helpers.js';
 import { qualityPhoto, saveCapture, saveRequest, uploadReferences } from './ai-quality-helpers.js';

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, test, type Locator } from './test.js';
 import { api } from './api-url.js';
 import type { GardenDocument } from '../frontend/src/types/garden.js';
 

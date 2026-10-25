@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.js';
 import { api } from './api-url.js';
 
 test('写真アップロード枠が左右の余白を保ち、クリックで写真を選択できる', async ({ page, request }, testInfo) => {

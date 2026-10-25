@@ -2,7 +2,7 @@ import { selectTestPlant } from './catalog-fixture';
 import { syntheticPhoto } from './occlusion-helpers';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test.js';
 import { api } from './api-url.js';
 import type { GardenDocument } from '../frontend/src/types/garden.js';
 

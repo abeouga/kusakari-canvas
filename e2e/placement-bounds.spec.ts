@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { test, expect, type APIRequestContext } from '@playwright/test';
+import { test, expect, type APIRequestContext } from './test.js';
 import type { GardenDocument } from '../frontend/src/types/garden';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { Vector3 } from 'three';
