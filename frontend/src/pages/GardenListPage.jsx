@@ -2,6 +2,7 @@ import { gardenEntryUrl } from '../domain/urls';
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { gardenApi } from "../api/gardens";
+import { ApiError } from "../api/http";
 import { MAX_GARDEN_NAME_LENGTH } from "../domain/limits";
 import { SiteHeader } from "../components/SiteHeader";
 import { Dialog } from "../components/Dialog";
@@ -19,6 +20,7 @@ export function GardenListPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [copyError, setCopyError] = useState("");
   const [copying, setCopying] = useState(false);
+  const [copyRetryId, setCopyRetryId] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   function closeMenu() {
     setOpenMenuId(null);
@@ -27,32 +29,19 @@ export function GardenListPage() {
     if (copying) return;
     setCopying(true);
     setCopyError("");
-    let created = null;
+    setCopyRetryId(null);
     try {
-      const source = await gardenApi.getGarden(id);
-      created = await gardenApi.createGarden({
-        name: source.name.slice(0, 54) + "（複製）",
-      });
-      const document = {
-        ...source,
-        id: created.id,
-        revision: created.revision,
-        name: created.name,
-      };
-      document.objects = source.objects.map((object) => ({
-        ...structuredClone(object),
-        id: crypto.randomUUID(),
-      }));
-      await gardenApi.saveGarden(document);
-      await queryClient.invalidateQueries({ queryKey: ["gardens"] });
+      // 複製はサーバーの1トランザクションで行い、失敗時に空の複製を残しません。
+      await gardenApi.duplicateGarden(id);
     } catch (error) {
-      let message = "庭を複製できませんでした。";
-      if (error instanceof Error) message = error.message;
-      if (created)
-        message += " 作成済みの空の複製は一覧から確認・削除できます。";
-      setCopyError(message);
-      await queryClient.invalidateQueries({ queryKey: ["gardens"] });
+      setCopyError(
+        error instanceof ApiError
+          ? `庭を複製できませんでした。${error.message}`
+          : "庭を複製できませんでした。接続を確認して再試行してください。",
+      );
+      setCopyRetryId(id);
     } finally {
+      await queryClient.invalidateQueries({ queryKey: ["gardens"] });
       setCopying(false);
     }
   }
@@ -137,9 +126,19 @@ export function GardenListPage() {
           </section>
 
           {copyError && (
-            <p className="notice notice-error" role="alert">
-              {copyError}
-            </p>
+            <div className="notice notice-error" role="alert" data-testid="copy-error">
+              <p>{copyError}</p>
+              {copyRetryId && (
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  disabled={copying}
+                  onClick={() => copyGarden(copyRetryId)}
+                >
+                  複製を再試行
+                </button>
+              )}
+            </div>
           )}
           {copying && (
             <p className="notice" role="status">

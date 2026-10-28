@@ -432,3 +432,48 @@ test('N. 木の3D・写真相互配置、固定カメラ、頂点番号非表示
   await expect(page.getByTestId('photo-vertex-number')).toHaveCount(0);
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-photo-trees-redrawn.png'), fullPage: true });
 });
+
+test('O. 確定済み輪郭の頂点を成立しない形へ動かすと反映せずエラーを表示し、成立する移動は保存復元する', async ({ page, request }) => {
+  const { id } = await preparePhoto(page);
+  for (const [x, y] of [[0.2, 0.8], [0.8, 0.8], [0.8, 0.2], [0.2, 0.2]]) await clickImage(page, x, y);
+  await page.getByTestId('photo-vertex-1').click();
+  await expect(page.getByTestId('photo-ground')).toBeVisible();
+  await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+  await showOutline(page);
+  // UC-04: カメラ未設定の面積・外周は土台寸法からの概算であることを示す。
+  await expect(page.getByTestId('ground-summary')).toContainText('カメラ未設定・土台寸法からの概算');
+  const saved = await gardenJson(request, id);
+  const outlineBefore = await page.getByTestId('photo-ground').getAttribute('points');
+
+  // UC-03 7a: 頂点1を辺2-3の外側へ一度に動かすと辺が交差する。修正は反映せず直前の形を保つ。
+  const from = await screenPoint(page, 0.2, 0.8), crossing = await screenPoint(page, 0.9, 0.5);
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(crossing.x, crossing.y);
+  await page.mouse.up();
+  await expect(page.getByTestId('vertex-error')).toContainText('反映していません');
+  await expect(page.getByTestId('photo-ground')).toHaveAttribute('points', outlineBefore!);
+  await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+  expect(await gardenJson(request, id)).toEqual(saved);
+  await page.screenshot({ path: resolve(artifactDirectory, 'garden-photo-vertex-rejected.png'), fullPage: true });
+
+  const valid = await screenPoint(page, 0.3, 0.7);
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(valid.x, valid.y, { steps: 4 });
+  await page.mouse.up();
+  await expect(page.getByTestId('vertex-error')).toHaveCount(0);
+  await expect(page.getByTestId('photo-ground')).not.toHaveAttribute('points', outlineBefore!);
+  await expect.poll(async () => (await gardenJson(request, id)).revision).toBeGreaterThan(saved.revision);
+  await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+  const moved = await saveArtifact(request, id, 'garden-photo-vertex-moved.json');
+  expect(moved.photo!.boundary[0].x).toBeCloseTo(0.3, 2);
+  expect(moved.photo!.boundary[0].y).toBeCloseTo(0.7, 2);
+  expect(moved.photo!.boundary.slice(1)).toEqual(saved.photo!.boundary.slice(1));
+  const outlineMoved = await page.getByTestId('photo-ground').getAttribute('points');
+  await page.reload();
+  await showOutline(page);
+  await expect(page.getByTestId('photo-ground')).toHaveAttribute('points', outlineMoved!);
+  expect(await gardenJson(request, id)).toEqual(moved);
+  await page.screenshot({ path: resolve(artifactDirectory, 'garden-photo-vertex-moved.png'), fullPage: true });
+});

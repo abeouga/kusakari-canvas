@@ -210,6 +210,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.headers["Location"] = f"{settings.api_prefix}/api/gardens/{garden.id}"
         return garden
 
+    @router.post("/api/gardens/{id}/duplicate", status_code=201, response_model=GardenSummary)
+    def duplicate(id: str, response: Response, db: Db, owner: Owner):
+        garden = service.duplicate_garden(db, owner, id)
+        response.headers["Location"] = f"{settings.api_prefix}/api/gardens/{garden.id}"
+        return garden
+
     @router.get("/api/gardens/{id}", response_model=GardenDocument)
     def get(id: str, db: Db, owner: Owner):
         return service.get_garden(db, owner, id, media)

@@ -256,3 +256,7 @@ input::placeholder { color: #adb4a8; }
 }
 
 .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.auth-loading { display: grid; place-items: center; min-height: 100dvh; background: var(--green-soft); }
+.auth-loading span { width: 40px; height: 40px; border: 4px solid #dbe6dc; border-top-color: var(--green); border-radius: 50%; animation: auth-loading-spin .8s linear infinite; }
+@keyframes auth-loading-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .auth-loading span { animation-duration: 2.4s; } }

@@ -38,3 +38,14 @@ export function placementRows(document, assets) {
   }
   return rows;
 }
+
+// EC selections need at least one; a matching placement already covers it.
+export function withSavedItems(rows, saved = []) {
+  const merged = [...rows];
+  for (const item of saved) {
+    if (merged.some((row) => row.productId === item.productId)) continue;
+    merged.push({ key: `product:${item.productId}`, productId: item.productId, assetId: item.productId,
+      name: item.name, materialCode: "", footprint: 0, quantity: 1, unit: "piece", unplaced: true });
+  }
+  return merged;
+}

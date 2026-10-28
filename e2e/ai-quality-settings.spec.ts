@@ -86,7 +86,7 @@ test('fixed-input guard accepts the actual browser capture before a real no-key 
     });
     await expect(page.getByAltText('品質固定入力の選択した参考写真')).toBeVisible();
     const firstResponse = page.waitForResponse(r => r.url().endsWith('/ai-image') && r.request().method() === 'POST');
-    await page.getByRole('button', { name: 'AIで生成（API利用料が発生します）', exact: true }).click();
+    await page.getByRole('button', { name: 'AIで生成', exact: true }).click();
     const first = await firstResponse;
     expect(first.status()).toBe(503);
     const frozen = first.request().postDataJSON() as QualityPayload;
@@ -112,7 +112,7 @@ test('fixed-input guard accepts the actual browser capture before a real no-key 
       await route.continue();
     });
     const pending = page.waitForResponse((response) => response.request().method() === 'POST' && response.url().endsWith('/ai-image'));
-    await page.getByRole('button', { name: 'AIで生成（API利用料が発生します）', exact: true }).click();
+    await page.getByRole('button', { name: 'AIで生成', exact: true }).click();
     const response = await pending;
     expect(response.status()).toBe(503);
     expect((await response.json()).code).toBe('AI_NOT_CONFIGURED');

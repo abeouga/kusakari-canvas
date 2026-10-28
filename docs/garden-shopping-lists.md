@@ -71,3 +71,27 @@ ECの庭別一覧で庭の見た目を判別できるようにする。
 ### Consequences
 
 未撮影の旧庭も配置図を取得できる。生成画像は生成当時の配置を表す。生成履歴を削除すると次の候補へ切り替わる。新規テーブル以外の既存データは維持する。EC側の `docs/cart-ux-and-demo-products.md` に画面・検証結果を記録する。
+
+## 2026-10-23: ECで追加した商品をCanvasのリストに表示し、配置で二重に数えない
+
+### Context
+
+ECの「買い物リストに追加」で保存した商品（EC側 `garden_shopping_items`）が、Canvasの右パネルには表示されなかった。また、EC側で「配置数＋EC追加分1点」と合算していたため、ECで追加した商品をCanvasで1個置くと必要数が2点になっていた。
+
+### Decision
+
+- ECで追加した商品は「この庭に1点以上必要」という意味で扱う。必要数は `max(配置数, 1)` とする。配置がなければ1点、配置があれば配置数のままとする。ECの庭別一覧・詳細・カート移送はすべてこの計算による。
+- Canvasは、ECの `GET /api/shopping-lists/{gardenId}/saved-items`（会員カートIDで絞り込んだ商品IDと商品名、`listRevision`）を取得し、編集中の配置から作ったリストと画面上で合成する。EC追加分の正本はECのままで、CanvasのDBやGardenDocumentへは複製しない。
+- まだ配置していないEC追加分は「ECで追加（庭に未配置）」と表示する。商品一覧と同じように、ドラッグまたは「庭に配置」で配置できる。取得に失敗した場合は配置分だけを表示し、取得できなかったことを通知する。
+
+### Alternatives
+
+Canvas側へEC追加分を同期・保存する方式は、正本が2か所になるため採用しない。ECの詳細APIを使う方式は、保存済みの配置と合算済みの値しか返さず、未保存の配置と合成できないため採用しない。
+
+### Consequences
+
+DBスキーマとGardenDocumentの形式は変更しない。Canvasで配置をすべて削除しても、EC追加分の1点は残る（ECでのリストからの削除は引き続き対象外）。ECの別タブで追加した商品は、Canvasの画面に戻ったときの再取得（10秒のキャッシュ後）で反映される。
+
+### Verification
+
+ECで `npx playwright test --config playwright.shopping-picker.config.js`（実Cognito・実API・専用MySQL）の「a product saved from EC appears in the Canvas list…」で確認する。ECで追加 → Canvasで1点・未配置表示 → 1個配置しても1点 → 2個で2点 → 再読み込み後も2点、ECの詳細も同じ数量であることを確かめる。画面とJSONはEC側の `artifacts/shopping-picker/canvas-ec-item-*` に保存する。CanvasとECの両方を認証付きで起動する構成がEC側にあるため、検証はEC側に置く。

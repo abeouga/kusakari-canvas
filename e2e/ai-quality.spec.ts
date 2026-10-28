@@ -105,7 +105,7 @@ for (const name of cases) {
       }
       const pending = page.waitForRequest((outgoing) => outgoing.method() === 'POST' && outgoing.url().endsWith('/ai-image'));
       const generationStart = Date.now();
-      await page.getByRole('button', { name: 'AIで生成（API利用料が発生します）', exact: true }).click();
+      await page.getByRole('button', { name: 'AIで生成', exact: true }).click();
       const outgoing = await pending;
       const payload = outgoing.postDataJSON() as QualityPayload;
       const inputOrder = await saveRequest(directory, payload);

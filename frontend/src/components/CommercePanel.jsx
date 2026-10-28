@@ -4,7 +4,7 @@ import { ecUrl } from '../domain/shopping';
 import { PlacedObjects } from './PlacedObjects';
 import { ProductBrowser } from './ProductBrowser';
 import { SidebarResize } from './SidebarResize';
-import { placedProductAsset, startProductDrag } from '../domain/productModels';
+import { placedProductAsset, productAsset, startProductDrag } from '../domain/productModels';
 import { useEditorStore } from '../stores/editorStore';
 
 export function CommercePanel({ document, assets, selectedObject, disabled, commerce, onSelectObject, onNavigate, width, onWidthChange }) {
@@ -40,17 +40,24 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
       </section>
       <section id="commerce-list" role="tabpanel" aria-labelledby="commerce-tab-list" hidden={tab !== 'list'}>
         <h3>{document.name}の買い物リスト</h3>
-        <p className="form-hint">配置した商品の必要数です。庭で追加・削除すると数量が変わります。</p>
+        <p className="form-hint">配置した商品とECで追加した商品の必要数です。ECで追加した商品は、配置しても1点のまま数えます。</p>
         <p role="status" data-testid="shopping-sync-status">{status}</p>
-        {commerce.rows.length === 0 && <p>庭に商品を配置すると、このリストに表示されます。</p>}
+        {commerce.saved.isError && <div className="notice notice-error" role="alert">
+          <p>ECで追加した商品を取得できません。{commerce.saved.error.message}</p>
+          <button type="button" className="button button-secondary" disabled={commerce.saved.isFetching} onClick={() => commerce.saved.refetch()}>ECで追加した商品を再取得</button>
+        </div>}
+        {commerce.rows.length === 0 && <p>庭に商品を配置するか、ECで買い物リストに追加すると、このリストに表示されます。</p>}
         {commerce.rows.map((row) => {
           const object = document.objects.find((o) => row.productId ? o.productId === row.productId : !o.productId && o.assetId === row.assetId);
-          const asset = object ? placedProductAsset(object, assets) : null;
           const product = commerce.products.data?.find((p) => p.id === row.productId);
+          let asset = null;
+          if (object) asset = placedProductAsset(object, assets);
+          else if (product) asset = productAsset(product, assets);
           return <article key={row.key} className="commerce-product" data-testid={'shopping-line-' + row.assetId}
             draggable={!!asset && !disabled} onDragStart={(event) => startProductDrag(event, asset)}>
             {product && <img src={productImage(product.imageUrl)} alt="" draggable={false}/>}
             <div><strong>{product?.name ?? row.name}</strong><p data-testid="needed-quantity">必要数 {row.quantity}点</p>
+              {row.unplaced && <p data-testid="unplaced-ec-item">ECで追加（庭に未配置）</p>}
               {row.productId && commerce.products.isSuccess && !product && <p role="status">この店舗の販売対象ではないため購入できません。保存済みの配置は維持されます。</p>}
               {product && <p>商品小計の目安 {yen(product.priceYen * row.quantity)}</p>}
               <button type="button" disabled={disabled || !asset} onClick={() => useEditorStore.getState().selectAsset(asset.id)}>庭に配置</button>

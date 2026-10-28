@@ -19,7 +19,7 @@ CookieのセッションをECへ照会し、返された会員IDを所有者と�
 ## Alternatives / Consequences
 
 Canvas専用ログインを作らず、ECのセッションを共有します。EC停止中は認証済み操作も停止します。
-未ログインでCanvasを開くと、ECの`/account/login?returnTo=元のCanvasのURL`へ自動転送します。Canvas内にはログインフォーム/ログインボタンを設けません。ログイン成功後は元のCanvas画面へ戻ります。編集中のCanvas/EC APIが401を返した場合も同じEC画面へ転送します。403や認証先障害503では自動転送せず、エラーを表示します。
+未ログインでCanvasを開くと、ECの`/account/login?returnTo=元のCanvasのURL`へ自動転送します。Canvas内にはログインフォーム/ログインボタンを設けません。ログイン成功後は元のCanvas画面へ戻ります。未保存の編集がない画面でCanvas/EC APIが401を返した場合も同じEC画面へ転送します。2026-10-28以降、未保存の編集がある場合は転送せず編集内容を保持し、別ウィンドウでECへ再ログインしてから保存を再実行します（[編集中のログイン期限切れ](session-expiry-edits.md)）。403や認証先障害503では自動転送せず、エラーを表示します。
 設定とテストアカウント作成手順は隣接`kusakari-terraform/README.md`、認証境界の全体仕様はECの`docs/cognito-auth.md`を参照します。
 2026-10-19に東京の実User Pool `ap-northeast-1_HvkWp5qwE`を作成し、成功系を検証しました。Git対象外`.env`にCognitoモードとEC APIオリジンを設定済みです。
 

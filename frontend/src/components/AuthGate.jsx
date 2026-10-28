@@ -24,10 +24,11 @@ export function AuthGate({ children }) {
   if (state === 'authenticated' || state === 'demo') {
     return <AuthContext.Provider value={authSession}>{children}</AuthContext.Provider>;
   }
+  if (state !== 'error') {
+    return <main className="auth-loading" role="status" aria-label="ログイン状態を確認しています"><span /></main>;
+  }
   return <main className="workspace-card">
     <h1>Kusakari Canvas</h1>
-    {state === 'loading' && <p>ログイン状態を確認しています。</p>}
-    {state === 'redirecting' && <p>ECのログイン画面へ移動しています。</p>}
     {state === 'error' && <><p role="alert">ログイン状態を確認できません。ECの起動と接続設定を確認してください。</p><button onClick={() => window.location.reload()}>再試行</button></>}
   </main>;
 }

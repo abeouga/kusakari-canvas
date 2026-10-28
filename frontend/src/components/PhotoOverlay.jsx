@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import { homography, unitCorners, validCorners, validSurface, withPhotoBoundary } from '../domain/photoProjection';
+import { homography, unitCorners, validCorners, validSurface } from '../domain/photoProjection';
 import { useEditorStore } from '../stores/editorStore';
 import { PhotoCanvas } from '../three/PhotoCanvas';
 import { PhotoCalibrationEditor } from './PhotoCalibrationEditor';
@@ -24,6 +24,7 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
     const [pointer, setPointer] = useState(null);
     const [isFileDragging, setIsFileDragging] = useState(false);
     const [error, setError] = useState('');
+    const [vertexError, setVertexError] = useState('');
     const [selectedEdge, setSelectedEdge] = useState(null);
     // 写真上の配置操作と、輪郭・辺の寸法の編集を切り替えます。頂点と辺は編集中だけ操作できます。
     const [editingEdges, setEditingEdges] = useState(false);
@@ -57,6 +58,7 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
     function setMode(edges) {
         setEditingEdges(edges);
         setSelectedEdge(null);
+        setVertexError('');
         if (edges) {
             useEditorStore.getState().selectAsset(null);
             useEditorStore.getState().selectObject(null);
@@ -67,6 +69,7 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
         setSelectedEdge(null);
         setPointer(null);
         setError('');
+        setVertexError('');
     }
     function imagePoint(clientX, clientY) {
         const matrix = svg.current?.getScreenCTM();
@@ -85,7 +88,8 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
         if (drawingBoundary)
             useEditorStore.getState().setPhotoBoundaryDraft(boundary);
         else
-            useEditorStore.getState().setPhoto(withPhotoBoundary(photo, boundary));
+            // 確定済みの輪郭は、成立しない形になる移動を反映せず直前の形を保ちます。
+            setVertexError(useEditorStore.getState().moveBoundaryVertex(index, next) ?? '');
     }
     function finishBoundary() {
         if (disabled)
@@ -233,6 +237,7 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
     {calibrating && photo && <PhotoCalibrationEditor document={document} photo={photo} returnFocus={cameraButton} onClose={() => useEditorStore.getState().setCalibrating(false)}/>}
     <input ref={fileInput} type="file" accept="image/jpeg,image/png" disabled={disabled} aria-label="庭の写真を選択" onChange={(event) => { void readPhoto(event.target.files?.[0]); event.target.value = ''; }} hidden/>
     {error && <p role="alert" className="notice-error">{error}</p>}
+    {vertexError && editMode && <p role="alert" className="notice-error" data-testid="vertex-error">{vertexError}</p>}
     {calibrationError && <p role="alert" className="notice-error">{calibrationError}</p>}
     {!photo && renderOverlay(null)}
     {!photo ? <button type="button" className="photo-empty" disabled={disabled} onClick={() => fileInput.current?.click()}>
@@ -250,7 +255,7 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
       {editMode && <div className="photo-guidance edge-toolbar" role="toolbar" aria-label="輪郭と寸法の編集">
         <span className="edge-progress" data-testid="edge-progress"><strong>{enteredCount}/{edgeCount}辺</strong>入力済み</span>
         <span className="edge-perspective">パース：{perspective}</span>
-        {summary.area !== null && <span className="edge-area" data-testid="ground-summary">面積 {summary.area.toFixed(2)} m²・外周 {summary.perimeter.toFixed(2)} m</span>}
+        {summary.area !== null && <span className="edge-area" data-testid="ground-summary" title={summary.label}>面積 {summary.area.toFixed(2)} m²・外周 {summary.perimeter.toFixed(2)} m{!photo.calibration && `（${summary.label}）`}</span>}
         <button type="button" className="button button-secondary" disabled={disabled} onClick={startBoundary}><UiIcon name="redraw" size={14}/>庭の領域を書き直す</button>
         <button type="button" className="button button-primary" onClick={() => setMode(false)}><UiIcon name="check" size={14}/>完了</button>
       </div>}

@@ -44,7 +44,7 @@ test('live output survives actual DB save failure and retries persistence withou
     fault('install', garden.id);
     injectedId = garden.id;
     const pending = page.waitForRequest((outgoing) => outgoing.method() === 'POST' && outgoing.url().endsWith('/ai-image'));
-    await page.getByRole('button', { name: 'AIで生成（API利用料が発生します）', exact: true }).click();
+    await page.getByRole('button', { name: 'AIで生成', exact: true }).click();
     const outgoing = await pending;
     await saveRequest(artifacts, outgoing.postDataJSON());
     const response = await outgoing.response();
@@ -68,7 +68,7 @@ test('live output survives actual DB save failure and retries persistence withou
     const unsavedPath = resolve(artifacts, 'history-live-recovery-unsaved.png');
     await download.saveAs(unsavedPath);
     expect(await readFile(unsavedPath)).toEqual(Buffer.from(afterDataUrl.split(',')[1], 'base64'));
-    await expect(page.getByRole('button', { name: 'AIで生成（API利用料が発生します）', exact: true })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'AIで生成', exact: true })).toBeDisabled();
     const url = `${api}/gardens/${garden.id}/image-history`;
     expect((await (await request.get(url)).json()).items).toHaveLength(0);
     await page.keyboard.press('Escape');

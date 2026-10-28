@@ -246,6 +246,45 @@ test('offline save keeps edits, stops retry storms and supports an explicit retr
   await reloadedEvidence(page, request, garden.id, 'offline-recovered');
 });
 
+test('expired login during save keeps edits in memory, offers EC re-login and saves after returning', async ({ page, request }) => {
+  const garden = await scene(page, request);
+  let attempts = 0;
+  // 障害注入: 保存要求にだけログイン期限切れ(401)を返す。ほかの要求は実APIへ送る。
+  await page.route(`**/api/gardens/${garden.id}`, async route => {
+    if (route.request().method() !== 'PUT') { await route.continue(); return; }
+    attempts++;
+    await route.fulfill({ status: 401, contentType: 'application/json',
+      body: JSON.stringify({ status: 401, code: 'LOGIN_REQUIRED', message: 'ログインしてください。' }) });
+  });
+  const editorUrl = page.url();
+  await page.getByTestId('object-details-toggle').click();
+  await page.getByTestId('position-x').fill('2.5');
+  const expired = page.getByTestId('session-expired');
+  await expect(expired).toContainText('ログインの有効期限が切れました');
+  await page.waitForTimeout(1200);
+  expect(attempts).toBe(1);
+  expect(page.url()).toBe(editorUrl);
+  await expect(page.getByTestId('position-x')).toHaveValue('2.5');
+  expect((await read(request, garden.id)).objects[0].position.x).toBe(0);
+  await page.screenshot({ path: `${evidence}/login-expired-edits-kept.png` });
+  await page.unroute(`**/api/gardens/${garden.id}`);
+  const loginRequest = page.context().waitForEvent('request', req => req.url().startsWith(`${ec}/account/login`));
+  const loginWindow = page.context().waitForEvent('page');
+  await expired.getByRole('button', { name: 'ECに再ログイン', exact: true }).click();
+  const returnTo = new URL(new URL((await loginRequest).url()).searchParams.get('returnTo')!);
+  expect(returnTo.origin).toBe(new URL(editorUrl).origin);
+  expect(returnTo.searchParams.get('loginComplete')).toBe('1');
+  // 隔離E2Eの認証は明示したデモ設定のため、ECがログイン成功後に行う戻り先への遷移をログイン用ウィンドウで再現する。
+  const opened = await loginWindow;
+  await opened.goto(returnTo.href, { waitUntil: 'commit' });
+  const stored = await saved(page, request, garden.id, garden.revision + 1);
+  expect(stored.objects[0].position.x).toBe(2.5);
+  await expect(expired).toHaveCount(0);
+  expect(page.url()).toBe(editorUrl);
+  if (!opened.isClosed()) await opened.close();
+  await reloadedEvidence(page, request, garden.id, 'login-expired-recovered');
+});
+
 test('new edits during a pending request autosave again without a navigation or save action', async ({ page, request }) => {
   const garden = await scene(page, request);
   let release!: () => void;

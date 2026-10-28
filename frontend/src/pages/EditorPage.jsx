@@ -19,8 +19,10 @@ import { validSurface } from '../domain/photoProjection';
 import { calibratedBoundaryError } from '../domain/calibratedProjection';
 import { Dialog } from '../components/Dialog';
 import { UiIcon } from '../components/UiIcon';
+import { GardenTitle } from '../components/GardenTitle';
 import { CompletionImageAction } from '../components/CompletionImageAction';
 import { clearPlantCompositionCache } from '../three/PlantCompositionModel';
+import { onLoginCompleted, openLoginWindow, setUnauthorizedHandler } from '../api/auth';
 export function EditorPage({ gardenId }) {
     const gardenQuery = useQuery({ queryKey: ['garden', gardenId], queryFn: () => gardenApi.getGarden(gardenId), staleTime: Infinity });
     const assetQuery = useQuery({ queryKey: ['assets'], queryFn: gardenApi.listAssets, staleTime: Infinity });
@@ -112,8 +114,24 @@ export function EditorPage({ gardenId }) {
         window.addEventListener('keydown', handleDeleteKey);
         return () => window.removeEventListener('keydown', handleDeleteKey);
     }, []);
+    // 未保存の編集があるときの401はログインへ遷移せず、編集内容を保持したまま再ログインを案内します。
+    const [sessionExpired, setSessionExpired] = useState(false);
+    useEffect(() => setUnauthorizedHandler(() => {
+        const state = useEditorStore.getState();
+        if (!state.isDirty && state.photoBoundaryDraft === null && !state.isCalibrating) return false;
+        setSessionExpired(true);
+        return true;
+    }), []);
     const { save, flush } = useGardenAutosave(gardenId, document, isDirty, isSaving, isTransformDragging,
-        isCalibrating, hasBoundaryDraft, saveError);
+        isCalibrating, hasBoundaryDraft, saveError ?? (sessionExpired ? 'session-expired' : null));
+    function retryAfterLogin() {
+        setSessionExpired(false);
+        void save();
+    }
+    useEffect(() => onLoginCompleted(() => {
+        setSessionExpired(false);
+        void save();
+    }), [save]);
     function goToList() {
         requestNavigation(canvasUrl('/'));
     }
@@ -182,7 +200,11 @@ export function EditorPage({ gardenId }) {
           範囲外 {index + 1}: {assetForObject(object, assetMap)?.name ?? object.assetId}
         </button>)}
       </div>}
-      {saveError && (<div className="editor-alert notice-error" role="alert">
+      {sessionExpired ? (<div className="editor-alert notice-error" role="alert" data-testid="session-expired">
+          <span>ログインの有効期限が切れました。編集内容はこの画面に保持されています。ECに再ログインしてから保存を再試行してください。</span>
+          <button type="button" onClick={openLoginWindow}>ECに再ログイン</button>
+          <button type="button" onClick={retryAfterLogin} disabled={isSaving || isTransformDragging}>保存を再試行</button>
+        </div>) : saveError && (<div className="editor-alert notice-error" role="alert">
           <span>{saveError}</span>
           <button type="button" onClick={save} disabled={isSaving || isTransformDragging}>再試行</button>
         </div>)}
@@ -201,15 +223,15 @@ export function EditorPage({ gardenId }) {
           <div className="canvas-tools" data-view-mode={viewMode}>
             <div className="document-identity">
               <button type="button" className="icon-button list-button" aria-label="← 庭一覧" title="庭一覧に戻る" onClick={goToList} disabled={isEditingDisabled}><UiIcon name="back" size={16}/></button>
-              <div className="document-title"><h1 title={document.name}>{document.name}</h1></div>
+              <GardenTitle name={document.name} disabled={isEditingDisabled || hasBoundaryDraft}/>
               <span className="document-save-status" data-testid="save-status" role="status" aria-live="polite" title={statusText}
                 data-state={saveError ? 'error' : savePending ? 'pending' : 'saved'}>
                 <UiIcon name={saveError ? 'alert' : savePending ? 'clock' : 'check'} size={14}/><span className="document-save-label">{statusText}</span>
               </span>
             </div>
             <div className="view-mode-actions" role="group" aria-label="表示モード">
-              <button type="button" aria-label="写真＋設計" title="写真＋設計" aria-pressed={viewMode === 'photo'} disabled={isEditingDisabled} onClick={() => setViewMode('photo')}><UiIcon name="photo"/><span>写真<span className="view-mode-suffix">＋設計</span></span></button>
-              <button type="button" aria-label="3D庭" title="3D庭" aria-pressed={viewMode === '3d'} disabled={hasBoundaryDraft || isEditingDisabled} onClick={() => setViewMode('3d')}><UiIcon name="cube"/><span>3D<span className="view-mode-suffix">庭</span></span></button>
+              <button type="button" aria-label="写真＋設計" title="写真＋設計" aria-pressed={viewMode === 'photo'} disabled={isEditingDisabled} onClick={() => setViewMode('photo')}><UiIcon name="photo"/><span>写真</span></button>
+              <button type="button" aria-label="3D庭" title="3D庭" aria-pressed={viewMode === '3d'} disabled={hasBoundaryDraft || isEditingDisabled} onClick={() => setViewMode('3d')}><UiIcon name="cube"/><span>3D</span></button>
             </div>
             <div className="camera-actions">
               {viewMode === '3d' && !document.photo && <button type="button" aria-label="土台設定" title="土台設定" aria-haspopup="dialog" onClick={() => setDimensionsOpen(true)} disabled={isEditingDisabled}><UiIcon name="ruler"/><span>土台設定</span></button>}

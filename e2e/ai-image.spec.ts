@@ -43,7 +43,7 @@ async function addReference(page: Page) {
 
 async function generateWithoutKey(page: Page) {
   const pending = page.waitForRequest((request) => request.method() === 'POST' && request.url().endsWith('/ai-image'));
-  await page.getByRole('button', { name: 'AIで生成（API利用料が発生します）', exact: true }).click();
+  await page.getByRole('button', { name: 'AIで生成', exact: true }).click();
   const outgoing = await pending;
   const response = await outgoing.response();
   expect(response?.status()).toBe(503);
@@ -121,7 +121,7 @@ test('AI generation uses real EC selection, captures plant/furniture coverage, a
     await expect(page.getByTestId('ai-result-guidance')).toContainText('庭全体のAfter画像を生成');
     await expect(page.getByTestId('ai-result-guidance')).toContainText('背景や家具も含め');
     await expect(page.getByRole('combobox', { name: '低木に対応する商品', exact: true })).toHaveCount(0);
-    await page.getByRole('button', { name: 'AIで生成（API利用料が発生します）', exact: true }).click();
+    await page.getByRole('button', { name: 'AIで生成', exact: true }).click();
     await expect(page.getByRole('region', { name: 'AI完成イメージ生成' }).getByRole('alert')).toContainText('参考写真を追加');
     await page.getByRole('group', { name: '低木の参考写真', exact: true }).getByLabel('写真を選択').setInputFiles({
       name: 'invalid.png', mimeType: 'image/png', buffer: Buffer.from('<svg></svg>') });

@@ -49,7 +49,7 @@ test('live OpenAI edit returns a full-frame result after a real EC product selec
     await expect(page.getByAltText('低木の選択した参考写真')).toBeVisible();
     const pending = page.waitForRequest((outgoing) => outgoing.method() === 'POST' && outgoing.url().endsWith('/ai-image'));
     const start = Date.now();
-    await page.getByRole('button', { name: 'AIで生成（API利用料が発生します）', exact: true }).click();
+    await page.getByRole('button', { name: 'AIで生成', exact: true }).click();
     const outgoing = await pending;
     const payload = outgoing.postDataJSON();
     await expect(page.getByRole('button', { name: 'AI画像を生成中…', exact: true })).toBeDisabled();

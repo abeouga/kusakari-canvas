@@ -218,7 +218,7 @@ export function AiImageGeneration({ image, onBusyChange, onUnsavedChange }) {
       <div className="ai-action-copy">
         <span>{pending ? 'この画面のままお待ちください' : candidates.isFetching ? '植物の参考画像を準備中…' : result ? '別の仕上がりを試す' : '配置した植物を、自然な仕上がりに'}</span>
       </div>
-      <button type="button" className="button button-primary ai-generate-button" aria-label="AIで生成（API利用料が発生します）"
+      <button type="button" className="button button-primary ai-generate-button" aria-label="AIで生成"
         disabled={formDisabled || candidates.isFetching || candidates.isPending || candidates.isError || !plants.length || !!unlinked.length || inputImageCount > 16}
         onClick={generate}><UiIcon name="sparkles"/>{pending ? '生成中…' : 'AIで生成'}</button>
     </div>

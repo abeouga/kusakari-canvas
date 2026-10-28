@@ -3,6 +3,8 @@ import { addObject, changeObjectTransform, createPlacedObject, duplicateObject, 
 import { validSurface, withPhotoBoundary } from '../domain/photoProjection';
 import { dimensionError } from '../domain/gardenDimensions';
 import { applyEdgeLength, withEdgeLengthsForBoundary } from '../domain/edgeCalibration';
+import { MAX_GARDEN_NAME_LENGTH } from '../domain/limits';
+import { calibratedBoundaryError } from '../domain/calibratedProjection';
 export const useEditorStore = create((set, get) => ({
     document: null,
     selectedObjectId: null,
@@ -49,6 +51,17 @@ export const useEditorStore = create((set, get) => ({
         set({ document: { ...state.document, width, depth }, isDirty: true, saveError: null, editError: null });
         return true;
     },
+    renameGarden: (name) => {
+        const state = get();
+        const trimmed = name.trim();
+        if (!state.document || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null)
+            return false;
+        if (!trimmed || trimmed.length > MAX_GARDEN_NAME_LENGTH)
+            return false;
+        if (trimmed !== state.document.name)
+            set({ document: { ...state.document, name: trimmed }, isDirty: true, saveError: null, editError: null });
+        return true;
+    },
     setPhotoEdgeLength: (index, length) => {
         const state = get();
         if (!state.document?.photo || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null)
@@ -71,6 +84,23 @@ export const useEditorStore = create((set, get) => ({
             photo = withEdgeLengthsForBoundary(photo);
         set({ document: { ...state.document, photo }, isDirty: true, saveError: null,
             photoBoundaryDraft: !photo || photo.dataUrl !== state.document.photo?.dataUrl ? null : state.photoBoundaryDraft });
+    },
+    // 確定済み輪郭の頂点移動。成立しない形になる場合は反映せず、理由を返します。
+    moveBoundaryVertex: (index, point) => {
+        const state = get();
+        const photo = state.document?.photo;
+        if (!photo || !photo.boundary[index] || state.photoBoundaryDraft !== null || state.isCalibrating || state.isTransformDragging)
+            return '操作を完了してから輪郭を修正してください。';
+        const boundary = [...photo.boundary];
+        boundary[index] = point;
+        const next = withPhotoBoundary(photo, boundary);
+        if (!validSurface(next))
+            return '輪郭が成立しないため、この移動は反映していません。線の交差、面積不足、重複や近すぎる頂点にならない位置へ動かしてください。';
+        const { width, depth } = state.document;
+        if (calibratedBoundaryError(next, width, depth) && !calibratedBoundaryError(photo, width, depth))
+            return '頂点が地平線または庭の実寸範囲を越えるため、この移動は反映していません。';
+        get().setPhoto(next);
+        return null;
     },
     setPhotoBoundaryDraft: (photoBoundaryDraft) => {
         const state = get();

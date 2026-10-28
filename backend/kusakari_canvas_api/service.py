@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from .errors import ApiError, bad_request, not_found
 from .media import MediaStore
-from .models import Asset, Garden, PlacedObject
+from .models import Asset, Garden, GardenThumbnail, PlacedObject
 from .plant_schemas import PlantComposition
 from .schemas import (
     AssetResponse,
@@ -140,3 +140,45 @@ def delete_garden(session: Session, owner: str, id: str) -> None:
     with session.begin():
         session.delete(owned_garden(session, owner, id, lock=True))
         session.flush()
+
+
+DUPLICATE_SUFFIX = "（複製）"
+DUPLICATE_NAME_UNITS = 54
+COPIED_OBJECT_COLUMNS = tuple(column.key for column in PlacedObject.__table__.columns
+                              if column.key not in {"id", "garden_id"})
+
+
+def duplicate_name(name: str) -> str:
+    # 従来の画面と同じくUTF-16の54単位で切り詰めます。サロゲートペアは分割しません。
+    kept, units = [], 0
+    for char in name:
+        size = 2 if ord(char) > 0xFFFF else 1
+        if units + size > DUPLICATE_NAME_UNITS:
+            break
+        kept.append(char)
+        units += size
+    return "".join(kept) + DUPLICATE_SUFFIX
+
+
+def duplicate_garden(session: Session, owner: str, id: str) -> GardenSummary:
+    """写真・輪郭・実寸補正・配置を1トランザクションで複製します。生成履歴は複製しません。"""
+    with session.begin():
+        # 保存(PUT)と同じ行ロックで、庭と配置の組み合わせが途中の版にならないようにします。
+        source = owned_garden(session, owner, id, lock=True)
+        copy = Garden(id=str(uuid4()), owner_id=owner, name=duplicate_name(source.name), width=source.width,
+                      depth=source.depth, revision=0, updated_at=datetime.now(UTC).replace(tzinfo=None),
+                      # S3保存時はimageKeyの参照を共有します。キーは内容のハッシュで、庭の削除で消えません。
+                      photo_json=source.photo_json)
+        session.add(copy)
+        session.flush()
+        for obj in session.scalars(select(PlacedObject).where(PlacedObject.garden_id == source.id)
+                                   .order_by(PlacedObject.id)):
+            session.add(PlacedObject(id=str(uuid4()), garden_id=copy.id,
+                                     **{key: getattr(obj, key) for key in COPIED_OBJECT_COLUMNS}))
+        capture = session.get(GardenThumbnail, source.id)
+        if capture is not None and capture.revision == source.revision:
+            session.add(GardenThumbnail(garden_id=copy.id, revision=copy.revision,
+                                        image_png=capture.image_png, image_key=capture.image_key))
+        session.flush()
+        return GardenSummary(id=copy.id, name=copy.name, width=copy.width, depth=copy.depth,
+                             revision=copy.revision, updatedAt=copy.updated_at.replace(tzinfo=UTC))

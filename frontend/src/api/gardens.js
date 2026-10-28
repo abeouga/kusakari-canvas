@@ -12,5 +12,7 @@ export const gardenApi = {
         method: 'PUT',
         body: JSON.stringify(document),
     }),
+    /** 写真・輪郭・配置を含む庭を、サーバーの1トランザクションで複製します。 */
+    duplicateGarden: (id) => requestJson(`/api/gardens/${encodeURIComponent(id)}/duplicate`, { method: 'POST' }),
     deleteGarden: (id) => requestJson(`/api/gardens/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 };

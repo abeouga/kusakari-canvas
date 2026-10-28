@@ -42,7 +42,9 @@ export function useGardenAutosave(gardenId, document, dirty, saving, dragging, c
         return true;
       } catch (reason) {
         if (useEditorStore.getState().document?.id === gardenId) {
-          const message = reason instanceof ApiError && reason.code === 'OBJECT_POSITION_OUT_OF_BOUNDS'
+          const message = reason?.status === 401
+            ? 'ログインの有効期限が切れたため保存できませんでした。編集内容はこの画面に保持されています。'
+            : reason instanceof ApiError && reason.code === 'OBJECT_POSITION_OUT_OF_BOUNDS'
             ? '施工範囲外の配置を移動または削除してください。'
             : reason instanceof ApiError && reason.status === 409
             ? '別の保存結果と競合しました。編集内容は保持されています。再読み込み前に変更内容を確認してください。'

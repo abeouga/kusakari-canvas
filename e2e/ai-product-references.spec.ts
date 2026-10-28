@@ -91,7 +91,7 @@ test('linked products are automatic, grouped by product, archived-readable and p
     for (const item of products) {
       await expect(section.getByText(item.name, { exact: true })).toHaveCount(0);
     }
-    const generate = section.getByRole('button', { name: 'AIで生成（API利用料が発生します）', exact: true });
+    const generate = section.getByRole('button', { name: 'AIで生成', exact: true });
     await expect(generate).toBeEnabled();
     await page.screenshot({ path: `${evidence}/compact-generation-dialog.png` });
     await expect(generate).toBeInViewport();
@@ -187,7 +187,7 @@ test('a saved unlinked legacy tree has a clear replacement notice, without a pro
     const section = page.getByRole('region', { name: 'AI完成イメージ生成' });
     await expect(section.getByRole('alert')).toContainText('商品に紐づいていない旧モデル（木）');
     await expect(section.getByRole('combobox')).toHaveCount(0);
-    await expect(section.getByRole('button', { name: 'AIで生成（API利用料が発生します）' })).toBeDisabled();
+    await expect(section.getByRole('button', { name: 'AIで生成' })).toBeDisabled();
     expect(await readGarden(request, garden.id)).toEqual(garden);
   } finally {
     expect((await request.delete(`${api}/gardens/${garden.id}`)).status()).toBe(204);
