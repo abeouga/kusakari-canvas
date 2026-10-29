@@ -90,7 +90,6 @@ export function GardenListPage() {
                 <UiIcon name="plus" />
                 新しい庭をつくる
               </h2>
-              <p>まずは名前だけ。写真や庭の形は、あとから設定できます。</p>
             </div>
             <form className="create-form" onSubmit={submit}>
               <label className="field-label" htmlFor="garden-name">
