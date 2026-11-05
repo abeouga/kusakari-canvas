@@ -21,7 +21,7 @@ async function dragProduct(page: Page, source: ReturnType<Page['locator']>, inde
 }
 
 test('seller features create six plant compositions; catalog and shopping-list drag placements survive reload', async ({ page, context, request }) => {
-  // Preserve the budget from playwright.plant-model.config.ts in the full suite.
+  // Preserve the budget from e2e/configs/playwright.plant-model.config.ts in the full suite.
   test.setTimeout(360000);
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));

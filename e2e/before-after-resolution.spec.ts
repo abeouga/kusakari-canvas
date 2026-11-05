@@ -6,7 +6,7 @@ import { api } from './api-url';
 import { createScene, openScene, readGarden, removeScenes, shrub, syntheticPhoto } from './occlusion-helpers';
 
 const evidence = process.env.KUSAKARI_BEFORE_AFTER_EVIDENCE!;
-test.skip(!evidence, 'Use playwright.before-after.config.ts with dedicated MySQL and offline image fixtures.');
+test.skip(!evidence, 'Use e2e/configs/playwright.before-after.config.ts with dedicated MySQL and offline image fixtures.');
 type Fixture = { width: number; height: number; providerSize: [number, number];
   beforeDataUrl: string; afterDataUrl: string; highResolutionDataUrl: string };
 const fixtures = { productIds: [] as string[], gardenIds: [] as string[], cartIds: [] as string[] };

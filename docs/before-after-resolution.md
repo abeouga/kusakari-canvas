@@ -66,7 +66,7 @@ AI自身による構図変更や植物サイズの誤りを保証して解決す
 - `verification.verify_ai_frame`：259×194、194×259、320×180を含む10寸法で四隅・中央を保持。
   縦横別倍率での座標変換、家具を保護するマスク、元JSON不変、同寸法の画素不変を確認。
   8MB超の生成PNGと、不正サイズ・透明PNG・形式・容量の拒否も確認した。
-- `playwright.before-after.config.ts`：実Canvas/EC API、専用MySQL、Chromiumで3ケース成功。
+- `e2e/configs/playwright.before-after.config.ts`：実Canvas/EC API、専用MySQL、Chromiumで3ケース成功。
   変換済み人工画像の履歴保存・再読込、全景の画素、スライダー端点、390px幅、PNGダウンロードを確認。
   さらに表示部だけに異なる自然解像度の画像を入れる独立表示検査で、共通枠とcontainを確認。
   人工画像による幾何変換・保存・表示の検証であり、実AIの品質検証ではない。

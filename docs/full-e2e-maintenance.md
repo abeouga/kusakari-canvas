@@ -8,7 +8,7 @@ Canvas単独の標準設定ではECを起動せず、ECを必要とするテス�
 
 ## Decision
 
-- 全体検証は`npm run test:e2e -- --config playwright.full.config.ts`で実行する。
+- 全体検証は`npm run test:e2e -- --config e2e/configs/playwright.full.config.ts`で実行する。
 - Canvas API/Web、EC API/Webに4つの空きポートを割り当てる。MySQLはCanvasの`kusakari_canvas_e2e`とECの`kusakari_e2e`を使用する。既存開発プロセスの停止・再利用はしない。
 - JavaのWindowsソケット用一時ディレクトリをテスト出力配下に限定する。通常の`java.io.tmpdir`より`TEMP`が優先されるため、`jdk.net.unixdomain.tmpdir`を設定する。[OpenJDK実装](https://raw.githubusercontent.com/openjdk/jdk21u/master/src/java.base/windows/classes/sun/nio/ch/UnixDomainSocketsUtil.java)
 - 有料AI生成とDB障害注入は既存の明示実行条件を維持する。通常検証では生成キーを空にし、実APIでの未設定応答を確認する。正常系APIモックは追加しない。
@@ -46,7 +46,7 @@ Canvas単独の標準設定ではECを起動せず、ECを必要とするテス�
 ## 標準E2E起動設定の修正（2026-10-20）
 
 - 標準の `npm run test:e2e` はEC接続先を割り当ててもCanvasだけを起動していた。商品fixtureを利用するテストの接続先と起動サービスが一致していなかった。
-- `scripts/e2e.mjs` は設定指定がない場合に `playwright.full.config.ts` を選択する。ファイル指定・grepによる部分実行も同じ4サービスを使用する。明示された `--config` / `--config=...` / `-c` / `-c=...` は優先し、従来の専用設定を上書きしない。
+- `scripts/e2e.mjs` は設定指定がない場合に `e2e/configs/playwright.full.config.ts` を選択する。ファイル指定・grepによる部分実行も同じ4サービスを使用する。明示された `--config` / `--config=...` / `-c` / `-c=...` は優先し、従来の専用設定を上書きしない。
 - READMEにECリポジトリ・専用DBの前提、部分実行、成果物の保存先を追記した。Canvas単独設定と一時MySQL検証の対象範囲も明示した。
 - `node --check scripts/e2e.mjs`、対象ファイルのESLint、`git diff --check` が成功。標準 `--list` で87件を検出し、`--config=...` と `-c` による対象1件の一覧取得も成功した。
 - 設定指定なしの `npm run test:e2e -- e2e/editor-toolbar.spec.ts --output artifacts/e2e/startup-config-20261020/test-results --reporter=line,json` が **1件成功（1.1分）**。実API・専用MySQL・Chromiumで実商品の配置・保存・再読み込みとECへの遷移要求を検証した。JSONレポートは `PLAYWRIGHT_JSON_OUTPUT_FILE` により同ディレクトリの `results.json` へ保存した。再読み込み画像・API JSONも同ディレクトリへ複写した。

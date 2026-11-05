@@ -9,7 +9,7 @@ const email = 'test.seller@example.com';
 
 function ecWeb() {
   const url = process.env.KUSAKARI_EC_E2E_WEB_URL;
-  if (!url) throw new Error('Run via npm run test:e2e -- --config playwright.full.config.ts');
+  if (!url) throw new Error('Run via npm run test:e2e -- --config e2e/configs/playwright.full.config.ts');
   return url;
 }
 

@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test';
-import base from './playwright.plant-model.config';
+import base from './playwright.plant-model.config.js';
 const evidence = process.env.KUSAKARI_AUTOSAVE_EVIDENCE;
 if (!evidence?.startsWith('D:/KusakariVerification/')) throw new Error('Set a dedicated D: evidence directory');
 process.env.KUSAKARI_CANVAS_E2E_API_URL = 'http://127.0.0.1:18081';

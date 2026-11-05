@@ -15,7 +15,7 @@ ProductBrowserでカート取得エラーを表示し、再取得ボタンが失
 ## 検証
 
 - 開発API：Canvas Originのカート要求が403から200となり、実画面の商品一覧と配置ボタンを確認。
-- `npx playwright test --config playwright.product-browser.config.ts`：1件成功。
+- `npx playwright test --config e2e/configs/playwright.product-browser.config.ts`：1件成功。
   ECカート通信のみを障害注入として遮断し、エラー表示と読み込み表示の終了を確認。
   遮断解除後は実EC・Canvas APIと各専用MySQL DBを使用し、商品再取得、配置、保存、再読み込みを確認。
 - 新しい庭とセッションを使用し、既存の庭・商品・カートは削除していない。
