@@ -17,8 +17,9 @@ export interface GardenObject {
     scale: Vector;
 }
 
+// v1-v4 are frozen saved rules; v5 (current) places the catalog v4 parts.
 export interface PlantComposition {
-    version: 1 | 2 | 3 | 4;
+    version: 1 | 2 | 3 | 4 | 5;
     catalogVersion: 1 | 2 | 3 | 4;
     profile: { plantType: 'tree' | 'shrub' | 'flower' | 'conifer' | 'multistem' | 'spreading' | 'grass' | 'rosette' | 'vine' | 'palm'; [key: string]: unknown };
     baseDimensions: { width: number; height: number; depth: number };

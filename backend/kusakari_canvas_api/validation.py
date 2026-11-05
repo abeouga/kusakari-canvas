@@ -10,7 +10,7 @@ from PIL import Image
 from .calibration import validate_calibrated_photo
 from .errors import bad_request
 from .placement_bounds import EPSILON, contains_anchor, ground_outline
-from .plant_assembly import assemble
+from .plant_schemas import resolve_saved
 from .schemas import GardenDocumentRequest, GardenPhoto, ImagePoint
 
 
@@ -27,7 +27,7 @@ def validate_document(document: GardenDocumentRequest) -> None:
                     or obj.modelComposition is None:
                 bad_request("INVALID_PLANT_MODEL", "商品の植物構成が不足しています。商品から配置し直してください。")
             try:
-                expected = assemble(obj.modelComposition.profile, obj.modelComposition.version)
+                expected = resolve_saved(obj.modelComposition)
             except ValueError:
                 bad_request("INVALID_PLANT_MODEL", "植物の特徴と構成の版が一致しません。")
             if expected != obj.modelComposition:

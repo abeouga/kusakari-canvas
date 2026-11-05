@@ -1,6 +1,6 @@
 # 商品特徴から事前制作GLB部品を構成する
 
-第2版の24部品・10構成規則・30商品の追加仕様は [plant-library-v2.md](plant-library-v2.md) を参照。以下は保存互換性を維持する第1版の設計記録です。
+第2版の24部品・10構成規則・30商品の追加仕様は [plant-library-v2.md](plant-library-v2.md)、現在の構成規則v5（茎・枝・葉の調整、旧版の凍結）は [plant-assembly-v5.md](plant-assembly-v5.md) を参照。以下は保存互換性を維持する第1版の設計記録です。
 
 ## Context
 

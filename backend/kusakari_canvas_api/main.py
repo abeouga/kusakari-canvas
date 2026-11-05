@@ -33,8 +33,7 @@ from .errors import ApiError
 from .history_routes import history_router
 from .media import MediaStore
 from .migrations import HEAD, current_revision, validate_schema
-from .plant_assembly import assemble, part_catalog
-from .plant_schemas import PlantComposition, PlantProfile
+from .plants import PlantComposition, PlantProfile, assemble, part_catalog
 from .schemas import (
     AssetResponse,
     CalibrationRequest,
@@ -185,9 +184,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return part_catalog()
 
     @router.post("/api/model-assemblies/resolve", response_model=PlantComposition)
-    def resolve_model(profile: PlantProfile, version: int = 4):
+    def resolve_model(profile: PlantProfile):
         try:
-            return assemble(profile, version)
+            return assemble(profile)
         except ValueError as error:
             from .errors import bad_request
             bad_request("INCOMPATIBLE_PLANT_DIMENSIONS", str(error))

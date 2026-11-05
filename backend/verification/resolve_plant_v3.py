@@ -4,8 +4,8 @@ import json
 import sys
 import time
 
-from kusakari_canvas_api.plant_assembly import assemble
-from kusakari_canvas_api.plant_schemas import PlantProfile
+from kusakari_canvas_api.plant_legacy import LegacyProfile as PlantProfile
+from kusakari_canvas_api.plant_legacy import assemble_legacy as assemble
 
 results = []
 for row in json.load(sys.stdin):

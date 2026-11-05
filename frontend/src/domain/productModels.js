@@ -1,9 +1,12 @@
 const legacyModels = { 'canvas-oak': 'tree_oak', 'canvas-boxwood': 'shrub_boxwood',
   'canvas-brick': 'brick_paver', 'canvas-bench': 'bench_wood' };
 
+// Assembly rule version → GLB catalog version it places. v5 reuses the unchanged v4 parts.
+const catalogForRule = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 4 };
+
 export function productAsset(product, assets) {
-  if ([1, 2, 3, 4].includes(product.modelComposition?.version)
-      && product.modelComposition?.catalogVersion === product.modelComposition.version) {
+  const version = product.modelComposition?.version;
+  if (version in catalogForRule && product.modelComposition.catalogVersion === catalogForRule[version]) {
     return { id: `product:${product.id}`, placedAssetId: 'plant_modular', name: product.name,
       category: product.modelComposition.profile.plantType, productId: product.id,
       materialCode: product.canvasMaterialCode, modelComposition: product.modelComposition,
