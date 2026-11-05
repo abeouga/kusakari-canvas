@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test';
-import base from './playwright.plant-model.config';
+import base from './playwright.plant-model.config.js';
 
 const evidence = process.env.KUSAKARI_BEFORE_AFTER_EVIDENCE;
 if (!evidence?.startsWith('D:/KusakariVerification/')) throw new Error('Set a dedicated D: verification output directory');

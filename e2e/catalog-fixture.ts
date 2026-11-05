@@ -24,7 +24,7 @@ const selectedProducts = new WeakMap<Page, string>();
 
 export async function createTestProduct(request: APIRequestContext, name = 'E2E配置用', imageUrl = '/images/e2e-reference.svg') {
   const origin = process.env.KUSAKARI_EC_E2E_WEB_URL;
-  if (!origin) throw new Error('Use playwright.full.config.ts for real catalog placement');
+  if (!origin) throw new Error('Use e2e/configs/playwright.full.config.ts for real catalog placement');
   const preset = plantPresetsV3.find(item => item.key === 'soft-grass')!;
   const response = await request.post(`${origin}/api/products`, { data: {
     ...productInput(preset, imageUrl), sku: `E2E-${randomUUID()}`, name,
@@ -45,7 +45,7 @@ export async function placeTestPlant(page: Page, x: number, y: number) {
   let id = selectedProducts.get(page);
   if (!id) {
     const origin = process.env.KUSAKARI_EC_E2E_WEB_URL;
-    if (!origin) throw new Error('Use playwright.full.config.ts for real catalog placement');
+    if (!origin) throw new Error('Use e2e/configs/playwright.full.config.ts for real catalog placement');
     const preset = plantPresetsV3.find(item => item.key === 'soft-grass')!;
     const response = await page.request.post(`${origin}/api/products`, { data: {
       ...productInput(preset, preset.imageUrl), sku: `E2E-${randomUUID()}`,

@@ -41,7 +41,7 @@ DBスキーマ変更はない。入力16枚制限・生成品質設定・画像�
 
 ### Verification
 
-- `playwright.ai-products.config.ts` の実EC/Canvas API・専用MySQL・Chromiumで2シナリオが成功。
+- `e2e/configs/playwright.ai-products.config.ts` の実EC/Canvas API・専用MySQL・Chromiumで2シナリオが成功。
   モンステラ2株とフウチソウ1株に対し2参照、販売終了商品の自動取得、画像表示、商品選択UIなし、
   商品ID不一致・重複の拒否、履歴の再保存・再読込、通信遮断後の再取得、旧未紐付け配置の案内を確認。
 - 同じリクエストを `verify_product_reference_pipeline.py` で読み、実ECの商品画像を取得・検証した。

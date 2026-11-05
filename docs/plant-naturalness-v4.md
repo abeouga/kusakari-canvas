@@ -89,7 +89,7 @@ node scripts/review-plant-v4.mjs after
 npm run precheck
 npm run build:web
 npx tsc --noEmit -p e2e/tsconfig.plant-model.json
-npx playwright test --config playwright.plant-v4.config.ts
+npx playwright test --config e2e/configs/playwright.plant-v4.config.ts
 ```
 
 資産生成は未公開の制作時だけ行う。公開済みv4を上書きする次回修正は行わず、新しい版に分ける。

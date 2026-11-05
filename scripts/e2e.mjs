@@ -54,7 +54,7 @@ function runPlaywright(ports) {
   const explicitConfig = args.some((arg) => arg === '--config' || arg.startsWith('--config=')
     || arg === '-c' || arg.startsWith('-c='));
   // Normal UI tests use real EC products, so their default needs all four services.
-  const config = explicitConfig ? [] : ['--config', 'playwright.full.config.ts'];
+  const config = explicitConfig ? [] : ['--config', 'e2e/configs/playwright.full.config.ts'];
   const child = spawn(process.execPath, [playwrightCli, 'test', ...config, ...args], {
     cwd: root,
     env,

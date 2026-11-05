@@ -8,7 +8,7 @@ const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANV
 const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286');
 const evidence = process.env.KUSAKARI_AUTOSAVE_EVIDENCE!;
 const fixtures: { productIds: string[]; gardenIds: string[]; cartIds: string[] } = { productIds: [], gardenIds: [], cartIds: [] };
-test.skip(!evidence, 'Use playwright.autosave.config.ts with dedicated data');
+test.skip(!evidence, 'Use e2e/configs/playwright.autosave.config.ts with dedicated data');
 async function record() {
   await mkdir(evidence, { recursive: true });
   try {

@@ -10,7 +10,7 @@ import { capture, createScene, openScene, readGarden, syntheticPhoto } from './o
 const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
 const ec = (process.env.KUSAKARI_EC_E2E_API_PORT ? 'http://127.0.0.1:' + process.env.KUSAKARI_EC_E2E_API_PORT + '/api' : 'http://127.0.0.1:18186/api');
 const evidence = process.env.KUSAKARI_AI_PRODUCTS_EVIDENCE!;
-test.skip(!evidence, 'Run with playwright.ai-products.config.ts and a dedicated evidence directory; four real services are required.');
+test.skip(!evidence, 'Run with e2e/configs/playwright.ai-products.config.ts and a dedicated evidence directory; four real services are required.');
 type Product = { id: string; name: string; canvasMaterialCode: string; modelComposition: PlantComposition };
 type Reference = { assetId: string; productId: string; productName: string; source: 'catalog' };
 const fixtures: { productIds: string[]; gardenIds: string[]; cartIds: string[] } = { productIds: [], gardenIds: [], cartIds: [] };

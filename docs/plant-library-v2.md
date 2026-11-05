@@ -25,7 +25,7 @@
 
 ## Verification
 
-主検証は `playwright.plant-library.config.ts` による実API・専用MySQL・Chromium。24ファイルのGLB配信、30商品の作成とプレビュー、旧v1との混在、ドラッグ配置、保存再読込、構成改ざん拒否、商品照合を確認する。30個表示時のrequestAnimationFrame頻度は参考値であり、GPU描画FPSと同一ではない。
+主検証は `e2e/configs/playwright.plant-library.config.ts` による実API・専用MySQL・Chromium。24ファイルのGLB配信、30商品の作成とプレビュー、旧v1との混在、ドラッグ配置、保存再読込、構成改ざん拒否、商品照合を確認する。30個表示時のrequestAnimationFrame頻度は参考値であり、GPU描画FPSと同一ではない。
 
 幾何境界の独立検証は、見た目だけでは接続基点や不正な頂点を網羅できないため、GLBのPOSITION属性・索引・境界・接続点を検査する。
 
@@ -113,7 +113,7 @@ https://www.rhs.org.uk/plants/544537/hesperocyparis-macrocarpa-goldcrest/details
 - 対象30商品の構成をv3へ更新。3店舗すべてで商品名・写真・価格・在庫などの非モデル項目を照合し、変更なしを確認。対象外15商品、他の庭も変更なし。
 - ユーザー承認済みの現在の庭は反映時点で11株。revision 15→16へ更新し、11株のID・位置・回転・倍率・商品関連付けを維持した。再読込後11/11表示、画面例外0、検査による庭データ変更なしを確認。
 
-検証スクリプトは `verify-plant-v3.mjs`、`verify-plant-v3-settings.mjs`、`verify-plant-v3-leaf-holes.mjs`、`playwright.plant-v3.config.ts`。
+検証スクリプトは `verify-plant-v3.mjs`、`verify-plant-v3-settings.mjs`、`verify-plant-v3-leaf-holes.mjs`、`e2e/configs/playwright.plant-v3.config.ts`。
 測定・画面・参考資料・テスト結果は `artifacts/plant-v3/`。更新直前の全店舗商品と庭のバックアップは `artifacts/plant-v3/publication/2026-10-17T14-39-36.192Z/`。
 これらのローカル実データ・写真・検証成果物はgitignore対象で、公開成果物には含めない。
 移行用スクリプトは `node scripts/publish-plant-v3.mjs --garden=<承認済み庭UUID>` で事前測定のみ、`--apply` を追加した場合に限り更新する。
