@@ -215,7 +215,7 @@ test('autosave failure retains placements, blocks EC navigation and supports ret
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
     await expect(page.getByTestId('shopping-sync-status')).toContainText('ECへ未反映');
     expect((await loadGarden(request, garden.id)).objects).toHaveLength(0);
-    await page.getByRole('button', { name: 'ECで買い物リストを確認', exact: true }).click();
+    await page.getByRole('button', { name: 'リストを確認', exact: true }).click();
     await expect(page).toHaveURL(new RegExp('/gardens/' + garden.id));
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     await page.unroute('**/api/gardens/' + garden.id);
@@ -225,7 +225,7 @@ test('autosave failure retains placements, blocks EC navigation and supports ret
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await saved(page, 1);
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
-    await page.getByRole('button', { name: 'ECで買い物リストを確認', exact: true }).click();
+    await page.getByRole('button', { name: 'リストを確認', exact: true }).click();
     await expect(page).toHaveURL(`${ec}/cart/gardens/${garden.id}`);
     await expect(page.getByRole('checkbox')).toHaveCount(1);
     await expect(page.getByRole('checkbox')).not.toBeChecked();

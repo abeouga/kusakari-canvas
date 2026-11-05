@@ -4,6 +4,7 @@ import { ecUrl } from '../domain/shopping';
 import { PlacedObjects } from './PlacedObjects';
 import { ProductBrowser } from './ProductBrowser';
 import { SidebarResize } from './SidebarResize';
+import { UiIcon } from './UiIcon';
 import { placedProductAsset, productAsset, startProductDrag } from '../domain/productModels';
 import { useEditorStore } from '../stores/editorStore';
 
@@ -40,7 +41,6 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
       </section>
       <section id="commerce-list" role="tabpanel" aria-labelledby="commerce-tab-list" hidden={tab !== 'list'}>
         <h3>{document.name}の買い物リスト</h3>
-        <p className="form-hint">配置した商品とECで追加した商品の必要数です。ECで追加した商品は、配置しても1点のまま数えます。</p>
         <p role="status" data-testid="shopping-sync-status">{status}</p>
         {commerce.saved.isError && <div className="notice notice-error" role="alert">
           <p>ECで追加した商品を取得できません。{commerce.saved.error.message}</p>
@@ -64,11 +64,8 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
             </div>
           </article>;
         })}
-        <p className="form-hint">購入する商品はECで選択します。価格・在庫はECで確認してください。</p>
-        <button className="button button-primary" type="button" disabled={disabled}
-          onClick={() => onNavigate(new URL('/cart/gardens/' + document.id, ecUrl).href)}>ECで買い物リストを確認</button>
-        <button className="button button-secondary" type="button" disabled={disabled}
-          onClick={() => onNavigate(new URL('/cart', ecUrl).href)}>ECカートを見る</button>
+        <button className="button button-primary shopping-list-link" type="button" disabled={disabled}
+          onClick={() => onNavigate(new URL('/cart/gardens/' + document.id, ecUrl).href)}>リストを確認<UiIcon name="arrow" size={15}/></button>
       </section>
     </div>
   </aside>;

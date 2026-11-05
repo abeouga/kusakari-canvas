@@ -24,6 +24,7 @@
 .commerce-product input { width: 70px; min-width: 0; padding: 6px; }
 .commerce-totals p { display: flex; justify-content: space-between; }
 .commerce-totals > button { width: 100%; margin-top: 10px; }
+.shopping-list-link { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 40px; margin-top: 14px; font-size: 13px; }
 .commerce-panel .placed-section { padding: 16px 0; }
 .commerce-panel .inspector-empty { padding: 24px 0; }
 @media (max-width: 768px) {
