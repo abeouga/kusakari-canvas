@@ -35,7 +35,7 @@ export default defineConfig({
       stdout: 'pipe',
       reuseExistingServer: false, timeout: 120000, env: {
         LOGGING_LEVEL_ROOT: 'WARN',
-        JAVA_TOOL_OPTIONS: `-Xmx384m -Djdk.net.unixdomain.tmpdir=${javaTemp}`, KUSAKARI_CANVAS_API_URL: canvasApi,
+        JAVA_TOOL_OPTIONS: `-Xmx1024m -Djdk.net.unixdomain.tmpdir=${javaTemp}`, KUSAKARI_CANVAS_API_URL: canvasApi,
         KUSAKARI_EC_E2E_API_PORT: process.env.KUSAKARI_EC_E2E_API_PORT!,
         KUSAKARI_EC_E2E_WEB_ORIGIN: ecWeb, KUSAKARI_EC_E2E_CANVAS_ORIGIN: canvasWeb } },
     { ...servers[1], env: { ...servers[1].env, VITE_KUSAKARI_EC_URL: `${ecWeb}/` } },
