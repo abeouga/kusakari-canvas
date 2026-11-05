@@ -52,6 +52,9 @@ export async function signInTestSeller() {
     expect(member.authenticated).toBe(true);
     process.env.KUSAKARI_E2E_MEMBER_ID = memberId(member.id);
     ecSql(`UPDATE auth_members SET role='SELLER',store_id=1,enabled=TRUE,withdrawn_at=NULL WHERE id='${memberId()}';`);
+    // Products created by earlier runs are archived, as a seller's delete does, so the catalog that every
+    // editor load fetches does not grow with each run. Seed products have no owner and are kept.
+    ecSql(`UPDATE products SET active=FALSE WHERE owner_member_id='${memberId()}' AND active=TRUE;`);
     await page.context().storageState({ path: authStatePath });
   } finally {
     await browser.close();
