@@ -60,11 +60,11 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
               startProductDrag(event, asset);
               if (asset) showDragPreview(event, { name: product?.name ?? row.name, imageUrl: product ? productImage(product.imageUrl) : null });
             }}>
-            {product && <img src={productImage(product.imageUrl)} alt="" draggable={false}/>}
-            <div><strong>{product?.name ?? row.name}</strong><p data-testid="needed-quantity">必要数 {row.quantity}点</p>
-              {row.unplaced && <p data-testid="unplaced-ec-item">ECで追加（庭に未配置）</p>}
+            {product ? <img src={productImage(product.imageUrl)} alt="" draggable={false}/> : <span className="commerce-product-noimage" aria-hidden="true"/>}
+            <div><strong>{product?.name ?? row.name}</strong><small data-testid="needed-quantity">必要数 {row.quantity}点</small>
+              {row.unplaced && <small data-testid="unplaced-ec-item">ECで追加（庭に未配置）</small>}
               {row.productId && commerce.products.isSuccess && !product && <p role="status">この店舗の販売対象ではないため購入できません。保存済みの配置は維持されます。</p>}
-              {product && <p>商品小計の目安 {yen(product.priceYen * row.quantity)}</p>}
+              {product && <p className="commerce-price"><small>小計の目安</small>{yen(product.priceYen * row.quantity)}</p>}
               <button type="button" disabled={disabled || !asset} onClick={() => useEditorStore.getState().selectAsset(asset.id)}>庭に配置</button>
             </div>
           </article>;
