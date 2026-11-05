@@ -78,27 +78,18 @@ test('TREE50. Blender樹木50本の共有描画・独立編集・MySQL保存復�
 
     await page.getByTestId('object-row-0').click();
     const changedId = await page.getByTestId('object-row-0').getAttribute('data-object-id');
-    if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
-    await page.getByTestId('position-x').fill('-10');
-    if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
-    await page.getByTestId('rotation-y').fill('45');
-    if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
-    await page.getByTestId('uniform-scale').fill('1.1');
+    await page.getByTestId('object-toolbar').getByRole('button', { name: '削除', exact: true }).click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     await page.reload();
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
-    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 50 / 50');
+    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 49 / 49');
     const restored = await (await request.get(`${api}/gardens/${garden.id}`)).json();
-    expect(restored.objects).toHaveLength(50);
+    expect(restored.objects).toHaveLength(49);
+    // Only the deleted tree changed; every other tree is restored exactly.
     for (const original of objects) {
       const actual = restored.objects.find((object: { id: string }) => object.id === original.id);
-      if (original.id === changedId) {
-        expect(actual.position.x).toBe(-10);
-        expect(actual.rotation.y).toBeCloseTo(Math.PI / 4, 5);
-        expect(actual.scale).toEqual({ x: 1.1, y: 1.1, z: 1.1 });
-      } else {
-        expect(actual).toEqual(original);
-      }
+      if (original.id === changedId) expect(actual).toBeUndefined();
+      else expect(actual).toEqual(original);
     }
     await page.getByRole('button', { name: '初期視点', exact: true }).click();
     await mkdir('artifacts/e2e', { recursive: true });

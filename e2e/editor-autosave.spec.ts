@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import type { GardenDocument } from '../frontend/src/types/garden';
 import { syntheticPhoto } from './occlusion-helpers';
+import { dragSelectedObject, moveSelectedObject, positionLabel, showTopView } from './transform-helpers';
 
 const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
 const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286');
@@ -68,7 +69,7 @@ async function reloadedEvidence(page: Page, request: APIRequestContext, id: stri
   await page.screenshot({ path: `${evidence}/${name}-reloaded.png` });
 }
 
-test('merged toolbar fits 7 widths in both views and transform, duplicate, delete edits autosave', async ({ page, request }) => {
+test('merged toolbar fits 7 widths in both views and move and delete edits autosave', async ({ page, request }) => {
   const garden = await scene(page, request);
   await expect(page.getByTestId('save-garden')).toHaveCount(0);
   await expect(page.getByRole('button', { name: '植物候補を相談', exact: true })).toHaveCount(0);
@@ -114,18 +115,12 @@ test('merged toolbar fits 7 widths in both views and transform, duplicate, delet
   expect(expanded.width).toBeGreaterThan(1300);
   await expect(page.locator('.canvas-tools h1')).toHaveText(garden.name);
   await page.getByRole('button', { name: '商品・買い物リストパネルを表示', exact: true }).click();
-  await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('position-x').fill('1.5');
-  await page.getByTestId('rotation-y').fill('35');
-  await page.getByTestId('uniform-scale').fill('1.2');
-  const transformed = await saved(page, request, garden.id, garden.revision + 1);
-  expect(transformed.objects[0].position.x).toBe(1.5);
-  expect(transformed.objects[0].rotation.y).toBeCloseTo(35 * Math.PI / 180, 5);
-  expect(transformed.objects[0].scale.x).toBe(1.2);
-  await page.getByRole('button', { name: '複製', exact: true }).click();
-  await expect.poll(async () => (await read(request, garden.id)).objects.length).toBe(2);
+  await showTopView(page);
+  const moved = await moveSelectedObject(page, request, garden.id, 1.5, 0);
+  expect(moved.objects[0].position.x).toBeGreaterThan(0.5);
+  await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   await page.getByRole('button', { name: '削除', exact: true }).click();
-  await expect.poll(async () => (await read(request, garden.id)).objects.length).toBe(1);
+  await expect.poll(async () => (await read(request, garden.id)).objects.length).toBe(0);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   await page.keyboard.press('Escape');
   await page.getByRole('tab', { name: /買い物リスト/ }).click();
@@ -195,13 +190,13 @@ test('delayed save allows newer edits, serializes revisions and flushes before E
     await route.continue();
   });
   try {
-    await page.getByTestId('object-details-toggle').click();
-    await page.getByTestId('position-x').fill('1.5');
+    await showTopView(page);
+    await dragSelectedObject(page, garden, 1.5, 0);
     await firstStarted;
     await expect(page.getByTestId('save-status')).toHaveText('保存中…');
-    await expect(page.getByTestId('position-z')).toBeEnabled();
-    await page.getByTestId('position-z').fill('2.5');
-    await page.getByTestId('rotation-y').fill('45');
+    // The object can still be moved while the first save is pending.
+    await dragSelectedObject(page, snapshots[0], 0, 2.5);
+    await expect(page.getByTestId('object-row-0')).not.toHaveText(new RegExp(positionLabel(snapshots[0].objects[0].position)));
     await page.waitForTimeout(650);
     expect(snapshots).toHaveLength(1);
     await page.keyboard.press('Escape');
@@ -214,8 +209,9 @@ test('delayed save allows newer edits, serializes revisions and flushes before E
     expect(stored.revision).toBe(garden.revision + 2);
     expect(snapshots).toHaveLength(2);
     expect(snapshots.map(item => item.revision)).toEqual([garden.revision, garden.revision + 1]);
-    expect(stored.objects[0].position).toEqual({ x: 1.5, y: 0, z: 2.5 });
-    expect(stored.objects[0].rotation.y).toBeCloseTo(Math.PI / 4, 5);
+    expect(stored.objects[0].position).toEqual(snapshots[1].objects[0].position);
+    expect(stored.objects[0].position.x).toBeGreaterThan(0.5);
+    expect(stored.objects[0].position.z).toBeGreaterThan(snapshots[0].objects[0].position.z + 1);
     await page.screenshot({ path: `${evidence}/ec-after-flush.png` });
     await reloadedEvidence(page, request, garden.id, 'concurrent-edits');
   } finally { release(); }
@@ -228,13 +224,14 @@ test('offline save keeps edits, stops retry storms and supports an explicit retr
     if (route.request().method() === 'PUT') { attempts++; await route.abort('failed'); }
     else await route.continue();
   });
-  await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('position-x').fill('3');
+  await showTopView(page);
+  await dragSelectedObject(page, garden, 3, 0);
   await expect(page.getByTestId('save-status')).toHaveText('保存できませんでした');
   await page.waitForTimeout(1200);
   expect(attempts).toBe(1);
   expect((await read(request, garden.id)).objects[0].position.x).toBe(0);
-  await expect(page.getByTestId('position-x')).toHaveValue('3');
+  const local = await page.getByTestId('object-row-0').locator('small').textContent();
+  expect(local).not.toBe(positionLabel(garden.objects[0].position));
   await page.keyboard.press('Escape');
   await page.getByRole('tab', { name: /買い物リスト/ }).click();
   await page.getByRole('button', { name: 'リストを確認', exact: true }).click();
@@ -242,7 +239,8 @@ test('offline save keeps edits, stops retry storms and supports an explicit retr
   expect(page.url()).toContain(`/gardens/${garden.id}`);
   await page.unroute(`**/api/gardens/${garden.id}`);
   await page.locator('.editor-alert').getByRole('button', { name: '再試行', exact: true }).click();
-  expect((await saved(page, request, garden.id, garden.revision + 1)).objects[0].position.x).toBe(3);
+  const recovered = await saved(page, request, garden.id, garden.revision + 1);
+  expect(positionLabel(recovered.objects[0].position)).toBe(local);
   await reloadedEvidence(page, request, garden.id, 'offline-recovered');
 });
 
@@ -257,14 +255,15 @@ test('expired login during save keeps edits in memory, offers EC re-login and sa
       body: JSON.stringify({ status: 401, code: 'LOGIN_REQUIRED', message: 'ログインしてください。' }) });
   });
   const editorUrl = page.url();
-  await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('position-x').fill('2.5');
+  await showTopView(page);
+  await dragSelectedObject(page, garden, 2.5, 0);
   const expired = page.getByTestId('session-expired');
   await expect(expired).toContainText('ログインの有効期限が切れました');
   await page.waitForTimeout(1200);
   expect(attempts).toBe(1);
   expect(page.url()).toBe(editorUrl);
-  await expect(page.getByTestId('position-x')).toHaveValue('2.5');
+  const local = await page.getByTestId('object-row-0').locator('small').textContent();
+  expect(local).not.toBe(positionLabel(garden.objects[0].position));
   expect((await read(request, garden.id)).objects[0].position.x).toBe(0);
   await page.screenshot({ path: `${evidence}/login-expired-edits-kept.png` });
   await page.unroute(`**/api/gardens/${garden.id}`);
@@ -278,7 +277,7 @@ test('expired login during save keeps edits in memory, offers EC re-login and sa
   const opened = await loginWindow;
   await opened.goto(returnTo.href, { waitUntil: 'commit' });
   const stored = await saved(page, request, garden.id, garden.revision + 1);
-  expect(stored.objects[0].position.x).toBe(2.5);
+  expect(positionLabel(stored.objects[0].position)).toBe(local);
   await expect(expired).toHaveCount(0);
   expect(page.url()).toBe(editorUrl);
   if (!opened.isClosed()) await opened.close();
@@ -292,22 +291,21 @@ test('new edits during a pending request autosave again without a navigation or 
   const gate = new Promise<void>(resolve => { release = resolve; });
   const firstStarted = new Promise<void>(resolve => { started = resolve; });
   let requests = 0;
+  let first!: GardenDocument;
   await page.route(`**/api/gardens/${garden.id}`, async route => {
-    if (route.request().method() === 'PUT' && ++requests === 1) { started(); await gate; }
+    if (route.request().method() === 'PUT' && ++requests === 1) { first = route.request().postDataJSON(); started(); await gate; }
     await route.continue();
   });
   try {
-    await page.getByTestId('object-details-toggle').click();
-    await page.getByTestId('position-x').fill('2');
+    await showTopView(page);
+    await dragSelectedObject(page, garden, 2, 0);
     await firstStarted;
-    await page.getByTestId('position-z').fill('3');
-    await page.getByTestId('uniform-scale').fill('1.4');
+    await dragSelectedObject(page, first, 0, 3);
     release();
     const stored = await saved(page, request, garden.id, garden.revision + 2);
     expect(requests).toBe(2);
-    expect(stored.objects[0].position).toEqual({ x: 2, y: 0, z: 3 });
-    expect(stored.objects[0].scale.x).toBe(1.4);
-    await expect(page.getByTestId('position-z')).toHaveValue('3');
+    expect(stored.objects[0].position.z).toBeGreaterThan(first.objects[0].position.z + 1);
+    await expect(page.getByTestId('object-row-0').locator('small')).toHaveText(positionLabel(stored.objects[0].position));
     await reloadedEvidence(page, request, garden.id, 'automatic-followup');
   } finally { release(); }
 });
@@ -318,10 +316,10 @@ test('a real revision conflict preserves both remote and local changes without r
   expect(remote.status()).toBe(200);
   let attempts = 0;
   page.on('request', req => { if (req.method() === 'PUT' && req.url().endsWith(`/api/gardens/${garden.id}`)) attempts++; });
-  await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('position-x').fill('4');
+  await showTopView(page);
+  await dragSelectedObject(page, garden, 4, 0);
   await expect(page.locator('.editor-alert')).toContainText('競合しました');
-  await expect(page.getByTestId('position-x')).toHaveValue('4');
+  await expect(page.getByTestId('object-row-0').locator('small')).not.toHaveText(positionLabel(garden.objects[0].position));
   await page.waitForTimeout(1200);
   expect(attempts).toBe(1);
   const stored = await read(request, garden.id);

@@ -5,6 +5,7 @@ import { api } from './api-url';
 import { createPhotoCamera } from '../frontend/src/three/photoCamera.js';
 import { syntheticPhoto, createScene, openScene, readGarden, shrub, capture } from './occlusion-helpers';
 import type { GardenDocument } from '../frontend/src/types/garden';
+import { moveSelectedObject, showTopView } from './transform-helpers';
 
 async function point(page: Page, garden: GardenDocument, x: number, y: number, z: number) {
   const camera = createPhotoCamera(garden.photo!, garden.width, garden.depth)!;
@@ -36,9 +37,9 @@ test('3d view survives an autosave', async ({ page, request }) => {
   const garden = await createScene(request, [], await syntheticPhoto(page), [shrub(0, 0)]);
   await openScene(page, garden);
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
-  await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('position-x').fill('1');
-  await expect.poll(async () => (await readGarden(request, garden.id)).revision).toBeGreaterThan(garden.revision);
+  await page.getByTestId('object-row-0').click();
+  await showTopView(page);
+  await moveSelectedObject(page, request, garden.id, 1, 0);
   await expect(page.getByRole('button', { name: '3D庭', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await mkdir('artifacts/e2e/photo-interaction', { recursive: true });
   await writeFile('artifacts/e2e/photo-interaction/garden.json', JSON.stringify(await readGarden(request, garden.id), null, 2));

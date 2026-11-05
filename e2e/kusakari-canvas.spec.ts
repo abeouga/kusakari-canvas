@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { expect, test, type Page, type APIRequestContext } from './test.js';
 import { api as apiBase } from './api-url.js';
 import type { GardenDocument } from '../frontend/src/types/garden.js';
+import { dragSelectedObject, moveSelectedObject, positionLabel, showTopView } from './transform-helpers';
 
 const artifactDirectory = resolve('artifacts/e2e');
 let createdGardenIds: string[] = [];
@@ -63,40 +64,25 @@ test('A. 庭作成からGLB配置・変形・保存・再読み込みまで', as
   const canvas = page.locator('[data-testid="garden-canvas"] canvas');
   const bounds = await canvas.boundingBox();
   if (!bounds) throw new Error('3Dキャンバスが表示されていません。');
-  const initialX = Number(await page.getByTestId('position-x').inputValue());
-  const initialZ = Number(await page.getByTestId('position-z').inputValue());
+  const row = page.getByTestId('object-row-0').locator('small');
+  const initial = await row.textContent();
   await page.mouse.move(bounds.x + bounds.width / 2 + 5, bounds.y + bounds.height / 2);
   await page.mouse.down();
   await page.mouse.move(bounds.x + bounds.width / 2 + 75, bounds.y + bounds.height / 2 + 8, { steps: 6 });
   await page.mouse.up();
-  await expect.poll(async () => {
-    const currentX = Number(await page.getByTestId('position-x').inputValue());
-    const currentZ = Number(await page.getByTestId('position-z').inputValue());
-    return Math.abs(currentX - initialX) + Math.abs(currentZ - initialZ);
-  }).toBeGreaterThan(0.1);
-
-  if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('rotation-y').fill('30');
-  if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('uniform-scale').fill('1.25');
-  await expect(page.getByTestId('rotation-y')).toHaveValue('30');
-  await expect(page.getByTestId('uniform-scale')).toHaveValue('1.25');
-  const savedX = Number(await page.getByTestId('position-x').inputValue());
+  await expect(row).not.toHaveText(initial!);
+  const moved = await row.textContent();
   await page.getByRole('button', { name: '上から見る' }).click();
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   const stored = await saveGardenArtifact(request, id, 'garden-roundtrip.json');
   expect(stored.revision).toBeGreaterThan(0);
   expect(stored.objects).toHaveLength(1);
-  expect(stored.objects[0].position.x).toBeCloseTo(savedX, 2);
-  expect(stored.objects[0].rotation.y).toBeCloseTo(Math.PI / 6, 5);
-  expect(stored.objects[0].scale).toEqual({ x: 1.25, y: 1.25, z: 1.25 });
+  expect(positionLabel(stored.objects[0].position)).toBe(moved);
 
   await page.reload();
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
-  await expect(page.getByTestId('position-x')).toHaveValue(String(Number(savedX.toFixed(2))));
-  await expect(page.getByTestId('rotation-y')).toHaveValue('30');
-  await expect(page.getByTestId('uniform-scale')).toHaveValue('1.25');
+  await expect(row).toHaveText(moved!);
   await expect(page.getByTestId('object-row-0')).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: '上から見る' }).click();
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-roundtrip.png'), fullPage: true });
@@ -113,7 +99,7 @@ test('A. 庭作成からGLB配置・変形・保存・再読み込みまで', as
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.locator('h1')).toHaveText(name);
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
-  await expect(page.getByTestId('position-x')).toHaveValue(String(Number(savedX.toFixed(2))));
+  await expect(row).toHaveText(moved!);
 
   await page.getByRole('button', { name: '← 庭一覧' }).click();
   await page.waitForURL('/');
@@ -132,7 +118,7 @@ test('A. 庭作成からGLB配置・変形・保存・再読み込みまで', as
   expect((await request.get(`${apiBase}/gardens/${id}`)).status()).toBe(404);
 });
 
-test('B. 同一GLBの配置、独立移動、複製、削除', async ({ page, request }) => {
+test('B. 同一GLBの配置、独立移動、削除', async ({ page, request }) => {
   const id = await createGarden(page, `E2E independent ${Date.now()}`);
   await placeTree(page, 0.42, 0.5);
   const canvas = page.locator('[data-testid="garden-canvas"] canvas');
@@ -150,33 +136,31 @@ test('B. 同一GLBの配置、独立移動、複製、削除', async ({ page, re
   const originalIds = [firstId, secondId];
   const secondPositionBefore = structuredClone(original.objects.find((object) => object.id === secondId)?.position);
   if (!secondPositionBefore) throw new Error('2個目の保存位置を取得できませんでした。');
+  const firstBefore = original.objects.find((object) => object.id === firstId)!.position;
   await page.getByTestId('object-row-0').click();
-  if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('position-x').fill('-1.5');
-  await expect(page.getByTestId('position-x')).toHaveValue('-1.5');
+  const firstMoved = await moveSelectedObject(page, request, id, -1, 0);
+  const firstPosition = firstMoved.objects.find((object) => object.id === firstId)!.position;
+  expect(firstPosition.x).toBeLessThan(firstBefore.x - 0.5);
+  expect(firstMoved.objects.find((object) => object.id === secondId)?.position).toEqual(secondPositionBefore);
 
-  if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
-  await page.getByRole('button', { name: '複製' }).click();
+  // A third placement of the same model moves independently of the other two.
+  await placeTestPlant(page, bounds.x + bounds.width * 0.5, bounds.y + bounds.height * 0.72);
   await expect(page.getByTestId('object-row-2')).toBeVisible();
-  const duplicateId = await page.getByTestId('object-row-2').getAttribute('data-object-id');
-  expect(duplicateId).toBeTruthy();
-  expect(originalIds).not.toContain(duplicateId);
-  if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('position-x').fill('2.5');
-  await page.getByTestId('object-row-0').click();
-  await expect(page.getByTestId('position-x')).toHaveValue('-1.5');
-  await page.getByTestId('object-row-1').click();
-  await expect(page.getByTestId('position-x')).toHaveValue(String(Number(secondPositionBefore.x.toFixed(2))));
-  await page.getByTestId('object-row-2').click();
-  if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
-  await page.getByRole('button', { name: '削除' }).click();
+  const thirdId = await page.getByTestId('object-row-2').getAttribute('data-object-id');
+  expect(originalIds).not.toContain(thirdId);
+  await expect.poll(async () => (await gardenJson(request, id)).objects.length).toBe(3);
+  await expect(page.getByTestId('object-row-2')).toHaveAttribute('aria-pressed', 'true');
+  await moveSelectedObject(page, request, id, 1, 0);
+  await expect(page.getByTestId('object-row-0').locator('small')).toHaveText(positionLabel(firstPosition));
+  await expect(page.getByTestId('object-row-1').locator('small')).toHaveText(positionLabel(secondPositionBefore));
+  await page.getByTestId('object-toolbar').getByRole('button', { name: '削除', exact: true }).click();
   await expect(page.getByTestId('object-row-2')).toHaveCount(0);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   const stored = await saveGardenArtifact(request, id, 'garden-independent.json');
   expect(stored.objects).toHaveLength(2);
   const firstStored = stored.objects.find((object) => object.id === firstId);
   const secondStored = stored.objects.find((object) => object.id === secondId);
-  expect(firstStored?.position.x).toBe(-1.5);
+  expect(firstStored?.position).toEqual(firstPosition);
   expect(secondStored?.position).toEqual(secondPositionBefore);
   expect(new Set(stored.objects.map((object) => object.id)).size).toBe(2);
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 2 / 2');
@@ -205,16 +189,20 @@ test('D. 保存失敗後の編集保持と再試行', async ({ page, request }) 
     else await route.continue();
   });
   await placeTree(page);
-  if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('position-x').fill('1.2');
+  const placed = await page.getByTestId('object-row-0').locator('small').textContent();
+  // The failed save shows a banner that shifts the canvas; return to the top view before dragging.
+  await expect(page.locator('.editor-alert[role="alert"]')).toContainText('自動保存できませんでした');
+  await showTopView(page);
+  await dragSelectedObject(page, await gardenJson(request, id), 1.2, 0);
   await expect(page.locator('.editor-alert[role="alert"]')).toContainText('自動保存できませんでした');
   await expect(page.locator('.editor-alert').getByRole('button', { name: '再試行', exact: true })).toBeEnabled();
-  await expect(page.getByTestId('position-x')).toHaveValue('1.2');
+  const local = await page.getByTestId('object-row-0').locator('small').textContent();
+  expect(local).not.toBe(placed);
   expect((await gardenJson(request, id)).revision).toBe(0);
   await page.unroute(`**/api/gardens/${id}`);
   await page.locator('.editor-alert').getByRole('button', { name: '再試行', exact: true }).click();
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
-  expect((await gardenJson(request, id)).objects[0].position.x).toBe(1.2);
+  expect(positionLabel((await gardenJson(request, id)).objects[0].position)).toBe(local);
 });
 
 test('E. 古いrevisionの保存を競合として拒否しローカル編集を維持', async ({ page, request }) => {
@@ -222,16 +210,15 @@ test('E. 古いrevisionの保存を競合として拒否しローカル編集を
   await placeTree(page);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
 
-  if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
   const serverDocument = await gardenJson(request, id);
   const competingDocument = structuredClone(serverDocument);
   competingDocument.objects[0].position.z = 1.25;
   const competingSave = await request.put(`${apiBase}/gardens/${id}`, { data: competingDocument });
   expect(competingSave.ok()).toBeTruthy();
-  await page.getByTestId('position-x').fill('2');
+  await dragSelectedObject(page, serverDocument, 2, 0);
   await expect(page.locator('.editor-alert[role="alert"]')).toContainText('別の保存結果と競合しました');
   await expect(page.locator('.editor-alert').getByRole('button', { name: '再試行', exact: true })).toBeEnabled();
-  await expect(page.getByTestId('position-x')).toHaveValue('2');
+  await expect(page.getByTestId('object-row-0').locator('small')).not.toHaveText(positionLabel(serverDocument.objects[0].position));
   const serverAfterConflict = await gardenJson(request, id);
   expect(serverAfterConflict.revision).toBe(serverDocument.revision + 1);
   expect(serverAfterConflict.objects[0].position.z).toBe(1.25);
@@ -301,7 +288,7 @@ test('H. 回転リングのドラッグを保存して再読み込みできる',
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-rotation-hover.png'), fullPage: true });
   await page.mouse.click(centerX + radius, centerY);
   await expect(page.getByTestId('tool-rotate')).toBeEnabled();
-  await expect(page.getByTestId('rotation-y')).toHaveValue('0');
+  expect((await gardenJson(request, id)).objects[0].rotation.y).toBe(0);
   await page.mouse.move(centerX + radius, centerY);
   await page.mouse.down();
   await page.mouse.move(centerX, centerY + radius, { steps: 6 });
@@ -309,7 +296,8 @@ test('H. 回転リングのドラッグを保存して再読み込みできる',
   await page.keyboard.press('Escape');
   await page.mouse.up();
   await expect(page.getByTestId('tool-rotate')).toBeEnabled();
-  await expect(page.getByTestId('rotation-y')).toHaveValue('0');
+  await page.waitForTimeout(800); // Longer than the autosave debounce: a cancelled drag saves nothing.
+  expect((await gardenJson(request, id)).objects[0].rotation.y).toBe(0);
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-rotation-cancel.png'), fullPage: true });
   await page.mouse.move(centerX + radius, centerY);
   await page.mouse.down();
@@ -321,9 +309,9 @@ test('H. 回転リングのドラッグを保存して再読み込みできる',
   await page.mouse.up();
 
   await expect(page.getByTestId('tool-rotate')).toBeEnabled();
-  const degrees = Number(await page.getByTestId('rotation-y').inputValue());
-  expect(degrees).toBeCloseTo(450, 0);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+  const degrees = (await gardenJson(request, id)).objects[0].rotation.y * 180 / Math.PI;
+  expect(degrees).toBeCloseTo(450, 0);
   await expect(page.getByTestId('object-row-1')).toHaveCount(0);
   expect((await gardenJson(request, id)).objects).toHaveLength(1);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
@@ -336,7 +324,7 @@ test('H. 回転リングのドラッグを保存して再読み込みできる',
   await page.reload();
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
-  await expect(page.getByTestId('rotation-y')).toHaveValue(String(degrees));
+  expect(await gardenJson(request, id)).toEqual(stored);
   await page.getByRole('button', { name: '上から見る' }).click();
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-rotation-handle.png'), fullPage: true });
 });

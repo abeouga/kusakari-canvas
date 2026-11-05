@@ -31,9 +31,15 @@ for (const mode of ['photo','3d']) test(`pointer drag and product drop reject th
     return {x:box.x+(p.x+1)*box.width/2,y:box.y+(1-p.y)*box.height/2};
   }
   const card=page.getByTestId(`browse-${product.id}`);
+  // A product tile follows the pointer instead of the browser's ghost image and is gone after the drop.
+  const tile=page.getByTestId('product-drag-tile');
   async function dragCard(point:{x:number,y:number}) {
     await card.hover({position:{x:35,y:35}}); await page.mouse.down();
-    await page.mouse.move(point.x,point.y,{steps:8}); await page.mouse.up();
+    await page.mouse.move(point.x,point.y,{steps:8});
+    await expect(tile).toContainText(product.name);
+    await expect.poll(async()=>{ const at=(await tile.boundingBox())!; return Math.max(Math.abs(at.x+28-point.x),Math.abs(at.y+28-point.y)); }).toBeLessThan(2);
+    await page.mouse.up();
+    await expect(tile).toHaveCount(0);
   }
   const outside=pixel(2,-2),inside=pixel(-2,-2);
   await dragCard(outside);
@@ -42,6 +48,9 @@ for (const mode of ['photo','3d']) test(`pointer drag and product drop reject th
   await dragCard(inside);
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   await expect.poll(async()=> (await readGarden(request,garden.id)).objects.length).toBe(1);
+  const sidebar=(await page.getByRole('tab',{name:'商品一覧',exact:true}).boundingBox())!;
+  await dragCard({x:sidebar.x+sidebar.width/2,y:sidebar.y+sidebar.height/2});
+  await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   const transfer=await page.evaluateHandle((id)=>{
     const data=new DataTransfer(); data.setData('application/x-kusakari-product',`product:${id}`); return data;
   },product.id);

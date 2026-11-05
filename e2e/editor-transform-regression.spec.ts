@@ -50,12 +50,17 @@ test('3d body movement, rotation ring and scale handle survive saving and reload
   next = await readGarden(request, garden.id);
   expect(Math.abs(next.objects[0].rotation.y)).toBeCloseTo(Math.PI / 2, 1);
   garden = next;
-  // Reset rotation through the public detail field so the X scale handle is horizontal.
-  await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('rotation-y').fill('0');
-  await page.keyboard.press('Escape');
+  // Turn the ring back so the X scale handle is horizontal again.
+  await page.mouse.move(...Object.values(await screen(page, garden, position.x, 0.06, position.z + 1.4)) as [number, number]);
+  await page.mouse.down();
+  for (let i = 11; i >= 0; i--) {
+    const p = await screen(page, garden, position.x + 1.4 * Math.cos(i * Math.PI / 24), 0.06, position.z + 1.4 * Math.sin(i * Math.PI / 24));
+    await page.mouse.move(p.x, p.y);
+  }
+  await page.mouse.up();
   await expect.poll(async () => (await readGarden(request, garden.id)).revision).toBeGreaterThan(garden.revision);
   garden = await readGarden(request, garden.id);
+  expect(garden.objects[0].rotation.y).toBeCloseTo(0, 1);
   await page.getByTestId('tool-scale').click();
   // The control may flip the local-axis handle towards the camera. Locate the
   // actual red cube instead of assuming which side of the object it occupies.

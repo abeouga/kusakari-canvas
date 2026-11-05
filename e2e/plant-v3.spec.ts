@@ -84,9 +84,6 @@ test('five natural models, v1/v2/v3 snapshots, placement, edits and reload retai
     await card.dragTo(page.getByTestId('garden-canvas').locator('canvas'),
       { sourcePosition: { x: 35, y: 35 }, targetPosition: { x: 300, y: 400 } });
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 9 / 9', { timeout: 60000 });
-    await page.getByTestId('object-details-toggle').click();
-    await page.getByTestId('rotation-y').fill('37'); await page.getByTestId('uniform-scale').fill('1.25');
-    await page.getByTestId('object-details-toggle').click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const snapshot = await request.get(`${api}/gardens/${garden.id}`).then((r) => r.json());
     await page.reload();

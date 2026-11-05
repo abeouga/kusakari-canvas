@@ -2,6 +2,7 @@ import { seedLegacyObjects } from './catalog-fixture';
 import { expect, test } from './test.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
+import { moveSelectedObject, topViewPoint } from './transform-helpers';
 const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api'), evidence = 'artifacts/plant-v4/interaction';
 type RenderMetrics = { frame: number; calls: number; triangles: number };
 declare global { interface Window { plantRenderSnapshot: () => RenderMetrics } }
@@ -18,7 +19,7 @@ test('demand renderer: idle, camera, live drag, rotation cancellation, capture a
     await seedLegacyObjects(page, ['bench_wood']);
     const canvas = page.getByTestId('garden-canvas').locator('canvas'), box = await canvas.boundingBox();
     if (!box) throw new Error('Missing canvas');
-    const cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+    let cx = box.x + box.width / 2, cy = box.y + box.height / 2;
     await page.mouse.click(cx, cy);
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     await page.keyboard.press('Escape');
@@ -39,11 +40,10 @@ test('demand renderer: idle, camera, live drag, rotation cancellation, capture a
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const moved = await request.get(`${api}/gardens/${garden.id}`).then((r) => r.json());
     expect(Math.hypot(moved.objects[0].position.x, moved.objects[0].position.z)).toBeGreaterThan(0.05);
-    // Restore the center through the normal inspector, then exercise the custom rotation ring.
-    await page.getByTestId('object-details-toggle').click();
-    await page.getByTestId('position-x').fill('0'); await page.getByTestId('position-z').fill('0');
-    await page.getByTestId('object-details-toggle').click();
+    // Drag the plant back near the center, then exercise the custom rotation ring around it.
+    const centered = await moveSelectedObject(page, request, garden.id, -moved.objects[0].position.x, -moved.objects[0].position.z);
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+    ({ x: cx, y: cy } = await topViewPoint(page, centered, centered.objects[0].position.x, centered.objects[0].position.z));
     await page.getByTestId('tool-rotate').click();
     const radius = 1.4 * box.height / (2 * 17.94 * Math.tan(21 * Math.PI / 180));
     await page.mouse.move(cx + radius, cy); await page.mouse.down();

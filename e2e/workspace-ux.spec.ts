@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { expect, test } from './test.js';
 import { api } from './api-url.js';
 import type { GardenDocument } from '../frontend/src/types/garden.js';
+import { dragSelectedObject, positionLabel, showTopView } from './transform-helpers';
 
 test('S. 作業面・独立開閉・ダイアログのフォーカス・未保存確認', async ({ page, request }) => {
   const created = await (await request.post(`${api}/gardens`, { data: { name: `E2E workspace ${Date.now()}` } })).json() as GardenDocument;
@@ -54,14 +55,17 @@ test('S. 作業面・独立開閉・ダイアログのフォーカス・未保�
     await expect(dimensions).toBeFocused();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
 
-    if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
-    await page.getByTestId('position-x').fill('1.7');
+    await page.getByTestId('object-row-0').click();
+    await showTopView(page);
+    await dragSelectedObject(page, saved, 1.7, 0);
+    const local = await page.getByTestId('object-row-0').locator('small').textContent();
+    expect(local).not.toBe(positionLabel(saved.objects[0].position));
     const back = page.getByRole('button', { name: '← 庭一覧', exact: true });
     // Committed transforms flush automatically before navigation.
     await back.click();
     await page.waitForURL('/');
     const moved = await (await request.get(`${api}/gardens/${created.id}`)).json();
-    expect(moved.objects[0].position.x).toBe(1.7);
+    expect(positionLabel(moved.objects[0].position)).toBe(local);
     await page.goto(`/gardens/${created.id}`);
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
@@ -78,7 +82,7 @@ test('S. 作業面・独立開閉・ダイアログのフォーカス・未保�
     await page.keyboard.press('Escape');
     await expect(back).toBeFocused();
     await expect(page.getByTestId('object-row-0')).toBeVisible();
-    await expect(page.getByTestId('position-x')).toHaveValue('1.7');
+    await expect(page.getByTestId('object-row-0').locator('small')).toHaveText(local!);
     let unexpectedDialogs = 0;
     page.on('dialog', async (dialog) => { unexpectedDialogs++; await dialog.dismiss(); });
     await back.click();
