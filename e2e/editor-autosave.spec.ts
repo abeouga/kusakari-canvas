@@ -129,8 +129,8 @@ test('merged toolbar fits 7 widths in both views and transform, duplicate, delet
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   await page.keyboard.press('Escape');
   await page.getByRole('tab', { name: /買い物リスト/ }).click();
-  await expect(page.getByRole('button', { name: 'ECで買い物リストを確認', exact: true })).toHaveCount(1);
-  await expect(page.getByRole('tabpanel', { name: /買い物リスト/ }).getByRole('button', { name: 'ECで買い物リストを確認', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'リストを確認', exact: true })).toHaveCount(1);
+  await expect(page.getByRole('tabpanel', { name: /買い物リスト/ }).getByRole('button', { name: 'リストを確認', exact: true })).toBeVisible();
   await reloadedEvidence(page, request, garden.id, 'transform');
   await page.getByRole('button', { name: '← 庭一覧', exact: true }).click();
   await expect(page).toHaveURL((process.env.KUSAKARI_CANVAS_E2E_WEB_PORT ? 'http://127.0.0.1:' + process.env.KUSAKARI_CANVAS_E2E_WEB_PORT + '/' : 'http://127.0.0.1:15173/'));
@@ -206,7 +206,7 @@ test('delayed save allows newer edits, serializes revisions and flushes before E
     expect(snapshots).toHaveLength(1);
     await page.keyboard.press('Escape');
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
-    await page.getByRole('button', { name: 'ECで買い物リストを確認', exact: true }).click();
+    await page.getByRole('button', { name: 'リストを確認', exact: true }).click();
     expect(page.url()).toContain(`/gardens/${garden.id}`);
     release();
     await expect(page).toHaveURL(`${ec}/cart/gardens/${garden.id}`);
@@ -237,7 +237,7 @@ test('offline save keeps edits, stops retry storms and supports an explicit retr
   await expect(page.getByTestId('position-x')).toHaveValue('3');
   await page.keyboard.press('Escape');
   await page.getByRole('tab', { name: /買い物リスト/ }).click();
-  await page.getByRole('button', { name: 'ECで買い物リストを確認', exact: true }).click();
+  await page.getByRole('button', { name: 'リストを確認', exact: true }).click();
   await expect(page.locator('.editor-alert')).toContainText('自動保存できませんでした');
   expect(page.url()).toContain(`/gardens/${garden.id}`);
   await page.unroute(`**/api/gardens/${garden.id}`);

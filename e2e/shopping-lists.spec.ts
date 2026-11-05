@@ -17,7 +17,7 @@ const profile = { plantType: 'flower', heightCm: 55, widthCm: 65, crownShape: 'r
 
 async function createProduct(request: APIRequestContext) {
   const products = await request.get(`${ec}/api/products?storeId=1`).then(r => r.json());
-  const excluded = new Set(['id', 'unit', 'source', 'sourceUpdatedAt', 'publishedAt', 'active', 'publicationStatus', 'modelComposition', 'canvasMaterialCode']);
+  const excluded = new Set(['id', 'unit', 'source', 'sourceUpdatedAt', 'publishedAt', 'active', 'publicationStatus', 'modelComposition', 'canvasMaterialCode', 'sellerStoreId']);
   const input = Object.fromEntries(Object.entries(products[0]).filter(([key]) => !excluded.has(key)));
   const body = { ...input, storeId: 1, name: 'リスト用草花-' + randomUUID().slice(0, 8),
     sku: 'SL-' + randomUUID().slice(0, 12), stock: 20, heightCm: 55, plantModelProfile: profile };
@@ -154,7 +154,7 @@ test('partial transfer, duplicate requests, cart limits, stale gardens and inval
     expect(detail.items).toHaveLength(2);
     const selected = detail.items.map((line: Line) => ({ key: line.key, productId: line.products[0].id }));
     const input = { cartRevision: cart.revision, gardenRevision: saved.revision, listRevision: detail.listRevision, items: selected };
-    expect((await request.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1 } })).ok()).toBeTruthy();
+    expect((await request.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1, expectedStock: body.stock } })).ok()).toBeTruthy();
     const url = `${ec}/api/cart/shopping-lists/${garden.id}/items`;
     const concurrent = await Promise.all([request.post(url, { data: input }), request.post(url, { data: input })]);
     expect(concurrent.map(r => r.status()).sort()).toEqual([200, 409]);
@@ -215,7 +215,7 @@ test('autosave failure retains placements, blocks EC navigation and supports ret
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
     await expect(page.getByTestId('shopping-sync-status')).toContainText('ECへ未反映');
     expect((await loadGarden(request, garden.id)).objects).toHaveLength(0);
-    await page.getByRole('button', { name: 'ECで買い物リストを確認', exact: true }).click();
+    await page.getByRole('button', { name: 'リストを確認', exact: true }).click();
     await expect(page).toHaveURL(new RegExp('/gardens/' + garden.id));
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     await page.unroute('**/api/gardens/' + garden.id);
@@ -225,7 +225,7 @@ test('autosave failure retains placements, blocks EC navigation and supports ret
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await saved(page, 1);
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
-    await page.getByRole('button', { name: 'ECで買い物リストを確認', exact: true }).click();
+    await page.getByRole('button', { name: 'リストを確認', exact: true }).click();
     await expect(page).toHaveURL(`${ec}/cart/gardens/${garden.id}`);
     await expect(page.getByRole('checkbox')).toHaveCount(1);
     await expect(page.getByRole('checkbox')).not.toBeChecked();
@@ -302,7 +302,7 @@ test('EC shows partial-add reasons and the shopping list fits a mobile screen', 
     await expect(page.getByRole('checkbox')).toHaveCount(2);
     await page.getByRole('button', { name: '全選択', exact: true }).click();
     await expect(page.getByRole('checkbox', { name: product.name + 'を選択', exact: true })).toBeChecked();
-    expect((await request.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1 } })).ok()).toBeTruthy();
+    expect((await request.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1, expectedStock: body.stock } })).ok()).toBeTruthy();
     await page.getByRole('button', { name: '選択した商品をカートに追加', exact: true }).click();
     await expect(page).toHaveURL(`${ec}/cart`);
     await expect(page.locator('.garden-transfer-result')).toContainText('1種類を追加しました');
