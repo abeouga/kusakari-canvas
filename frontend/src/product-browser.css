@@ -6,7 +6,18 @@
 .sidebar-resize:hover, .sidebar-resize:focus-visible { background: #54795830; outline: none; }
 .sidebar-resize > span { width: 3px; height: 42px; margin-top: 90px; border-radius: 3px; background: #9bad96; }
 .product-browser { display: grid; gap: 10px; padding-bottom: 16px; }
-.product-browser > label { display: grid; gap: 5px; font-size: 12px; }
+.browse-toolbar { display: flex; align-items: center; gap: 6px; }
+.browse-search { position: relative; flex: 1; min-width: 0; color: #6a7a64; }
+.browse-search > svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.browse-search input { width: 100%; min-height: 38px; padding: 8px 10px 8px 34px; border: 1px solid #dfe6da; border-radius: 19px; background: #fff; font-size: 13px; }
+.browse-search input:focus-visible { outline: 2px solid #5e876355; border-color: #5e8763; }
+.info-tip-trigger { display: grid; place-items: center; flex: 0 0 auto; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #6a7a64; }
+.info-tip-trigger:hover, .info-tip-trigger[aria-expanded='true'] { background: #edf2eb; color: #284d3b; }
+.info-tip { position: fixed; z-index: 1000; padding: 10px 12px; border: 1px solid #d7e0d3; border-radius: 8px; background: #fff; color: #284d3b; font-size: 12px; line-height: 1.6; box-shadow: 0 8px 24px #24351f2e; }
+.category-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.category-chips button { min-height: 30px; padding: 4px 12px; border: 1px solid #cbd8c4; border-radius: 15px; background: #fff; color: #355934; font-size: 12px; }
+.category-chips button:hover { background: #f1f5ee; }
+.category-chips button[aria-pressed='true'] { border-color: #284d3b; background: #284d3b; color: #fff; }
 .browse-product { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; min-height: 150px; overflow: hidden; border: 1px solid #dfe6da; border-radius: 7px; background: #fff; }
 .browse-product[draggable='true'], .commerce-product[draggable='true'] { cursor: grab; }
 .browse-product.is-selected { border-color: #5e8763; background: #f1f6ed; }

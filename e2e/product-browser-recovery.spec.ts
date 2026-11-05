@@ -21,6 +21,36 @@ test('EC接続失敗を表示し、再取得後に商品を配置・保存・復
   await expect(browser.getByRole('alert')).toHaveCount(0);
   const product = browser.getByTestId(`browse-${fixtureProduct.id}`);
   await expect(product).toBeVisible();
+  // The usage hint lives behind the i mark and is drawn above every other element.
+  await expect(browser.getByText('商品を庭へドラッグして配置できます。')).toHaveCount(0);
+  await browser.getByRole('button', { name: '商品一覧の使い方', exact: true }).hover();
+  const hint = page.getByRole('tooltip');
+  await expect(hint).toHaveText('商品を庭へドラッグして配置できます。');
+  expect(await hint.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return element.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
+  })).toBe(true);
+  await page.mouse.move(0, 0);
+  await expect(hint).toHaveCount(0);
+  await browser.getByRole('button', { name: '商品一覧の使い方', exact: true }).click();
+  await page.mouse.move(0, 0);
+  await expect(hint).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(hint).toHaveCount(0);
+  // Category buttons filter the list and show which category is selected.
+  const categories = browser.getByRole('group', { name: '商品カテゴリ' });
+  const category = fixtureProduct.category as string;
+  await categories.getByRole('button', { name: category, exact: true }).click();
+  await expect(categories.getByRole('button', { name: category, exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(categories.getByRole('button', { name: 'すべて', exact: true })).toHaveAttribute('aria-pressed', 'false');
+  const shown = await browser.locator('.browse-product small:first-of-type').allTextContents();
+  expect(shown.length).toBeGreaterThan(0);
+  expect(new Set(shown)).toEqual(new Set([category]));
+  await categories.getByRole('button', { name: 'すべて', exact: true }).click();
+  await browser.getByRole('searchbox', { name: '商品を検索' }).fill(fixtureProduct.name);
+  await expect(product).toBeVisible();
+  for (const name of await browser.locator('.browse-product strong').allTextContents()) expect(name).toContain(fixtureProduct.name);
+  await browser.getByRole('searchbox', { name: '商品を検索' }).fill('');
   const canvas = page.getByTestId('garden-canvas').locator('canvas');
   await product.dragTo(canvas, { sourcePosition: { x: 35, y: 35 } });
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');

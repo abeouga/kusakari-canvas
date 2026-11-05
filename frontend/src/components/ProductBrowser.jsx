@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { productImage, yen } from '../api/commerce';
 import { productAsset, startProductDrag } from '../domain/productModels';
 import { useEditorStore } from '../stores/editorStore';
+import { InfoTip } from './InfoTip';
+import { UiIcon } from './UiIcon';
 
 export function ProductBrowser({ assets, commerce, disabled }) {
   const [search, setSearch] = useState('');
@@ -13,10 +15,16 @@ export function ProductBrowser({ assets, commerce, disabled }) {
   const products = query.data ?? [];
   const categories = [...new Set(products.map((product) => product.category))];
   return <section className="product-browser" aria-label="ECの商品一覧">
-    <p className="form-hint">商品を庭へドラッグして配置できます。</p>
-    <label>商品を検索<input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="商品名・学名"/></label>
-    <label>商品カテゴリ<select value={category} onChange={(event) => setCategory(event.target.value)}>
-      <option value="">すべて</option>{categories.map((name) => <option key={name}>{name}</option>)}</select></label>
+    <div className="browse-toolbar">
+      <label className="browse-search"><UiIcon name="search" size={16}/>
+        <input type="search" aria-label="商品を検索" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="商品名・学名"/>
+      </label>
+      <InfoTip label="商品一覧の使い方">商品を庭へドラッグして配置できます。</InfoTip>
+    </div>
+    <div className="category-chips" role="group" aria-label="商品カテゴリ">
+      {['', ...categories].map((name) => <button key={name || 'all'} type="button" aria-pressed={category === name}
+        onClick={() => setCategory(name)}>{name || 'すべて'}</button>)}
+    </div>
     {!failedQuery && (cart.isPending || query.isPending) && <p role="status">商品を読み込んでいます…</p>}
     {failedQuery && <p role="alert">{failedQuery.error.message}<button type="button" onClick={() => failedQuery.refetch()}>商品を再取得</button></p>}
     {!failedQuery && !query.isPending && products.length === 0 && <p>商品はありません。</p>}
