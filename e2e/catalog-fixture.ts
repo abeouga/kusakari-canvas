@@ -40,7 +40,8 @@ export function productPlacement(product: Product, x = 0, z = 0, scale = 1) {
 }
 
 // A new real catalog product per browser page; never reactivate retired demonstration products.
-export async function selectTestPlant(page: Page) {
+// The product card is dragged with the real pointer and dropped at the page coordinates (x, y).
+export async function placeTestPlant(page: Page, x: number, y: number) {
   let id = selectedProducts.get(page);
   if (!id) {
     const origin = process.env.KUSAKARI_EC_E2E_WEB_URL;
@@ -62,5 +63,10 @@ export async function selectTestPlant(page: Page) {
     if (await top.isVisible()) await top.click();
   }
   await page.getByRole('tab', { name: '商品一覧', exact: true }).click();
-  await page.getByTestId(`browse-${id}`).getByRole('button', { name: '庭に配置' }).click();
+  const card = page.getByTestId(`browse-${id}`);
+  await card.scrollIntoViewIfNeeded();
+  await card.hover({ position: { x: 35, y: 35 } });
+  await page.mouse.down();
+  await page.mouse.move(x, y, { steps: 8 });
+  await page.mouse.up();
 }

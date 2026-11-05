@@ -7,7 +7,7 @@ import { createPhotoCamera } from '../frontend/src/three/photoCamera.js';
 import { createTestProduct } from './catalog-fixture';
 
 const directory='artifacts/e2e/placement-bounds';
-for (const mode of ['photo','3d']) test(`click and product drop reject the cutout (${mode})`, async ({page,request})=>{
+for (const mode of ['photo','3d']) test(`pointer drag and product drop reject the cutout (${mode})`, async ({page,request})=>{
   await page.goto('/');
   const photo=await syntheticPhoto(page);
   photo.boundary=[{x:.1,y:.9},{x:.9,y:.9},{x:.9,y:.5},{x:.5,y:.5},{x:.5,y:.1},{x:.1,y:.1}];
@@ -30,14 +30,18 @@ for (const mode of ['photo','3d']) test(`click and product drop reject the cutou
     const p=new Vector3(x,0,z).project(camera);
     return {x:box.x+(p.x+1)*box.width/2,y:box.y+(1-p.y)*box.height/2};
   }
-  await page.getByTestId(`browse-${product.id}`).getByRole('button',{name:'庭に配置',exact:true}).click();
+  const card=page.getByTestId(`browse-${product.id}`);
+  async function dragCard(point:{x:number,y:number}) {
+    await card.hover({position:{x:35,y:35}}); await page.mouse.down();
+    await page.mouse.move(point.x,point.y,{steps:8}); await page.mouse.up();
+  }
   const outside=pixel(2,-2),inside=pixel(-2,-2);
-  await page.mouse.click(outside.x,outside.y);
+  await dragCard(outside);
+  await expect(page.getByRole('alert')).toContainText('範囲内へドロップ');
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 0 / 0');
-  await page.mouse.click(inside.x,inside.y);
+  await dragCard(inside);
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   await expect.poll(async()=> (await readGarden(request,garden.id)).objects.length).toBe(1);
-  await page.keyboard.press('Escape');
   const transfer=await page.evaluateHandle((id)=>{
     const data=new DataTransfer(); data.setData('application/x-kusakari-product',`product:${id}`); return data;
   },product.id);

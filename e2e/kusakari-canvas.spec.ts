@@ -1,4 +1,4 @@
-import { selectTestPlant, seedLegacyObjects } from './catalog-fixture';
+import { placeTestPlant, seedLegacyObjects } from './catalog-fixture';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test, type Page, type APIRequestContext } from './test.js';
@@ -34,11 +34,10 @@ async function createGarden(page: Page, name: string): Promise<string> {
 async function placeTree(page: Page, x = 0.5, y = 0.5): Promise<void> {
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await page.getByRole('button', { name: '上から見る' }).click();
-  await selectTestPlant(page);
   const canvas = page.locator('[data-testid="garden-canvas"] canvas');
   const bounds = await canvas.boundingBox();
   if (!bounds) throw new Error('3Dキャンバスが表示されていません。');
-  await page.mouse.click(bounds.x + bounds.width * x, bounds.y + bounds.height * y);
+  await placeTestPlant(page, bounds.x + bounds.width * x, bounds.y + bounds.height * y);
   await expect(page.getByTestId('object-row-0')).toBeVisible();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
 }
@@ -136,11 +135,10 @@ test('A. 庭作成からGLB配置・変形・保存・再読み込みまで', as
 test('B. 同一GLBの配置、独立移動、複製、削除', async ({ page, request }) => {
   const id = await createGarden(page, `E2E independent ${Date.now()}`);
   await placeTree(page, 0.42, 0.5);
-  await selectTestPlant(page);
   const canvas = page.locator('[data-testid="garden-canvas"] canvas');
   const bounds = await canvas.boundingBox();
   if (!bounds) throw new Error('3Dキャンバスが表示されていません。');
-  await page.mouse.click(bounds.x + bounds.width * 0.65, bounds.y + bounds.height * 0.5);
+  await placeTestPlant(page, bounds.x + bounds.width * 0.65, bounds.y + bounds.height * 0.5);
   await expect(page.getByTestId('object-row-1')).toBeVisible();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 2 / 2');
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');

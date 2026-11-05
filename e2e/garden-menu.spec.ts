@@ -1,4 +1,4 @@
-import { selectTestPlant } from './catalog-fixture';
+import { placeTestPlant } from './catalog-fixture';
 import { expect, test } from './test.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
@@ -12,10 +12,9 @@ test('garden options duplicate and delete with persisted independent data', asyn
     await page.goto(`/gardens/${source.id}`);
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
-    await selectTestPlant(page);
     const box = await page.locator('[data-testid="garden-canvas"] canvas').boundingBox();
     if (!box) throw new Error('Canvasが表示されません。');
-    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await placeTestPlant(page, box.x + box.width / 2, box.y + box.height / 2);
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');

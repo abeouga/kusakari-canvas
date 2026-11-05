@@ -1,4 +1,4 @@
-import { selectTestPlant } from './catalog-fixture';
+import { placeTestPlant } from './catalog-fixture';
 import { syntheticPhoto } from './occlusion-helpers';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -26,12 +26,10 @@ test('S. 作業面・独立開閉・ダイアログのフォーカス・未保�
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight)).toBe(true);
 
     await page.getByRole('button', { name: '上から見る' }).click();
-    await selectTestPlant(page);
     const box = (await canvas.boundingBox())!;
-    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await placeTestPlant(page, box.x + box.width / 2, box.y + box.height / 2);
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     await page.keyboard.press('Escape');
-    await expect(page.locator('.browse-actions button[aria-pressed="true"]')).toHaveCount(0);
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const saved = await (await request.get(`${api}/gardens/${created.id}`)).json() as GardenDocument;
     await page.reload();

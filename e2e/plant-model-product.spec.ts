@@ -81,7 +81,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     const unsupported = page.getByTestId('browse-olive');
     await expect(unsupported).toContainText('3Dモデル未設定');
-    await expect(unsupported.getByRole('button', { name: '庭に配置' })).toBeDisabled();
+    await expect(unsupported).toHaveAttribute('draggable', 'false');
     await expect(page.locator('#catalog-panel')).toHaveCount(0);
     const separator = page.getByRole('separator', { name: '商品サイドバーの幅' });
     const handle = await separator.boundingBox();
@@ -107,8 +107,8 @@ test('seller features create six plant compositions; catalog and shopping-list d
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 7 / 7');
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     await page.getByRole('tab', { name: '商品一覧', exact: true }).click();
-    await firstCard.getByRole('button', { name: '庭に配置' }).click();
-    await page.getByTestId('garden-canvas').locator('canvas').click({ position: { x: 300, y: 430 } });
+    await firstCard.dragTo(page.getByTestId('garden-canvas').locator('canvas'),
+      { sourcePosition: { x: 35, y: 35 }, targetPosition: { x: 300, y: 430 } });
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 8 / 8');
     await page.getByTestId('object-details-toggle').click();
     await page.getByTestId('rotation-y').fill('37');
@@ -135,8 +135,8 @@ test('seller features create six plant compositions; catalog and shopping-list d
     expect(reloaded).toEqual(snapshot);
     // Editing the product creates a new composition; the garden retains its saved snapshot.
     const p = products[0];
-    const { id, unit, source, sourceUpdatedAt, publishedAt, active, publicationStatus, modelComposition, canvasMaterialCode, ...input } = p;
-    void id; void unit; void source; void sourceUpdatedAt; void publishedAt; void active; void publicationStatus; void modelComposition; void canvasMaterialCode;
+    const { id, unit, source, sourceUpdatedAt, publishedAt, active, publicationStatus, modelComposition, canvasMaterialCode, sellerStoreId, ...input } = p;
+    void id; void unit; void source; void sourceUpdatedAt; void publishedAt; void active; void publicationStatus; void modelComposition; void canvasMaterialCode; void sellerStoreId;
     const changed = await page.request.put(`${ec}/api/products/${p.id}`, {
       data: { ...input, storeId: 1, plantModelProfile: { ...p.plantModelProfile, leafShape: 'needle' } },
     });
@@ -210,7 +210,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
 test('model validation, legacy product updates and exact-product material quote use real APIs', async ({ request }) => {
   const catalog = await request.get(`${ec}/api/products?storeId=1`).then((response) => response.json());
   const responseFields = new Set(['id', 'unit', 'source', 'sourceUpdatedAt', 'publishedAt', 'active', 'publicationStatus',
-    'modelComposition', 'canvasMaterialCode', 'plantModelProfile']);
+    'modelComposition', 'canvasMaterialCode', 'plantModelProfile', 'sellerStoreId']);
   const input = Object.fromEntries(Object.entries(catalog[0]).filter(([key]) => !responseFields.has(key)));
   const profile = { plantType: 'tree', heightCm: 200, widthCm: 100, crownShape: 'round', branchCount: 12,
     branchAngle: 45, trunkThicknessCm: 8, leafShape: 'oval', leafSizeCm: 12, leafDensity: 'medium',
@@ -232,12 +232,14 @@ test('model validation, legacy product updates and exact-product material quote 
     expect(matches[0].candidates).toHaveLength(1);
     expect(matches[0].candidates[0].product.id).toBe(id);
     expect(matches[0].candidates[0].purchaseQuantity).toBe(2);
-    const updated = await request.put(`${ec}/api/products/${id}`, { data: { ...body, stock: 10 } });
+    const updated = await request.put(`${ec}/api/products/${id}`, { data: { ...body, stock: 10, expectedStock: body.stock } });
     expect(updated.status()).toBe(200);
     const saved = await updated.json();
     expect(saved.modelComposition).toEqual(product.modelComposition);
     expect(saved.plantModelProfile).toEqual({ ...profile, botanicalForm: null });
     expect(saved.stock).toBe(10);
+    // Later requests edit the product as it is now, so they test validation, not a stale stock conflict.
+    body.stock = 10;
     const invalid = await request.put(`${ec}/api/products/${id}`, {
       data: { ...body, name: '失敗時はこの名前を保存しない', plantModelProfile: { ...profile, heightCm: 250 } },
     });
