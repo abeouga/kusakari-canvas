@@ -32,7 +32,7 @@ test('seller can publish current grass; incompatible leaves are excluded and rej
     const response = await saved;
     expect(response.status()).toBe(200);
     const product = await response.json(); id = product.id;
-    expect(product.modelComposition.version).toBe(4);
+    expect(product.modelComposition.version).toBe(5);
     expect(product.plantModelProfile.plantType).toBe('grass');
     // Canvas intentionally returns 400 for all RequestValidationError failures.
     expect((await request.post(`${api}/model-assemblies/resolve`, { data: { ...product.plantModelProfile, leafShape: 'split' } })).status()).toBe(400);
@@ -70,7 +70,7 @@ test('30 plant products: actual GLBs, preview, drag, save, reload and exact purc
       } });
       expect(response.status(), await response.text()).toBe(200);
       const product = await response.json(); products.push(product);
-      expect(product.modelComposition.version).toBe(4);
+      expect(product.modelComposition.version).toBe(5);
       expect(product.modelComposition.catalogVersion).toBe(4);
       expect(Math.abs(product.modelComposition.baseDimensions.height / (preset.profile.heightCm / 100) - 1)).toBeLessThan(0.005);
       await page.goto(`/model-preview?profile=${encodeURIComponent(JSON.stringify(preset.profile))}`);

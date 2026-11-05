@@ -4,7 +4,7 @@ import math
 import random
 from functools import lru_cache
 
-from .config import REPO_ROOT
+from ..config import REPO_ROOT
 from .plant_schemas import ModelDimensions, ModelPart, PlantComposition, PlantProfile
 
 

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from .errors import ApiError, bad_request, not_found
 from .media import MediaStore
 from .models import Asset, Garden, GardenThumbnail, PlacedObject
-from .plant_schemas import PlantComposition
+from .plant_schemas import composition_adapter
 from .schemas import (
     AssetResponse,
     BaseDimensions,
@@ -45,7 +45,7 @@ def as_document(garden: Garden, objects: list[GardenObject], media: MediaStore |
 def object_response(obj: PlacedObject) -> GardenObject:
     vectors = {kind: Vector(**{axis: getattr(obj, f"{kind}_{axis}") for axis in "xyz"})
                for kind in ("position", "rotation", "scale")}
-    composition = PlantComposition.model_validate_json(obj.model_composition_json) if obj.model_composition_json else None
+    composition = composition_adapter.validate_json(obj.model_composition_json) if obj.model_composition_json else None
     return GardenObject(id=obj.id, assetId=obj.asset_id, productId=obj.product_id, productName=obj.product_name,
                         materialCode=obj.material_code, modelComposition=composition, **vectors)
 

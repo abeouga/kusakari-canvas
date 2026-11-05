@@ -33,7 +33,7 @@ test('effective seller controls and current preview persist through the real EC 
     await publishProduct(form);
     const response = await saving; expect(response.status(), await response.text()).toBe(200);
     const saved = await response.json(); productId = saved.id;
-    expect(saved.modelComposition.version).toBe(4); expect(saved.modelComposition.fitScale).toEqual([1, 1, 1]);
+    expect(saved.modelComposition.version).toBe(5); expect(saved.modelComposition.catalogVersion).toBe(4); expect(saved.modelComposition.fitScale).toEqual([1, 1, 1]);
     expect(saved.plantModelProfile.leafSizeCm).toBe(25);
     await page.reload();
     const products = await request.get(`${ec}/api/products?storeId=1`).then((r) => r.json());
@@ -43,7 +43,7 @@ test('effective seller controls and current preview persist through the real EC 
   } finally { if (productId) expect((await request.delete(`${ec}/api/products/${productId}`)).ok()).toBeTruthy(); }
 });
 
-test('five natural models, v1/v2/v3 snapshots, placement, edits and reload retain canonical geometry', async ({ page, request }) => {
+test('five natural models, frozen v1-v4 snapshots, placement, edits and reload retain canonical geometry', async ({ page, request }) => {
   await mkdir(evidence, { recursive: true }); const products: Product[] = [];
   let garden: GardenDocument | undefined; const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -53,24 +53,22 @@ test('five natural models, v1/v2/v3 snapshots, placement, edits and reload retai
         sku: `V3-${randomUUID().slice(0, 12)}`, name: `V3検証-${preset.name}` } });
       expect(response.status(), await response.text()).toBe(200);
       const product = await response.json(); products.push(product);
-      expect(product.modelComposition.version).toBe(4);
+      expect(product.modelComposition.version).toBe(5);
     }
     const created = await request.post(`${api}/gardens`, { data: { name: `V3形状検証-${randomUUID().slice(0, 8)}`, width: 12, depth: 10 } });
     expect(created.status()).toBe(201); garden = await created.json();
     if (!garden) throw new Error('Missing garden');
-    const v1 = JSON.parse(await readFile('e2e/fixtures/plant-composition-v1.json', 'utf8'));
-    const resolved = await request.post(`${api}/model-assemblies/resolve?version=2`, { data: plantPresetsV3[0].profile });
-    expect(resolved.status()).toBe(200); const v2 = await resolved.json();
-    expect(v2.version).toBe(2);
-    const resolved3 = await request.post(`${api}/model-assemblies/resolve?version=3`, { data: plantPresetsV3[0].profile });
-    expect(resolved3.status()).toBe(200); const v3 = await resolved3.json(); expect(v3.version).toBe(3);
+    // Snapshots saved by the frozen v1-v4 rules (plant_legacy) must stay saveable and unchanged.
+    const legacy = await Promise.all([1, 2, 3, 4].map(async (version) =>
+      JSON.parse(await readFile(`e2e/fixtures/plant-composition-v${version}.json`, 'utf8'))));
+    expect(legacy.map((model) => model.version)).toEqual([1, 2, 3, 4]);
     garden.objects = products.map((p, i) => ({ id: randomUUID(), assetId: 'plant_modular', productId: p.id,
       productName: p.name, materialCode: p.canvasMaterialCode, modelComposition: p.modelComposition,
       position: { x: (i % 3 - 1) * 3, y: 0, z: (Math.floor(i / 3) - 0.5) * 3 },
       rotation: { x: 0, y: i * 0.35, z: 0 }, scale: { x: 1, y: 1, z: 1 } }));
-    for (const [i, model] of [v1, v2, v3].entries()) garden.objects.push({ id: randomUUID(), assetId: 'plant_modular',
+    for (const [i, model] of legacy.entries()) garden.objects.push({ id: randomUUID(), assetId: 'plant_modular',
       productId: `v3-legacy-${i}`, productName: `保存互換v${i + 1}`, materialCode: `product.v3-legacy-${i}`,
-      modelComposition: model, position: { x: -4 + i * 4, y: 0, z: 4 },
+      modelComposition: model, position: { x: -4.5 + i * 3, y: 0, z: 4 },
       rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } });
     const put = await request.put(`${api}/gardens/${garden.id}`, { data: garden });
     expect(put.status(), await put.text()).toBe(200);
@@ -78,17 +76,17 @@ test('five natural models, v1/v2/v3 snapshots, placement, edits and reload retai
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     const cart = await page.request.get(`${ec}/api/cart`);
     expect(cart.status(), await cart.text()).toBe(200);
-    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 8 / 8', { timeout: 60000 });
+    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 9 / 9', { timeout: 60000 });
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
     const card = page.getByTestId(`browse-${products[2].id}`); await card.scrollIntoViewIfNeeded();
     await card.dragTo(page.getByTestId('garden-canvas').locator('canvas'),
       { sourcePosition: { x: 35, y: 35 }, targetPosition: { x: 300, y: 400 } });
-    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 9 / 9', { timeout: 60000 });
+    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 10 / 10', { timeout: 60000 });
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const snapshot = await request.get(`${api}/gardens/${garden.id}`).then((r) => r.json());
     await page.reload();
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
-    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 9 / 9', { timeout: 60000 });
+    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 10 / 10', { timeout: 60000 });
     expect(await request.get(`${api}/gardens/${garden.id}`).then((r) => r.json())).toEqual(snapshot);
     const bad = structuredClone(snapshot); bad.objects[0].modelComposition.parts[0].position[1] += 0.1;
     expect((await request.put(`${api}/gardens/${garden.id}`, { data: bad })).status()).toBe(400);
