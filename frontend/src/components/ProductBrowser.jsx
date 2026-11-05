@@ -3,6 +3,7 @@ import { productImage, yen } from '../api/commerce';
 import { productAsset, startProductDrag } from '../domain/productModels';
 import { useEditorStore } from '../stores/editorStore';
 import { InfoTip } from './InfoTip';
+import { showDragPreview } from './ProductDragPreview';
 import { UiIcon } from './UiIcon';
 
 export function ProductBrowser({ assets, commerce, disabled }) {
@@ -33,7 +34,10 @@ export function ProductBrowser({ assets, commerce, disabled }) {
       const asset = productAsset(product, assets);
       const canPlace = !!asset && !disabled;
       return <article className={`browse-product${asset && selected === asset.id ? ' is-selected' : ''}`} key={product.id}
-        data-testid={`browse-${product.id}`} draggable={canPlace} onDragStart={(event) => startProductDrag(event, asset)}>
+        data-testid={`browse-${product.id}`} draggable={canPlace} onDragStart={(event) => {
+          startProductDrag(event, asset);
+          if (asset) showDragPreview(event, { name: product.name, imageUrl: productImage(product.imageUrl) });
+        }}>
         <img src={productImage(product.imageUrl)} alt="" loading="lazy" draggable={false}/>
         <div><strong>{product.name}</strong><small>{product.category}</small>
           <p className="browse-price">{yen(product.priceYen)}</p>

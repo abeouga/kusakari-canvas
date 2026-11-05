@@ -27,6 +27,9 @@
 .browse-product p { margin: 0; font-size: 13px; }
 .browse-product .browse-price { margin-top: auto; color: #284d3b; font-size: 18px; font-weight: 700; letter-spacing: .01em; }
 .browse-product small { color: #6a7a64; font-size: 11px; }
+.product-drag-tile { position: fixed; top: 0; left: 0; z-index: 1001; display: flex; align-items: center; gap: 10px; width: 220px; padding: 8px 12px 8px 8px; border: 1px solid #cbd8c4; border-radius: 8px; background: #fffffff2; box-shadow: 0 12px 28px #24351f38; pointer-events: none; will-change: transform; }
+.product-drag-tile img { flex: 0 0 auto; width: 44px; height: 44px; object-fit: cover; border-radius: 5px; background: #f5f7f1; }
+.product-drag-tile strong { min-width: 0; overflow: hidden; color: #284d3b; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .placement-candidates { padding: 14px 0; border-top: 1px solid #dfe6da; }
 .placement-candidates > summary { cursor: pointer; font-size: 12px; }
 @media (max-width: 900px) { .sidebar-resize { display: none; } }

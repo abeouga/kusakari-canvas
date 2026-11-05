@@ -3,6 +3,7 @@ import { productImage, yen } from '../api/commerce';
 import { ecUrl } from '../domain/shopping';
 import { PlacedObjects } from './PlacedObjects';
 import { ProductBrowser } from './ProductBrowser';
+import { ProductDragPreview, showDragPreview } from './ProductDragPreview';
 import { SidebarResize } from './SidebarResize';
 import { placedProductAsset, productAsset, startProductDrag } from '../domain/productModels';
 import { useEditorStore } from '../stores/editorStore';
@@ -29,6 +30,7 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
   return <aside id="properties-panel" className="properties-panel commerce-panel" aria-label="商品一覧と庭の買い物リスト"
     onKeyDown={(event) => event.stopPropagation()}>
     <SidebarResize width={width} onChange={onWidthChange}/>
+    <ProductDragPreview/>
     <div className="commerce-tabs" role="tablist" aria-label="商品一覧と買い物リストの切替" onKeyDown={tabKey}>
       <button id="commerce-tab-products" type="button" role="tab" aria-selected={tab === 'products'} aria-controls="commerce-products" tabIndex={tab === 'products' ? 0 : -1} onClick={() => setTab('products')}>商品一覧</button>
       <button id="commerce-tab-list" type="button" role="tab" aria-selected={tab === 'list'} aria-controls="commerce-list" tabIndex={tab === 'list' ? 0 : -1} onClick={() => setTab('list')}>買い物リスト（{count}）</button>
@@ -54,7 +56,10 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
           if (object) asset = placedProductAsset(object, assets);
           else if (product) asset = productAsset(product, assets);
           return <article key={row.key} className="commerce-product" data-testid={'shopping-line-' + row.assetId}
-            draggable={!!asset && !disabled} onDragStart={(event) => startProductDrag(event, asset)}>
+            draggable={!!asset && !disabled} onDragStart={(event) => {
+              startProductDrag(event, asset);
+              if (asset) showDragPreview(event, { name: product?.name ?? row.name, imageUrl: product ? productImage(product.imageUrl) : null });
+            }}>
             {product && <img src={productImage(product.imageUrl)} alt="" draggable={false}/>}
             <div><strong>{product?.name ?? row.name}</strong><p data-testid="needed-quantity">必要数 {row.quantity}点</p>
               {row.unplaced && <p data-testid="unplaced-ec-item">ECで追加（庭に未配置）</p>}
