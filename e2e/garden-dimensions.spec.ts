@@ -1,4 +1,5 @@
 import { placeTestPlant } from './catalog-fixture';
+import { topViewPoint } from './transform-helpers';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test } from './test.js';
@@ -33,10 +34,11 @@ test('Q. 名前だけで作成・土台寸法を編集・縮小検証・MySQL保
     await page.getByRole('button', { name: '上から見る' }).click();
     const box = await page.locator('[data-testid="garden-canvas"] canvas').boundingBox();
     if (!box) throw new Error('3D庭が表示されていません。');
-    await placeTestPlant(page, box.x + box.width / 2, box.y + box.height / 2);
+    // Place the plant at x = 6 m, inside 14 m but outside a 10 m wide base.
+    const east = await topViewPoint(page, initial, 6, 0);
+    await placeTestPlant(page, east.x, east.y);
     await expect(page.getByTestId('object-row-0')).toBeVisible();
-    if (!await page.locator('.object-details').evaluate((element) => (element as HTMLDetailsElement).open)) await page.getByTestId('object-details-toggle').click();
-    await page.getByTestId('position-x').fill('6');
+    await expect.poll(async () => ((await (await request.get(`${api}/gardens/${id}`)).json()) as GardenDocument).objects[0]?.position.x ?? 0).toBeGreaterThan(5.5);
     await page.getByRole('button', { name: '土台設定', exact: true }).click();
     await page.getByLabel('幅 (m)', { exact: true }).fill('10');
     await page.getByRole('button', { name: '土台に適用' }).click();
@@ -47,7 +49,7 @@ test('Q. 名前だけで作成・土台寸法を編集・縮小検証・MySQL保
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const saved = await (await request.get(`${api}/gardens/${id}`)).json() as GardenDocument;
     expect([saved.width, saved.depth]).toEqual([14, 12]);
-    expect(saved.objects[0].position.x).toBe(6);
+    expect(saved.objects[0].position.x).toBeCloseTo(6, 1);
     const rejected = await request.put(`${api}/gardens/${id}`, { data: { ...saved, width: 10 } });
     expect(rejected.status()).toBe(400);
     expect((await rejected.json()).code).toBe('OBJECT_POSITION_OUT_OF_BOUNDS');

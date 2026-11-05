@@ -37,8 +37,7 @@
 .display-toggles label:has(input:not(:checked)) { color: #a3ae9b; }
 .display-toggles label:has(input:disabled) { opacity: .45; }
 .toolbar-text-button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 4px 10px; border: 1px solid #cfdacb; border-radius: 6px; background: #fff; color: #244d3d; font-size: 12px; white-space: nowrap; }
-.object-details > summary { display: inline-flex; align-items: center; gap: 5px; }
-.object-toolbar:has(.toolbar-icons) .object-details { padding-left: 5px; border-left: 1px solid #e3e9de; }
+.object-toolbar:has(.toolbar-icons) .object-delete { margin-left: 5px; border-left: 1px solid #e3e9de; border-radius: 0 6px 6px 0; }
 .mode-badge { min-width: 30px; padding: 1px 6px; border-radius: 9px; background: #f7ecd6; color: #8a6a2f; font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .mode-badge.is-complete { background: #dcefe0; color: #225f51; }
 .edge-toolbar { flex-wrap: wrap; gap: 6px 14px; padding: 5px 10px 5px 14px; background: #eef5ef; color: #4f6a55; }
@@ -74,11 +73,11 @@
 .edge-popover .edge-notice { color: #225f51; }
 .edge-popover p.notice-error { color: var(--danger); }
 @media (max-width: 768px) {
-  .photo-mode .toolbar-label, .object-details .toolbar-label { display: none; }
+  .photo-mode .toolbar-label, .object-delete .toolbar-label { display: none; }
   .object-toolbar { gap: 3px; padding: 3px; }
   .toolbar-icons { padding-left: 3px; }
   .toolbar-icons button, .toolbar-icons label { width: 28px; height: 28px; }
   .photo-mode button { padding: 4px 7px; }
-  .object-toolbar:has(.toolbar-icons) .object-details > summary { padding: 7px 6px; }
+  .object-toolbar:has(.toolbar-icons) .object-delete { padding: 7px 6px; }
   .edge-toolbar .button-secondary { margin-left: 0; }
 }

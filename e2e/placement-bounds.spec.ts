@@ -19,7 +19,7 @@ async function nameFixture(request:APIRequestContext, garden:GardenDocument):Pro
   return saved.json();
 }
 const directory = 'artifacts/e2e/placement-bounds';
-test('concave construction boundary rejects API bypass and UI edits, then persists valid anchors', async ({ page, request }) => {
+test('concave construction boundary rejects API bypass, then persists valid anchors', async ({ page, request }) => {
   await page.goto('/');
   const photo = await syntheticPhoto(page);
   // Ground outline: [-5,4], [5,4], [5,0], [0,0], [0,-4], [-5,-4].
@@ -43,17 +43,8 @@ test('concave construction boundary rejects API bypass and UI edits, then persis
     expect(saved.status(), await saved.text()).toBe(200);
     garden = await saved.json();
   }
+  // Dragging into the cutout in the UI is covered by the photo drag test below.
   await openScene(page, garden);
-  await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('position-x').fill('1');
-  await expect(page.getByTestId('position-x')).toHaveValue('-1');
-  await page.getByTestId('position-x').fill('0');
-  await expect.poll(async () => (await readGarden(request, garden.id)).objects[0].position.x).toBe(0);
-  await page.getByRole('button', {name:'複製', exact:true}).click();
-  await expect(page.getByRole('alert')).toContainText('複製先が施工範囲外');
-  await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
-  await page.getByTestId('uniform-scale').fill('3');
-  await page.getByTestId('rotation-y').fill('45');
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   await page.reload();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
@@ -100,8 +91,17 @@ test('legacy invalid anchors remain readable and repair resumes autosave without
   await expect(page.getByTestId('outside-placements')).toContainText('1個');
   await expect(page.getByTestId('save-status')).toHaveText('施工範囲の修正が必要');
   await page.getByTestId('outside-placements').getByRole('button').click();
-  await page.getByTestId('object-details-toggle').click();
-  await page.getByTestId('position-x').fill('-1');
+  // Drag the plant out of the cutout to x = -1 m, as a user repairs it.
+  const camera=createPhotoCamera(garden.photo!,garden.width,garden.depth)!;
+  const box=(await page.getByTestId('photo-model-canvas').locator('canvas').boundingBox())!;
+  const pixel=(x:number,y:number,z:number)=>{
+    const p=new Vector3(x,y,z).project(camera);
+    return {x:box.x+(p.x+1)*box.width/2,y:box.y+(1-p.y)*box.height/2};
+  };
+  const anchor=garden.objects[0].position;
+  const from=pixel(anchor.x,.8,anchor.z), to=pixel(-1,.8,anchor.z);
+  await page.mouse.move(from.x,from.y); await page.mouse.down();
+  await page.mouse.move(to.x,to.y,{steps:20}); await page.mouse.up();
   await expect(page.getByTestId('outside-placements')).toHaveCount(0);
   await expect.poll(async()=> (await readGarden(request,garden.id)).revision).toBe(garden.revision+1);
   await page.reload();
@@ -132,8 +132,7 @@ test('redrawing a smaller boundary pauses persistence until the excluded placeme
   await page.waitForTimeout(800); // Longer than autosave debounce: invalid snapshots must stay local.
   expect(await readGarden(request,garden.id)).toEqual(garden);
   await page.getByTestId('outside-placements').getByRole('button').click();
-  await page.getByTestId('object-details-toggle').click();
-  await page.getByRole('button',{name:'削除',exact:true}).click();
+  await page.getByTestId('object-toolbar').getByRole('button',{name:'削除',exact:true}).click();
   await expect(page.getByTestId('outside-placements')).toHaveCount(0);
   await expect.poll(async()=> (await readGarden(request,garden.id)).objects.length).toBe(0);
   await page.reload();
