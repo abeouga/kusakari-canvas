@@ -14,10 +14,16 @@
 .commerce-material { border-top: 1px solid var(--line); padding: 12px 0; }
 .commerce-material h3 { display: flex; justify-content: space-between; font-size: 13px; gap: 6px; }
 .commerce-material h3 span { font-weight: normal; white-space: nowrap; }
-.commerce-product { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-.commerce-product img { width: 54px; height: 68px; object-fit: cover; border-radius: 5px; }
-.commerce-product strong { font-size: 12px; overflow-wrap: anywhere; }
-.commerce-product button, .commerce-scroll .notice-error button { min-height: 32px; border: 1px solid #cbd7c6; padding: 6px 10px; background: #f5f8f2; border-radius: 5px; font-size: 12px; margin-top: 8px; }
+.commerce-product { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; min-height: 150px; margin-top: 10px; overflow: hidden; border: 1px solid #dfe6da; border-radius: 7px; background: #fff; }
+.commerce-product > img, .commerce-product-noimage { width: 100%; height: 100%; min-height: 0; object-fit: cover; background: #f5f7f1; }
+.commerce-product > div { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; padding: 14px 12px 14px 0; }
+.commerce-product strong { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.commerce-product small { color: #6a7a64; font-size: 11px; }
+.commerce-scroll .commerce-product p { margin: 0; }
+.commerce-scroll .commerce-product .commerce-price { display: flex; flex-direction: column; margin-top: auto; color: #284d3b; font-size: 18px; font-weight: 700; line-height: 1.3; letter-spacing: .01em; }
+.commerce-product .commerce-price small { font-weight: 400; }
+.commerce-product > div > button { margin-top: 6px; }
+.commerce-product button,.commerce-scroll .notice-error button { min-height: 32px; border: 1px solid #cbd7c6; padding: 6px 10px; background: #f5f8f2; border-radius: 5px; font-size: 12px; margin-top: 8px; }
 .commerce-product form { display: flex; align-items: end; gap: 6px; }
 .commerce-product label { display: grid; gap: 5px; }
 .commerce-product input { width: 70px; min-width: 0; padding: 6px; }
