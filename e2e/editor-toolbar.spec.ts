@@ -30,24 +30,30 @@ test('editor controls preserve state and the merged canvas toolbar fits narrow s
       if (width >= 1280) expect(bounds!.height).toBeLessThanOrEqual(70);
     }
     await page.setViewportSize({ width: 1440, height: 960 });
-    // 詳細は配置物を選択した時だけ表示し、数量・施工範囲や商品検索は置かない。
-    await expect(page.getByTestId('object-details-toggle')).toHaveCount(0);
+    // 削除は配置物を選択した時だけ表示し、数量・施工範囲や商品検索は置かない。
+    await expect(page.getByTestId('object-delete')).toHaveCount(0);
+    // 初期視点は目のアイコンで示す。
+    await expect(page.getByRole('button', { name: '初期視点', exact: true }).locator('svg.lucide-eye')).toHaveCount(1);
     await expect(page.locator('.construction-details')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'この数量で商品を探す' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: '植物候補を相談', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
     const canvas = await page.locator('[data-testid="garden-canvas"] canvas').boundingBox();
-    await placeTestPlant(page, canvas!.x + canvas!.width / 2, canvas!.y + canvas!.height / 2);
+    await placeTestPlant(page, canvas!.x + canvas!.width * 0.4, canvas!.y + canvas!.height / 2);
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
-    await page.keyboard.press('Escape');
-    await page.getByTestId('object-row-0').click();
-    await page.getByTestId('object-details-toggle').click();
-    await expect(page.locator('.object-details-content')).toContainText('X座標');
-    await page.keyboard.press('Escape');
-    await expect(page.getByTestId('object-details-toggle')).toBeFocused();
-    await page.getByTestId('object-details-toggle').click();
-    await page.getByRole('button', { name: '複製', exact: true }).click();
-    await page.keyboard.press('Escape');
+    await placeTestPlant(page, canvas!.x + canvas!.width * 0.6, canvas!.y + canvas!.height / 2);
+    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 2 / 2');
+    await placeTestPlant(page, canvas!.x + canvas!.width * 0.5, canvas!.y + canvas!.height * 0.65);
+    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 3 / 3');
+    // 選択した配置物のツールバーは削除だけで、数値の入力欄や複製は出さない。
+    await page.getByTestId('object-row-2').click();
+    const toolbar = page.getByTestId('object-toolbar');
+    await expect(toolbar.getByRole('button', { name: '削除', exact: true })).toBeVisible();
+    await expect(toolbar.getByRole('button', { name: '複製', exact: true })).toHaveCount(0);
+    await expect(toolbar.getByRole('spinbutton')).toHaveCount(0);
+    await expect(toolbar.getByText('詳細')).toHaveCount(0);
+    await toolbar.getByRole('button', { name: '削除', exact: true }).click();
+    await expect(page.getByTestId('object-row-2')).toHaveCount(0);
     await expect(bar.getByRole('button', { name: '買い物リストをECで確認', exact: true })).toHaveCount(0);
     await expect(bar.getByTestId('save-status')).toHaveText('保存済み');
     await page.reload();

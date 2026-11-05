@@ -146,17 +146,6 @@ export const useEditorStore = create((set, get) => ({
         set({ document: next, isDirty: true, editError: null, saveError: null });
         return true;
     },
-    duplicateSelected: () => {
-        const state = get();
-        if (!state.document || !state.selectedObjectId)
-            return;
-        const next = duplicateObject(state.document, state.selectedObjectId);
-        if (!next) {
-            set({ editError: '複製先が施工範囲外か、配置数の上限に達しています。' });
-            return;
-        }
-        set({ document: next, selectedObjectId: next.objects[next.objects.length - 1].id, isDirty: true, editError: null, saveError: null });
-    },
     deleteSelected: () => {
         const state = get();
         if (!state.document || !state.selectedObjectId)

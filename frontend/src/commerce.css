@@ -2,10 +2,9 @@
 .object-toolbar { position: absolute; z-index: 15; top: 12px; right: 12px; display: flex; gap: 5px; padding: 5px; border: 1px solid var(--line); border-radius: 8px; background: #fffffff5; box-shadow: 0 3px 14px #20352020; max-width: calc(100% - 24px); }
 .object-toolbar .transform-tools { margin: 0; }
 .object-toolbar .transform-tools button { padding: 8px; white-space: nowrap; }
-.object-details > summary { cursor: pointer; padding: 10px 8px; font-size: 12px; }
-.object-details > summary[aria-disabled='true'] { opacity: .5; cursor: default; }
-.object-details-content { position: absolute; top: calc(100% + 6px); right: 0; width: 280px; max-width: calc(100vw - 36px); max-height: min(360px, calc(var(--editing-height, 450px) - 82px)); overflow: auto; overscroll-behavior: contain; padding: 16px; background: white; border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 4px 14px #20352025; }
-.object-details-content .selection-name { margin-bottom: 14px; }
+.object-delete { display: inline-flex; align-items: center; gap: 5px; padding: 8px; border: 0; border-radius: 6px; background: transparent; color: var(--danger); font-size: 12px; white-space: nowrap; }
+.object-delete:hover:not(:disabled) { background: #fbeeee; }
+.object-delete:disabled { opacity: .5; cursor: default; }
 .commerce-panel { min-width: 0; overflow: hidden; }
 .commerce-tabs { display: flex; gap: 3px; margin: 12px; padding: 3px; border-radius: 7px; background: #edf2eb; }
 .commerce-tabs button { flex: 1; padding: 9px 4px; border: 0; border-radius: 5px; background: transparent; color: #52664e; font-size: 12px; }

@@ -110,10 +110,6 @@ test('seller features create six plant compositions; catalog and shopping-list d
     await firstCard.dragTo(page.getByTestId('garden-canvas').locator('canvas'),
       { sourcePosition: { x: 35, y: 35 }, targetPosition: { x: 300, y: 430 } });
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 8 / 8');
-    await page.getByTestId('object-details-toggle').click();
-    await page.getByTestId('rotation-y').fill('37');
-    await page.getByTestId('uniform-scale').fill('1.25');
-    await page.getByTestId('object-details-toggle').click();
     await page.getByRole('button', { name: '初期視点', exact: true }).click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const snapshot = await page.request.get(`${api}/gardens/${garden.id}`).then((response) => response.json());

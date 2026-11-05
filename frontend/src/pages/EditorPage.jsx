@@ -58,7 +58,6 @@ export function EditorPage({ gardenId }) {
     const commandCamera = useEditorStore((state) => state.commandCamera);
     const setTool = useEditorStore((state) => state.setTool);
     const selectObject = useEditorStore((state) => state.selectObject);
-    const duplicateSelected = useEditorStore((state) => state.duplicateSelected);
     const deleteSelected = useEditorStore((state) => state.deleteSelected);
     const [retryRequest, setRetryRequest] = useState(null);
     const [viewMode, setViewMode] = useState('photo');
@@ -185,13 +184,12 @@ export function EditorPage({ gardenId }) {
     const assets = [...baseAssets, ...productAssets, ...savedAssets];
     const assetMap = new Map(assets.map((asset) => [asset.id, asset]));
     const selectedObject = document.objects.find((object) => object.id === selectedObjectId) ?? null;
-    const selectedAsset = selectedObject ? assetForObject(selectedObject, assetMap) ?? null : null;
     const outside = outsideObjects(document);
     const statusText = isSaving ? '保存中…' : isCalibrating ? 'カメラを設定中' : hasBoundaryDraft ? '輪郭を描画中' : outside.length ? '施工範囲の修正が必要' : saveError ? '保存できませんでした' : isDirty ? '自動保存待ち' : '保存済み';
     const savePending = outside.length > 0 || isDirty || isSaving || isCalibrating || hasBoundaryDraft;
     const isEditingDisabled = navigating || isTransformDragging || isCalibrating;
     const photoReady = !hasBoundaryDraft && !isCalibrating && (!document.photo || (validSurface(document.photo) && !calibratedBoundaryError(document.photo, document.width, document.depth)));
-    const renderOverlay = (leading) => <ObjectToolbar document={document} leading={leading} selectedObject={selectedObject} selectedAsset={selectedAsset} tool={tool} photoMode={viewMode === 'photo'} disabled={isEditingDisabled || hasBoundaryDraft} onSetTool={setTool} onDuplicate={duplicateSelected} onDelete={deleteSelected}/>;
+    const renderOverlay = (leading) => <ObjectToolbar leading={leading} selectedObject={selectedObject} tool={tool} photoMode={viewMode === 'photo'} disabled={isEditingDisabled || hasBoundaryDraft} onSetTool={setTool} onDelete={deleteSelected}/>;
     return (<div className="editor-shell canvas-shell">
       <SiteHeader onNavigate={requestNavigation} disabled={navigating || isTransformDragging}/>
       {outside.length > 0 && photoReady && <div className="editor-alert notice-error" role="alert" data-testid="outside-placements">
@@ -236,7 +234,7 @@ export function EditorPage({ gardenId }) {
             <div className="camera-actions">
               {viewMode === '3d' && !document.photo && <button type="button" aria-label="土台設定" title="土台設定" aria-haspopup="dialog" onClick={() => setDimensionsOpen(true)} disabled={isEditingDisabled}><UiIcon name="ruler"/><span>土台設定</span></button>}
               {viewMode === '3d' && <button type="button" aria-label="上から見る" title="上から見る" onClick={() => commandCamera('top')} disabled={isEditingDisabled}><UiIcon name="top"/><span>上から見る</span></button>}
-              {viewMode === '3d' && <button type="button" aria-label="初期視点" title="初期視点" onClick={() => commandCamera('home')} disabled={isEditingDisabled}><UiIcon name="home"/><span>初期視点</span></button>}
+              {viewMode === '3d' && <button type="button" aria-label="初期視点" title="初期視点" onClick={() => commandCamera('home')} disabled={isEditingDisabled}><UiIcon name="view"/><span>初期視点</span></button>}
               <button type="button" className="inspector-toggle" aria-label={propertiesCollapsed ? '商品・買い物リストパネルを表示' : '商品・買い物リストパネルを隠す'} title={propertiesCollapsed ? '商品・買い物リストを表示' : '商品・買い物リストを隠す'} aria-expanded={!propertiesCollapsed} aria-controls="properties-panel" onClick={() => setPropertiesCollapsed(!propertiesCollapsed)}><UiIcon name="panel"/><span>商品・リスト</span></button>
             </div>
           </div>
