@@ -21,10 +21,8 @@ test('EC接続失敗を表示し、再取得後に商品を配置・保存・復
   await expect(browser.getByRole('alert')).toHaveCount(0);
   const product = browser.getByTestId(`browse-${fixtureProduct.id}`);
   await expect(product).toBeVisible();
-  await product.getByRole('button', { name: '庭に配置', exact: true }).click();
   const canvas = page.getByTestId('garden-canvas').locator('canvas');
-  const bounds = (await canvas.boundingBox())!;
-  await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await product.dragTo(canvas, { sourcePosition: { x: 35, y: 35 } });
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   const saved = await (await request.get(`${api}/gardens/${garden.id}`)).json();

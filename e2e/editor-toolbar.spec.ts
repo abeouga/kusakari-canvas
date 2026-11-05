@@ -1,4 +1,4 @@
-import { selectTestPlant } from './catalog-fixture';
+import { placeTestPlant } from './catalog-fixture';
 import { expect, test } from './test.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { api } from './api-url.js';
@@ -36,9 +36,8 @@ test('editor controls preserve state and the merged canvas toolbar fits narrow s
     await expect(page.getByRole('button', { name: 'この数量で商品を探す' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: '植物候補を相談', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
-    await selectTestPlant(page);
     const canvas = await page.locator('[data-testid="garden-canvas"] canvas').boundingBox();
-    await page.mouse.click(canvas!.x + canvas!.width / 2, canvas!.y + canvas!.height / 2);
+    await placeTestPlant(page, canvas!.x + canvas!.width / 2, canvas!.y + canvas!.height / 2);
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     await page.keyboard.press('Escape');
     await page.getByTestId('object-row-0').click();

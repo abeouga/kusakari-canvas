@@ -27,11 +27,9 @@ export function ProductBrowser({ assets, commerce, disabled }) {
       return <article className={`browse-product${asset && selected === asset.id ? ' is-selected' : ''}`} key={product.id}
         data-testid={`browse-${product.id}`} draggable={canPlace} onDragStart={(event) => startProductDrag(event, asset)}>
         <img src={productImage(product.imageUrl)} alt="" loading="lazy" draggable={false}/>
-        <div><strong>{product.name}</strong><small>{product.category}</small><p>{yen(product.priceYen)}</p>
-          <small>{asset ? '庭に配置できます' : '3Dモデル未設定'}</small>
-          <div className="browse-actions"><button type="button" disabled={!canPlace} aria-pressed={!!asset && selected === asset.id} data-testid={asset ? `asset-${asset.id}` : undefined}
-            onClick={() => useEditorStore.getState().selectAsset(asset.id)}>庭に配置</button>
-          </div>
+        <div><strong>{product.name}</strong><small>{product.category}</small>
+          <p className="browse-price">{yen(product.priceYen)}</p>
+          {!asset && <small>3Dモデル未設定</small>}
         </div>
       </article>;
     })}

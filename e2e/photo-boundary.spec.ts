@@ -1,4 +1,4 @@
-import { selectTestPlant } from './catalog-fixture';
+import { placeTestPlant } from './catalog-fixture';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test, type Page, type APIRequestContext } from './test.js';
@@ -141,8 +141,8 @@ test('I. 仮線追従・始点で6点輪郭確定・配置・保存復元・3D�
   await showOutline(page);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(6);
   await expect(page.getByRole('button', { name: '輪郭を確定', exact: true })).toHaveCount(0);
-  await selectTestPlant(page);
-  await clickImage(page, 0.5, 0.65);
+  const drop = await screenPoint(page, 0.5, 0.65);
+  await placeTestPlant(page, drop.x, drop.y);
   await expect(page.getByTestId('object-row-0')).toBeVisible();
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   const stored = await saveArtifact(request, id, 'garden-photo-polygon.json');
@@ -345,10 +345,9 @@ test('N. 木の3D・写真相互配置、固定カメラ、頂点番号非表示
 
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await page.getByRole('button', { name: '上から見る' }).click();
-  await selectTestPlant(page);
   const bounds = await page.locator('[data-testid="garden-canvas"] canvas').boundingBox();
   if (!bounds) throw new Error('3D庭が表示されていません。');
-  await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await placeTestPlant(page, bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
   await expect(page.getByTestId('object-row-0')).toBeVisible();
   const treeFrom3dId = await page.getByTestId('object-row-0').getAttribute('data-object-id');
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
@@ -362,7 +361,8 @@ test('N. 木の3D・写真相互配置、固定カメラ、頂点番号非表示
   await page.getByLabel('配置', { exact: true }).check();
 
   await page.setViewportSize({ width: 1280, height: 900 });
-  await clickImage(page, 0.3, 0.65);
+  const photoDrop = await screenPoint(page, 0.3, 0.65);
+  await placeTestPlant(page, photoDrop.x, photoDrop.y);
   await expect(page.getByTestId('object-row-1')).toBeVisible();
   const treeFromPhotoId = await page.getByTestId('object-row-1').getAttribute('data-object-id');
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 2 / 2');

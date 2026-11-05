@@ -81,7 +81,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     const unsupported = page.getByTestId('browse-olive');
     await expect(unsupported).toContainText('3Dモデル未設定');
-    await expect(unsupported.getByRole('button', { name: '庭に配置' })).toBeDisabled();
+    await expect(unsupported).toHaveAttribute('draggable', 'false');
     await expect(page.locator('#catalog-panel')).toHaveCount(0);
     const separator = page.getByRole('separator', { name: '商品サイドバーの幅' });
     const handle = await separator.boundingBox();
@@ -107,8 +107,8 @@ test('seller features create six plant compositions; catalog and shopping-list d
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 7 / 7');
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     await page.getByRole('tab', { name: '商品一覧', exact: true }).click();
-    await firstCard.getByRole('button', { name: '庭に配置' }).click();
-    await page.getByTestId('garden-canvas').locator('canvas').click({ position: { x: 300, y: 430 } });
+    await firstCard.dragTo(page.getByTestId('garden-canvas').locator('canvas'),
+      { sourcePosition: { x: 35, y: 35 }, targetPosition: { x: 300, y: 430 } });
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 8 / 8');
     await page.getByTestId('object-details-toggle').click();
     await page.getByTestId('rotation-y').fill('37');
