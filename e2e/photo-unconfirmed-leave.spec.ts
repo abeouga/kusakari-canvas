@@ -1,6 +1,5 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { createGardenFromList } from './garden-create.js';
 import { expect, test, type Page } from './test.js';
 import { api } from './api-url.js';
 
@@ -31,8 +30,11 @@ async function uploadPhotoAndCancelOutline(page: Page) {
 
 // Issue #21: 輪郭を描かずに描画を取消した写真は保存できないため、確認後に保存せず庭一覧へ戻る。
 test('施工範囲が未確定の写真は確認後に保存せず庭一覧へ戻る', async ({ page, request }) => {
-  const id = await createGardenFromList(page);
+  const response = await request.post(`${api}/gardens`, { data: { name: `E2E photo leave ${Date.now()}` } });
+  expect(response.ok()).toBe(true);
+  const id: string = (await response.json()).id;
   createdGardenIds.push(id);
+  await page.goto(`/gardens/${id}`);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   const before = await (await request.get(`${api}/gardens/${id}`)).json();
   expect(before.photo ?? null).toBeNull();
