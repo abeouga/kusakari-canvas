@@ -16,8 +16,8 @@ from .database import create_database_engine
 from .history_models import HistoryEntity  # noqa: F401 - register history metadata for schema validation
 from .models import Base
 
-HEAD = "0007"
-SUPPORTED_REVISIONS = {"0001", "0002", "0003", "0004", "0005", "0006", HEAD}
+HEAD = "0008"
+SUPPORTED_REVISIONS = {"0001", "0002", "0003", "0004", "0005", "0006", "0007", HEAD}
 
 
 def migration_lock_name(database: str) -> str:
@@ -42,7 +42,7 @@ def validate_schema(connection: Connection, revision: str) -> None:
     for table in Base.metadata.sorted_tables:
         if table.name == "garden_image_history" and revision in {"0001", "0002"}:
             continue
-        if table.name == "garden_thumbnails" and revision not in {"0006", "0007"}:
+        if table.name == "garden_thumbnails" and revision < "0006":
             continue
         expected_tables.add(table.name)
     allowed = expected_tables | {"flyway_schema_history", "alembic_version"}
@@ -57,11 +57,13 @@ def validate_schema(connection: Connection, revision: str) -> None:
                 continue
             if revision in {"0001", "0002", "0003"} and table.name == "garden_image_history" and column.name == "generation_method":
                 continue
-            if revision not in {"0005", "0006", "0007"} and table.name == "placed_objects" and column.name in {
+            if revision < "0005" and table.name == "placed_objects" and column.name in {
                 "product_id", "product_name", "material_code", "model_composition_json"
             }:
                 continue
-            if revision != "0007" and table.name in {"garden_image_history", "garden_thumbnails"} and column.name.endswith("_key"):
+            if revision < "0007" and table.name in {"garden_image_history", "garden_thumbnails"} and column.name.endswith("_key"):
+                continue
+            if revision < "0008" and table.name == "gardens" and column.name == "shopping_targets_json":
                 continue
             expected[column.name] = column
         actual = {c["name"]: c for c in inspector.get_columns(table.name)}
@@ -70,7 +72,7 @@ def validate_schema(connection: Connection, revision: str) -> None:
         for name, column in expected.items():
             found = actual[name]
             nullable = column.nullable
-            if revision != "0007" and table.name in {"garden_image_history", "garden_thumbnails"} and name.endswith("_png"):
+            if revision < "0007" and table.name in {"garden_image_history", "garden_thumbnails"} and name.endswith("_png"):
                 nullable = False
             if type_signature(column.type, connection.dialect) != type_signature(found["type"], connection.dialect) \
                     or bool(nullable) != bool(found["nullable"]):

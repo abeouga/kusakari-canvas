@@ -17,7 +17,13 @@ export async function seedLegacyObjects(page: Page, assetIds: string[]) {
   await page.reload();
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await page.getByRole('button', { name: '上から見る', exact: true }).click();
+  await showProductsTab(page);
   await page.getByTestId('object-row-0').click();
+}
+
+// 編集画面の右パネルは買い物リストが初期表示です。商品カードや配置済み一覧を使う前に商品一覧へ切り替えます。
+export async function showProductsTab(page: Page) {
+  await page.getByRole('tab', { name: '商品一覧', exact: true }).click();
 }
 
 const selectedProducts = new WeakMap<Page, string>();
@@ -62,7 +68,7 @@ export async function placeTestPlant(page: Page, x: number, y: number) {
     const top = page.getByRole('button', { name: '上から見る', exact: true });
     if (await top.isVisible()) await top.click();
   }
-  await page.getByRole('tab', { name: '商品一覧', exact: true }).click();
+  await showProductsTab(page);
   const card = page.getByTestId(`browse-${id}`);
   await card.scrollIntoViewIfNeeded();
   await card.hover({ position: { x: 35, y: 35 } });

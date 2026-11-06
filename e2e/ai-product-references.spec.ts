@@ -6,6 +6,7 @@ import type { GardenObject, PlantComposition } from '../frontend/src/types/garde
 import { plantPresetsV3 } from '../scripts/plant-library-v3-presets.mjs';
 import { productInput } from '../scripts/plant-library-presets.mjs';
 import { capture, createScene, openScene, readGarden, syntheticPhoto } from './occlusion-helpers';
+import { showProductsTab } from './catalog-fixture';
 
 const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
 const ec = (process.env.KUSAKARI_EC_E2E_API_PORT ? 'http://127.0.0.1:' + process.env.KUSAKARI_EC_E2E_API_PORT + '/api' : 'http://127.0.0.1:18186/api');
@@ -142,6 +143,7 @@ test('linked products are automatic, grouped by product, archived-readable and p
     await page.keyboard.press('Escape');
     await page.reload();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 3 / 3');
+    await showProductsTab(page);
     await expect(page.getByTestId(`browse-${ids[1]}`)).toBeVisible();
     expect(await readGarden(request, garden.id)).toEqual(garden);
     await page.screenshot({ path: `${evidence}/reloaded.png` });

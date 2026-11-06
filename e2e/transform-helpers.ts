@@ -2,6 +2,7 @@ import { expect, type APIRequestContext, type Page } from '@playwright/test';
 import { PerspectiveCamera, Vector3 } from 'three';
 import type { GardenDocument } from '../frontend/src/types/garden';
 import { readGarden } from './occlusion-helpers';
+import { showProductsTab } from './catalog-fixture';
 
 // Switches the 3D view to "上から見る" and lets the camera settle before pointer work.
 export async function showTopView(page: Page) {
@@ -23,6 +24,7 @@ export async function topViewPoint(page: Page, garden: GardenDocument, x: number
 // Drags the selected object with the move tool by a ground offset (metres) in the top view,
 // the way a user moves it. `garden` is the document shown on screen.
 export async function dragSelectedObject(page: Page, garden: GardenDocument, dx: number, dz: number) {
+  await showProductsTab(page);
   const row = page.locator('[data-testid^="object-row-"][aria-pressed="true"]');
   const selected = await row.getAttribute('data-object-id');
   // An unsaved object is located by the position the placed-objects list shows.

@@ -6,6 +6,7 @@ import { createPhotoCamera } from '../frontend/src/three/photoCamera.js';
 import { syntheticPhoto, createScene, openScene, readGarden, shrub, capture } from './occlusion-helpers';
 import type { GardenDocument } from '../frontend/src/types/garden';
 import { moveSelectedObject, showTopView } from './transform-helpers';
+import { showProductsTab } from './catalog-fixture';
 
 async function point(page: Page, garden: GardenDocument, x: number, y: number, z: number) {
   const camera = createPhotoCamera(garden.photo!, garden.width, garden.depth)!;
@@ -37,6 +38,7 @@ test('3d view survives an autosave', async ({ page, request }) => {
   const garden = await createScene(request, [], await syntheticPhoto(page), [shrub(0, 0)]);
   await openScene(page, garden);
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
+  await showProductsTab(page);
   await page.getByTestId('object-row-0').click();
   await showTopView(page);
   await moveSelectedObject(page, request, garden.id, 1, 0);
