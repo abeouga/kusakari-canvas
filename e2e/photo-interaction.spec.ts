@@ -20,6 +20,7 @@ test('photo selection switches through the selected outline', async ({ page, req
   const photo = await syntheticPhoto(page);
   const garden = await createScene(request, [], photo, [shrub(0, 0, 3), shrub(2.1, 0, 0.7)]);
   await openScene(page, garden);
+  await showProductsTab(page);
   const large = garden.objects.find(o => o.scale.x === 3)!;
   const small = garden.objects.find(o => o.scale.x === 0.7)!;
   await page.locator(`[data-object-id="${large.id}"]`).click();
@@ -79,6 +80,7 @@ for (const calibrated of [false, true]) {
     const ordered = (g: GardenDocument) => ({ ...g, objects: [...g.objects].sort((a, b) => Number(b.id === subjectId) - Number(a.id === subjectId)) });
     garden = ordered(garden);
     await openScene(page, garden);
+    await showProductsTab(page);
     await page.locator(`[data-object-id="${subjectId}"]`).click();
     const puts: string[] = [];
     page.on('request', r => { if (r.method() === 'PUT' && r.url().endsWith(`/gardens/${garden.id}`)) puts.push(r.url()); });
