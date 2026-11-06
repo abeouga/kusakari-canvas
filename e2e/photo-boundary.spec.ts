@@ -1,4 +1,5 @@
 import { placeTestPlant } from './catalog-fixture';
+import { createGardenFromList } from './garden-create';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test, type Page, type APIRequestContext } from './test.js';
@@ -18,11 +19,7 @@ test.afterEach(async ({ request }) => {
 });
 
 async function preparePhoto(page: Page) {
-  await page.goto('/');
-  await page.getByLabel('庭の名前').fill(`E2E photo boundary ${Date.now()}`);
-  await page.getByRole('button', { name: '庭を作成' }).click();
-  await page.waitForURL(/\/gardens\//);
-  const id = new URL(page.url()).pathname.split('/').at(-1)!;
+  const id = await createGardenFromList(page);
   createdGardenIds.push(id);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   await page.getByRole('button', { name: '写真＋設計' }).click();

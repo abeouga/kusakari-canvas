@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { gardenApi } from "../api/gardens";
 import { ApiError } from "../api/http";
-import { MAX_GARDEN_NAME_LENGTH } from "../domain/limits";
+import { nextDefaultGardenName } from "../domain/gardenNames";
 import { SiteHeader } from "../components/SiteHeader";
 import { Dialog } from "../components/Dialog";
 import { UiIcon } from "../components/UiIcon";
@@ -15,8 +15,7 @@ export function GardenListPage() {
     queryKey: ["gardens"],
     queryFn: gardenApi.listGardens,
   });
-  const [name, setName] = useState("");
-  const [formError, setFormError] = useState(null);
+  const [createError, setCreateError] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [copyError, setCopyError] = useState("");
   const [copying, setCopying] = useState(false);
@@ -52,8 +51,10 @@ export function GardenListPage() {
       window.location.assign(gardenEntryUrl(`/gardens/${encodeURIComponent(document.id)}`));
     },
     onError: (error) =>
-      setFormError(
-        error instanceof Error ? error.message : "庭を作成できませんでした。",
+      setCreateError(
+        error instanceof ApiError
+          ? `庭を作成できませんでした。${error.message}`
+          : "庭を作成できませんでした。接続を確認して再試行してください。",
       ),
   });
   const removeGarden = useMutation({
@@ -63,67 +64,17 @@ export function GardenListPage() {
       await queryClient.invalidateQueries({ queryKey: ["gardens"] });
     },
   });
-  const validName =
-    name.trim().length > 0 && name.trim().length <= MAX_GARDEN_NAME_LENGTH;
-  function submit(event) {
-    event.preventDefault();
-    setFormError(null);
-    if (!validName) {
-      setFormError(
-        `庭の名前を1〜${MAX_GARDEN_NAME_LENGTH}文字で入力してください。`,
-      );
-      return;
-    }
-    createGarden.mutate({ name: name.trim() });
+  function createNewGarden() {
+    if (createGarden.isPending || !gardens.data) return;
+    setCreateError("");
+    // 名前は編集画面の「庭の名前を変更」でいつでも変えられるため、作成時は既定名を使います。
+    createGarden.mutate({ name: nextDefaultGardenName(gardens.data) });
   }
   return (
     <div className="canvas-shell canvas-list-shell">
       <SiteHeader />
       <div className="page-shell">
         <main className="garden-list-layout">
-          <section
-            className="panel create-panel"
-            aria-labelledby="create-heading"
-          >
-            <div className="section-heading">
-              <h2 id="create-heading">
-                <UiIcon name="plus" />
-                新しい庭をつくる
-              </h2>
-            </div>
-            <form className="create-form" onSubmit={submit}>
-              <label className="field-label" htmlFor="garden-name">
-                庭の名前
-              </label>
-              <input
-                id="garden-name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                maxLength={MAX_GARDEN_NAME_LENGTH}
-                placeholder="例：南側の庭"
-                required
-              />
-              {formError && (
-                <p className="notice notice-error" role="alert">
-                  {formError}
-                </p>
-              )}
-              {createGarden.isPending && (
-                <p className="notice" role="status">
-                  庭を作成しています…
-                </p>
-              )}
-              <button
-                className="button button-primary"
-                type="submit"
-                disabled={createGarden.isPending || !validName}
-              >
-                庭を作成
-                <UiIcon name="arrow" size={16} />
-              </button>
-            </form>
-          </section>
-
           {copyError && (
             <div className="notice notice-error" role="alert" data-testid="copy-error">
               <p>{copyError}</p>
@@ -174,12 +125,12 @@ export function GardenListPage() {
                 </button>
               </div>
             )}
-            {gardens.data?.length === 0 && (
-              <p className="empty-message">
-                保存した庭はまだありません。上のフォームから最初の庭を作成できます。
+            {createError && (
+              <p className="notice notice-error" role="alert">
+                {createError}
               </p>
             )}
-            {gardens.data && gardens.data.length > 0 && (
+            {gardens.data && (
               <ul className="garden-cards">
                 {gardens.data.map((garden) => (
                   <li className="garden-card" key={garden.id}>
@@ -218,6 +169,21 @@ export function GardenListPage() {
                     />
                   </li>
                 ))}
+                <li className="garden-card garden-card-create">
+                  <button
+                    type="button"
+                    className="garden-card-create-button"
+                    disabled={createGarden.isPending}
+                    onClick={createNewGarden}
+                  >
+                    <span className="garden-card-create-icon" aria-hidden="true">
+                      <UiIcon name="plus" size={22} />
+                    </span>
+                    <strong>
+                      {createGarden.isPending ? "庭を作成しています…" : "新しい庭をつくる"}
+                    </strong>
+                  </button>
+                </li>
               </ul>
             )}
           </section>
