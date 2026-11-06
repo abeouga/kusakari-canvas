@@ -1,4 +1,5 @@
 import { openPlantSettings, publishProduct } from './seller-wizard';
+import { seedGardenPhoto } from './garden-photo';
 import { test, expect } from './test.js';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
@@ -90,7 +91,9 @@ test('30 plant products: actual GLBs, preview, drag, save, reload and exact purc
       rotation: { x: 0, y: i * 0.13, z: 0 }, scale: { x: 1, y: 1, z: 1 } }));
     for (const [i, old] of legacy.entries()) garden.objects.push({ ...old, id: randomUUID(), position: { x: -12 + i * 3, y: 0, z: 12 } });
     const saved = await request.put(`${api}/gardens/${garden.id}`, { data: garden });
-    expect(saved.status(), await saved.text()).toBe(200); garden = await saved.json();
+    expect(saved.status(), await saved.text()).toBe(200);
+    // 庭写真が未アップロードの庭には配置できないため、先に確定済みの写真を保存します（#15）。
+    garden = await seedGardenPhoto(page, garden.id);
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.goto(`/gardens/${garden.id}`);
     await page.getByRole('button', { name: '3D庭', exact: true }).click();

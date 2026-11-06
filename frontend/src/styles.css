@@ -142,6 +142,7 @@ input::placeholder { color: #adb4a8; }
 .save-button { min-width: 100px; }
 .editor-alert { display: flex; align-items: center; gap: 12px; border: 1px solid #f0d5cd; border-radius: 9px; padding: 9px 12px; background: #fff8f5; font-size: 11px; }
 .editor-alert.photo-progress { border-color: #d6e1d1; color: #355241; background: #edf3e9; }
+.editor-alert.photo-progress button { color: #355241; text-decoration: underline; }
 .editor-alert button { border: 0; padding: 3px 5px; color: #8b4d40; background: transparent; cursor: pointer; font-size: 10px; font-weight: 700; }
 .editor-layout { display: grid; flex: 1; grid-template-columns: 220px minmax(480px, 1fr) 286px; gap: 13px; min-height: 0; }
 .editor-layout.editor-layout-catalog-collapsed { grid-template-columns: 38px minmax(480px, 1fr) 286px; }

@@ -1,5 +1,4 @@
-import { placeTestPlant } from './catalog-fixture';
-import { topViewPoint } from './transform-helpers';
+import { createTestProduct, productPlacement } from './catalog-fixture';
 import { renameGardenInEditor } from './garden-create';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -37,12 +36,13 @@ test('Q. 点線カードから既定名で作成・名前変更・土台寸法�
     const initial = await (await request.get(`${api}/gardens/${id}`)).json() as GardenDocument;
     expect([initial.width, initial.depth]).toEqual([14, 12]);
     await page.getByRole('button', { name: '土台設定を閉じる' }).click();
-    await page.getByRole('button', { name: '上から見る' }).click();
-    const box = await page.locator('[data-testid="garden-canvas"] canvas').boundingBox();
-    if (!box) throw new Error('3D庭が表示されていません。');
-    // Place the plant at x = 6 m, inside 14 m but outside a 10 m wide base.
-    const east = await topViewPoint(page, initial, 6, 0);
-    await placeTestPlant(page, east.x, east.y);
+    // 庭写真が未アップロードの庭には画面から配置できず（#15）、土台設定は写真なしの庭だけにある。
+    // #15以前に配置済みだった庭として、x = 6 m（幅14 mの内側、幅10 mの外側）の配置を実APIで保存します。
+    const product = await createTestProduct(request, `E2E土台寸法-${Date.now()}`);
+    const placed = await request.put(`${api}/gardens/${id}`, { data: { ...initial, objects: [productPlacement(product, 6, 0)] } });
+    expect(placed.status(), await placed.text()).toBe(200);
+    await page.reload();
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('object-row-0')).toBeVisible();
     await expect.poll(async () => ((await (await request.get(`${api}/gardens/${id}`)).json()) as GardenDocument).objects[0]?.position.x ?? 0).toBeGreaterThan(5.5);
     await page.getByRole('button', { name: '土台設定', exact: true }).click();

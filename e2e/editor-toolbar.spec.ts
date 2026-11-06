@@ -1,4 +1,5 @@
 import { placeTestPlant } from './catalog-fixture';
+import { seedGardenPhoto } from './garden-photo';
 import { expect, test } from './test.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { api } from './api-url.js';
@@ -6,6 +7,8 @@ import { api } from './api-url.js';
 test('editor controls preserve state and the merged canvas toolbar fits narrow screens', async ({ page, request }) => {
   const garden = await (await request.post(`${api}/gardens`, { data: { name: `E2E toolbar ${Date.now()}` } })).json();
   try {
+    // 庭写真が未アップロードの庭には配置できないため、先に確定済みの写真を保存します（#15）。
+    await seedGardenPhoto(page, garden.id);
     await page.goto(`/gardens/${garden.id}`);
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');

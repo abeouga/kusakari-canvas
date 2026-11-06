@@ -3,7 +3,7 @@ import { useThree } from '@react-three/fiber';
 import { PerspectiveCamera, Plane, Vector2, Vector3 } from 'three';
 import { useEditorStore } from '../stores/editorStore';
 import { productDragType } from '../domain/productModels';
-import { containsAnchor } from '../domain/placementBounds';
+import { containsAnchor, placementBlockedReason } from '../domain/placementBounds';
 
 export function DropPlacement({ document, assets, disabled }) {
   const { gl, camera, raycaster } = useThree();
@@ -21,6 +21,11 @@ export function DropPlacement({ document, assets, disabled }) {
       if (disabled || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null) return;
       const asset = assets.find((item) => item.id === event.dataTransfer.getData(productDragType));
       if (!asset) return;
+      const blocked = placementBlockedReason(document);
+      if (blocked) {
+        state.setEditError(blocked);
+        return;
+      }
       const bounds = element.getBoundingClientRect();
       const pointer = new Vector2((event.clientX - bounds.left) / bounds.width * 2 - 1,
         -(event.clientY - bounds.top) / bounds.height * 2 + 1);
