@@ -9,7 +9,7 @@
   .garden-list-layout { padding: 24px 0; }
   .projects-intro { margin-bottom: 24px; }
   .garden-cards { grid-template-columns: minmax(0, 1fr); }
-  .garden-card-open { padding: 20px; }
+  .garden-card-open { padding: 44px 20px 20px; }
   .editor-shell { height: auto; min-height: 100dvh; }
   .editor-brand { padding-right: 10px; font-size: 17px; }
   .toolbar-status { margin-left: 0; }

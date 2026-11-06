@@ -81,6 +81,7 @@ test('Q. 点線カードから既定名で作成・名前変更・土台寸法�
     const card = page.locator('.garden-card').filter({ hasText: saved.name });
     await expect(card).toBeVisible();
     await expect(card).not.toContainText('×');
+    await expect(card.getByTestId('garden-object-count')).toHaveText(`配置 ${shrunk.objects.length}点`);
     // 一覧カードは実APIの庭サムネイルを読み込んで表示する。
     const thumbnail = card.getByAltText(`${saved.name}のサムネイル`);
     await expect.poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth)).toBeGreaterThan(0);

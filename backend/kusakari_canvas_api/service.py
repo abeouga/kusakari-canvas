@@ -2,7 +2,7 @@ import json
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from .errors import ApiError, bad_request, not_found
@@ -66,10 +66,15 @@ def require_asset(session: Session, asset_id: str) -> None:
 
 def list_gardens(session: Session, owner: str) -> list[GardenSummary]:
     with session.begin():
+        # 配置数はMySQLで集計し、一覧のたびに各庭の配置行を読み込みません。
+        counts = (select(PlacedObject.garden_id, func.count().label("object_count"))
+                  .group_by(PlacedObject.garden_id).subquery())
+        rows = session.execute(select(Garden, func.coalesce(counts.c.object_count, 0))
+                               .outerjoin(counts, counts.c.garden_id == Garden.id)
+                               .where(Garden.owner_id == owner).order_by(Garden.updated_at.desc()))
         return [GardenSummary(id=g.id, name=g.name, width=g.width, depth=g.depth, revision=g.revision,
-                              updatedAt=g.updated_at.replace(tzinfo=UTC))
-                for g in session.scalars(select(Garden).where(Garden.owner_id == owner)
-                                         .order_by(Garden.updated_at.desc()))]
+                              updatedAt=g.updated_at.replace(tzinfo=UTC), objectCount=count)
+                for g, count in rows]
 
 
 def create_garden(session: Session, owner: str, request: CreateGardenRequest) -> GardenDocument:
@@ -171,8 +176,9 @@ def duplicate_garden(session: Session, owner: str, id: str) -> GardenSummary:
                       photo_json=source.photo_json)
         session.add(copy)
         session.flush()
-        for obj in session.scalars(select(PlacedObject).where(PlacedObject.garden_id == source.id)
-                                   .order_by(PlacedObject.id)):
+        objects = session.scalars(select(PlacedObject).where(PlacedObject.garden_id == source.id)
+                                  .order_by(PlacedObject.id)).all()
+        for obj in objects:
             session.add(PlacedObject(id=str(uuid4()), garden_id=copy.id,
                                      **{key: getattr(obj, key) for key in COPIED_OBJECT_COLUMNS}))
         capture = session.get(GardenThumbnail, source.id)
@@ -181,4 +187,5 @@ def duplicate_garden(session: Session, owner: str, id: str) -> GardenSummary:
                                         image_png=capture.image_png, image_key=capture.image_key))
         session.flush()
         return GardenSummary(id=copy.id, name=copy.name, width=copy.width, depth=copy.depth,
-                             revision=copy.revision, updatedAt=copy.updated_at.replace(tzinfo=UTC))
+                             revision=copy.revision, updatedAt=copy.updated_at.replace(tzinfo=UTC),
+                             objectCount=len(objects))

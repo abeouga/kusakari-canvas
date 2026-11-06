@@ -36,6 +36,15 @@ test('garden options duplicate and delete with persisted independent data', asyn
     await page.reload();
     const card = page.locator('.garden-card').filter({ has: page.getByText(name, { exact: true }) });
     const options = card.getByRole('button', { name: `${name}のオプション`, exact: true });
+    // カードには実APIの配置数を表示する。
+    await expect(card.getByTestId('garden-object-count')).toHaveText(`配置 ${saved.objects.length}点`);
+    // オプションボタンはカードの右上の角に置き、サムネイルに重ねない。
+    const cardBox = (await card.boundingBox())!;
+    const optionsBox = (await options.boundingBox())!;
+    const thumbBox = (await card.locator('.garden-thumb').boundingBox())!;
+    expect(cardBox.x + cardBox.width - (optionsBox.x + optionsBox.width)).toBeLessThanOrEqual(8);
+    expect(optionsBox.y - cardBox.y).toBeLessThanOrEqual(8);
+    expect(optionsBox.y + optionsBox.height).toBeLessThanOrEqual(thumbBox.y);
     await expect(card.getByRole('button', { name: '複製', exact: true })).toHaveCount(0);
     await expect(card.getByRole('button', { name: '削除', exact: true })).toHaveCount(0);
     await options.click();
@@ -67,8 +76,11 @@ test('garden options duplicate and delete with persisted independent data', asyn
     await copyError.getByRole('button', { name: '複製を再試行', exact: true }).click();
     const duplicated = await response;
     expect(duplicated.status()).toBe(201);
-    copyId = (await duplicated.json()).id;
+    const summary = await duplicated.json();
+    copyId = summary.id;
+    expect(summary.objectCount).toBe(saved.objects.length);
     await expect(copyCard).toBeVisible();
+    await expect(copyCard.getByTestId('garden-object-count')).toHaveText(`配置 ${saved.objects.length}点`);
     await expect(copyError).toHaveCount(0);
     expect(requests).toEqual([`POST /api/gardens/${source.id}/duplicate`]);
     expect(await copyNames()).toHaveLength(1);

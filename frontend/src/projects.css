@@ -15,17 +15,18 @@
 .garden-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 16px; margin: 0; padding: 0; list-style: none; }
 .garden-card { position: relative; display: flex; align-items: stretch; background: white; border: 1px solid var(--line); border-radius: 8px; min-width: 0; }
 .garden-card:hover { border-color: #b9cdab; }
-.garden-card-open { min-width: 0; border: 0; padding: 24px; background: none; text-align: left; flex: 1; display: flex; flex-direction: column; gap: 22px; align-items: start; }
+.garden-card-open { min-width: 0; border: 0; padding: 44px 24px 24px; background: none; text-align: left; flex: 1; display: flex; flex-direction: column; gap: 22px; align-items: start; }
 .garden-thumb { display: grid; place-items: center; width: 58px; height: 58px; border: 1px solid #e0ead5; border-radius: 8px; background: #f0f5e8; color: #81996b; }
 .garden-thumb-image { width: 100%; height: auto; aspect-ratio: 16 / 10; overflow: hidden; }
 .garden-thumb-image::before, .garden-thumb-image::after { content: none; }
 .garden-thumb-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .garden-card-copy { display: grid; gap: 7px; min-width: 0; width: 100%; }
 .garden-card-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 500; }
-.garden-card-copy span { font-size: 11px; color: #8f9e81; }
-.garden-card-copy span:last-child { margin-top: 9px; font-size: 10px; color: #a3b098; }
-.garden-options { position: absolute; right: 10px; top: 10px; }
-.garden-options-trigger { width: 44px; height: 44px; color: #758b72; }
+.garden-card-facts { display: flex; flex-wrap: wrap; gap: 6px; }
+.garden-card-facts > span { padding: 3px 8px; border-radius: 999px; background: #f0f5e8; color: #5f7a55; font-size: 11px; }
+.garden-card-saved { margin-top: 4px; font-size: 10px; color: #a3b098; }
+.garden-options { position: absolute; right: 4px; top: 4px; }
+.garden-options-trigger { width: 40px; height: 40px; color: #758b72; }
 .garden-options-trigger:hover, .garden-options-trigger[aria-expanded="true"] { background: #eff4e9; color: #244c3c; }
 .garden-options-panel { position: absolute; right: 0; top: calc(100% + 5px); z-index: 10; width: 164px; padding: 6px; border: 1px solid var(--line); border-radius: 10px; background: white; box-shadow: 0 8px 24px #263d3224; }
 .garden-options-panel button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 10px 12px; border: 0; border-radius: 6px; font: inherit; color: #244c3c; background: transparent; text-align: left; cursor: pointer; }

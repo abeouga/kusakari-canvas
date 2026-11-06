@@ -145,7 +145,12 @@ export function GardenListPage() {
                       <GardenThumbnail garden={garden} />
                       <span className="garden-card-copy">
                         <strong>{garden.name}</strong>
-                        <span>
+                        <span className="garden-card-facts">
+                          <span data-testid="garden-object-count">
+                            配置 {garden.objectCount}点
+                          </span>
+                        </span>
+                        <span className="garden-card-saved">
                           最終保存{" "}
                           {new Date(garden.updatedAt).toLocaleString("ja-JP")}
                         </span>
