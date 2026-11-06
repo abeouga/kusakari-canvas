@@ -11,7 +11,6 @@
   .create-panel { display: block; padding: 20px; margin-bottom: 28px; }
   .create-form { grid-template-columns: minmax(0, 1fr) auto; }
   .garden-cards { grid-template-columns: minmax(0, 1fr); }
-  .garden-card-open { padding: 20px; }
   .editor-shell { height: auto; min-height: 100dvh; }
   .editor-brand { padding-right: 10px; font-size: 17px; }
   .toolbar-status { margin-left: 0; }

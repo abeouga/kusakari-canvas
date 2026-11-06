@@ -86,6 +86,20 @@ test('garden options duplicate and delete with persisted independent data', asyn
     await mkdir('artifacts/e2e', { recursive: true });
     await writeFile('artifacts/e2e/garden-options-copy.json', JSON.stringify({ source: saved, copy }, null, 2));
     const copyOptions = copyCard.getByRole('button', { name: `${name}（複製）のオプション`, exact: true });
+    // 名前と最終保存は画像より上のヘッダーに表示し、オプションボタンはヘッダー内で名前と重ならない。
+    const header = copyCard.locator('.garden-card-header');
+    await expect(header.getByText(`${name}（複製）`, { exact: true })).toBeVisible();
+    await expect(header).toContainText('最終保存');
+    const headerBox = (await header.boundingBox())!;
+    const imageBox = (await copyCard.locator('.garden-thumb-image img').boundingBox())!;
+    const optionsBox = (await copyOptions.boundingBox())!;
+    const nameBox = (await header.locator('strong').boundingBox())!;
+    expect(headerBox.y + headerBox.height).toBeLessThanOrEqual(imageBox.y);
+    expect(imageBox.y - (headerBox.y + headerBox.height)).toBeLessThanOrEqual(14);
+    expect(optionsBox.y).toBeGreaterThanOrEqual(headerBox.y);
+    expect(optionsBox.y + optionsBox.height).toBeLessThanOrEqual(headerBox.y + headerBox.height);
+    expect(nameBox.x + nameBox.width).toBeLessThanOrEqual(optionsBox.x);
+    await page.screenshot({ path: 'artifacts/e2e/garden-card-header.png', fullPage: true });
     for (const width of [1440, 390, 320]) {
       await page.setViewportSize({ width, height: 960 });
       await copyOptions.click();

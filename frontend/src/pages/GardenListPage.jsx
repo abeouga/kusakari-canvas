@@ -191,13 +191,15 @@ export function GardenListPage() {
                         )
                       }
                     >
-                      <GardenThumbnail garden={garden} />
-                      <span className="garden-card-copy">
+                      <span className="garden-card-header">
                         <strong>{garden.name}</strong>
                         <span>
                           最終保存{" "}
                           {new Date(garden.updatedAt).toLocaleString("ja-JP")}
                         </span>
+                      </span>
+                      <span className="garden-card-body">
+                        <GardenThumbnail garden={garden} />
                       </span>
                     </button>
                     <GardenCardMenu
