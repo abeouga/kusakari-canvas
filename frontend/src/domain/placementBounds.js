@@ -34,3 +34,8 @@ export function containsAnchor(document, position) {
 export function outsideObjects(document) {
     return document.objects.filter((object) => !containsAnchor(document, object.position));
 }
+// 庭写真が未アップロードの庭には、クリック・ドラッグのどちらからも新しく配置しません（#15）。
+export const PHOTO_REQUIRED_MESSAGE = '庭写真が未アップロードのため配置できません。「写真」で庭写真をアップロードし、庭の輪郭を確定してください。';
+export function placementBlockedReason(document) {
+    return document.photo ? null : PHOTO_REQUIRED_MESSAGE;
+}

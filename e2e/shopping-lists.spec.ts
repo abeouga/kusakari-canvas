@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext, type Page } from './test.js';
+import { seedGardenPhoto } from './garden-photo';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
@@ -64,8 +65,9 @@ function legacyCandidate(productId: string, remove = false) {
 test('two gardens have separate live lists; selection adds to the single EC cart and survives reload', async ({ page, context, request }) => {
   await mkdir(evidence, { recursive: true });
   const { product } = await createProduct(request);
-  const a = await createGarden(request, 'A');
-  const b = await createGarden(request, 'B');
+  // 庭写真が未アップロードの庭には配置できないため、先に確定済みの写真を保存します（#15）。
+  const a = await seedGardenPhoto(page, (await createGarden(request, 'A')).id);
+  const b = await seedGardenPhoto(page, (await createGarden(request, 'B')).id);
   const pageErrors: string[] = [];
   page.on('pageerror', e => pageErrors.push(e.message));
   try {
@@ -200,7 +202,7 @@ test('partial transfer, duplicate requests, cart limits, stale gardens and inval
 });
 
 test('autosave failure retains placements, blocks EC navigation and supports retry', async ({ page, request }) => {
-  const garden = await createGarden(request, '障害');
+  const garden = await seedGardenPhoto(page, (await createGarden(request, '障害')).id);
   try {
     await page.goto(`/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
@@ -235,7 +237,7 @@ test('autosave failure retains placements, blocks EC navigation and supports ret
 });
 
 test('autosave revision conflict preserves the local placement and stops repeated overwrites', async ({ page, request }) => {
-  const garden = await createGarden(request, '障害');
+  const garden = await seedGardenPhoto(page, (await createGarden(request, '障害')).id);
   try {
     await page.goto(`/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
