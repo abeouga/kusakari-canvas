@@ -1,7 +1,7 @@
-import { randomUUID } from 'node:crypto';
 import { expect, test, type Page, type TestInfo } from './test.js';
 import { api } from './api-url';
 import { readGarden } from './occlusion-helpers';
+import { createGardenFromList } from './garden-create';
 
 async function expectPhoto(page: Page) {
   await expect(page.getByRole('button', { name: '写真＋設計', exact: true })).toHaveAttribute('aria-pressed', 'true');
@@ -17,12 +17,7 @@ async function evidence(page: Page, id: string, testInfo: TestInfo, name: string
 }
 
 test('新規・既存の庭は写真から開き、手動3D選択は保存中だけ維持する', async ({ page }, testInfo) => {
-  const name = `E2E initial photo ${randomUUID()}`;
-  await page.goto('/');
-  await page.getByLabel('庭の名前').fill(name);
-  await page.getByRole('button', { name: '庭を作成', exact: true }).click();
-  await page.waitForURL(/\/gardens\//);
-  const id = new URL(page.url()).pathname.split('/').at(-1)!;
+  const id = await createGardenFromList(page);
   await expectPhoto(page);
   const initial = await readGarden(page.request, id);
   const writes: string[] = [];
@@ -57,9 +52,10 @@ test('新規・既存の庭は写真から開き、手動3D選択は保存中だ
   expect(await (await page.request.get(thumbnailUrl)).body()).toEqual(thumbnail);
 
   await page.getByRole('button', { name: '← 庭一覧', exact: true }).click();
-  await page.locator('.garden-card').filter({ hasText: name }).locator('.garden-card-open').click();
+  await page.locator('.garden-card').filter({ hasText: initial.name }).locator('.garden-card-open').click();
   await expectPhoto(page);
   await page.goto(`/gardens/${id}`);
   await expectPhoto(page);
   expect(await evidence(page, id, testInfo, 'reopened-photo')).toEqual(saved);
+  expect((await page.request.delete(`${api}/gardens/${id}`)).status()).toBe(204);
 });
