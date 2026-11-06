@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { expect, test, type Page, type APIRequestContext } from './test.js';
 import { api as apiBase } from './api-url.js';
 import type { GardenDocument } from '../frontend/src/types/garden.js';
+import { createGardenFromList, renameGardenInEditor } from './garden-create';
 import { dragSelectedObject, moveSelectedObject, positionLabel, showTopView } from './transform-helpers';
 
 const artifactDirectory = resolve('artifacts/e2e');
@@ -21,14 +22,10 @@ test.afterEach(async ({ request }) => {
 });
 
 async function createGarden(page: Page, name: string): Promise<string> {
-  await page.goto('/');
-  await page.getByLabel('庭の名前').fill(name);
-  await page.getByRole('button', { name: '庭を作成' }).click();
-  await page.waitForURL(/\/gardens\//);
-  const id = new URL(page.url()).pathname.split('/').at(-1);
-  if (!id) throw new Error('作成後に庭IDを取得できませんでした。');
+  const id = await createGardenFromList(page);
   createdGardenIds.push(id);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+  await renameGardenInEditor(page, name);
   return id;
 }
 
@@ -184,6 +181,7 @@ test('C. 不正な寸法と配置位置を拒否し既存庭を維持', async ({
 
 test('D. 保存失敗後の編集保持と再試行', async ({ page, request }) => {
   const id = await createGarden(page, `E2E retry ${Date.now()}`);
+  const savedRevision = (await gardenJson(request, id)).revision;
   await page.route(`**/api/gardens/${id}`, async (route) => {
     if (route.request().method() === 'PUT') await route.abort('failed');
     else await route.continue();
@@ -198,7 +196,7 @@ test('D. 保存失敗後の編集保持と再試行', async ({ page, request }) 
   await expect(page.locator('.editor-alert').getByRole('button', { name: '再試行', exact: true })).toBeEnabled();
   const local = await page.getByTestId('object-row-0').locator('small').textContent();
   expect(local).not.toBe(placed);
-  expect((await gardenJson(request, id)).revision).toBe(0);
+  expect((await gardenJson(request, id)).revision).toBe(savedRevision);
   await page.unroute(`**/api/gardens/${id}`);
   await page.locator('.editor-alert').getByRole('button', { name: '再試行', exact: true }).click();
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');

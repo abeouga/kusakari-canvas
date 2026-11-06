@@ -1,24 +1,30 @@
 import { placeTestPlant } from './catalog-fixture';
 import { topViewPoint } from './transform-helpers';
+import { renameGardenInEditor } from './garden-create';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test } from './test.js';
 import { api } from './api-url.js';
 import type { GardenDocument } from '../frontend/src/types/garden.js';
 
-test('Q. 名前だけで作成・土台寸法を編集・縮小検証・MySQL保存復元', async ({ page, request }) => {
+test('Q. 点線カードから既定名で作成・名前変更・土台寸法を編集・縮小検証・MySQL保存復元', async ({ page, request }) => {
   const directory = resolve('artifacts/e2e');
   await mkdir(directory, { recursive: true });
   await page.goto('/');
-  await expect(page.locator('.create-form input')).toHaveCount(1);
-  await expect(page.getByRole('button', { name: '庭を作成' })).toBeDisabled();
-  await page.getByLabel('庭の名前').fill(`E2E dimensions ${Date.now()}`);
+  await expect(page.getByLabel('庭の名前')).toHaveCount(0);
+  const createCard = page.locator('.garden-cards > li').last();
+  await expect(createCard).toHaveClass(/garden-card-create/);
   const creation = page.waitForRequest((r) => r.method() === 'POST' && r.url().endsWith('/api/gardens'));
-  await page.getByRole('button', { name: '庭を作成' }).click();
-  expect(Object.keys((await creation).postDataJSON())).toEqual(['name']);
+  await createCard.getByRole('button', { name: '新しい庭をつくる', exact: true }).click();
+  const body = (await creation).postDataJSON();
+  expect(Object.keys(body)).toEqual(['name']);
+  expect(body.name).toMatch(/^新しい庭( \d+)?$/);
   await page.waitForURL(/\/gardens\//);
   const id = new URL(page.url()).pathname.split('/').at(-1)!;
   try {
+    await expect(page.locator('h1')).toHaveText(body.name);
+    await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+    await renameGardenInEditor(page, `E2E dimensions ${Date.now()}`);
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByRole('button', { name: '土台設定', exact: true }).click();
     await expect(page.getByLabel('幅 (m)', { exact: true })).toHaveValue('10');
@@ -75,6 +81,7 @@ test('Q. 名前だけで作成・土台寸法を編集・縮小検証・MySQL保
     const card = page.locator('.garden-card').filter({ hasText: saved.name });
     await expect(card).toBeVisible();
     await expect(card).not.toContainText('×');
+    await expect(card.getByTestId('garden-object-count')).toHaveText(`配置 ${shrunk.objects.length}点`);
     // 一覧カードは実APIの庭サムネイルを読み込んで表示する。
     const thumbnail = card.getByAltText(`${saved.name}のサムネイル`);
     await expect.poll(() => thumbnail.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth)).toBeGreaterThan(0);

@@ -138,6 +138,7 @@ class GardenSummary(ApiModel):
     depth: float
     revision: int
     updatedAt: datetime
+    objectCount: int
 
 
 class BaseDimensions(ApiModel):
