@@ -9,13 +9,16 @@ export function GardenGround({ document, selectedAsset, disabled, invisible = fa
     const outline = useMemo(() => groundOutline(document), [document.photo, document.width, document.depth]);
     const grid = useMemo(() => makeGrid(document.width, document.depth, outline), [document.width, document.depth, outline]);
     useEffect(() => () => grid.dispose(), [grid]);
+    // 写真の輪郭が未確定・不成立の間は地面の形がないため、空のShapeを作らず地面を描かない。
     const surface = useMemo(() => {
+        if (outline.length < 3)
+            return null;
         const shape = new Shape();
         outline.forEach((point, index) => index === 0 ? shape.moveTo(point.x, -point.z) : shape.lineTo(point.x, -point.z));
         shape.closePath();
         return new ShapeGeometry(shape);
     }, [outline]);
-    useEffect(() => () => surface.dispose(), [surface]);
+    useEffect(() => () => surface?.dispose(), [surface]);
     function finishPlacement(event) {
         const start = press.current;
         press.current = null;
@@ -30,6 +33,8 @@ export function GardenGround({ document, selectedAsset, disabled, invisible = fa
     }
     const groundLines = useMemo(() => makeBoundary(outline), [outline]);
     useEffect(() => () => groundLines.dispose(), [groundLines]);
+    if (!surface)
+        return null;
     return (<>
       <mesh name="garden-ground" rotation={[-Math.PI / 2, 0, 0]} position={[0, invisible ? 0 : -0.02, 0]} onPointerDown={(event) => {
             if (!selectedAsset || disabled || isDragging)
