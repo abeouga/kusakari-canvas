@@ -3,6 +3,7 @@ import { test, expect } from './test.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import type { GardenDocument, PlantComposition } from '../frontend/src/types/garden';
+import { showProductsTab } from './catalog-fixture';
 
 const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286');
 const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
@@ -81,6 +82,7 @@ test('seller picks a species, adjusts stem, branch and leaf controls; the v5 mod
     await page.goto(`/gardens/${garden.id}`);
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
+    await showProductsTab(page);
     const card = page.getByTestId(`browse-${product.id}`);
     await card.scrollIntoViewIfNeeded();
     await card.dragTo(page.getByTestId('garden-canvas').locator('canvas'),

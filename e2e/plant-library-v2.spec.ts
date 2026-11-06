@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { productInput } from '../scripts/plant-library-presets.mjs';
 import { plantPresetsV3 as plantPresets } from '../scripts/plant-library-v3-presets.mjs';
+import { showProductsTab } from './catalog-fixture';
 
 const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286');
 const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
@@ -96,6 +97,7 @@ test('30 plant products: actual GLBs, preview, drag, save, reload and exact purc
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText(`読み込み済み: ${garden.objects.length} / ${garden.objects.length}`, { timeout: 60000 });
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
+    await showProductsTab(page);
     const card = page.getByTestId(`browse-${products[28].id}`);
     await card.scrollIntoViewIfNeeded();
     const target = page.getByTestId('garden-canvas').locator('canvas');

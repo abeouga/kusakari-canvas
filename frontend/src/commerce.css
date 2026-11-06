@@ -24,6 +24,9 @@
 .commerce-product .commerce-price small { font-weight: 400; }
 .commerce-product > div > button { margin-top: 6px; }
 .commerce-product button,.commerce-scroll .notice-error button { min-height: 32px; border: 1px solid #cbd7c6; padding: 6px 10px; background: #f5f8f2; border-radius: 5px; font-size: 12px; margin-top: 8px; }
+.commerce-count { display: flex; align-items: center; gap: 6px; }
+.commerce-count > span { color: #284d3b; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.commerce-product .commerce-count button { min-width: 28px; min-height: 28px; margin: 0; padding: 0 6px; font-size: 14px; line-height: 1; }
 .commerce-product form { display: flex; align-items: end; gap: 6px; }
 .commerce-product label { display: grid; gap: 5px; }
 .commerce-product input { width: 70px; min-width: 0; padding: 6px; }

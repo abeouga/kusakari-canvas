@@ -67,4 +67,6 @@ export interface GardenDocument {
     depth: number;
     objects: GardenObject[];
     photo: GardenPhoto | null;
+    // 買い物リストで利用者が決めた必要数。未指定の行は配置数（ECで追加した未配置商品は1）を必要数とします。
+    shoppingTargets?: { key: string; quantity: number }[];
 }

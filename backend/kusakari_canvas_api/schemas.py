@@ -112,12 +112,29 @@ class GardenPhoto(ApiModel):
     projectionSize: PhotoProjectionSize | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
+class ShoppingTarget(ApiModel):
+    """Required quantity for one shopping-list line; the placed count is derived from objects."""
+    key: str = Field(max_length=80, pattern=r"^(product|asset):[a-z0-9][a-z0-9_-]*$")
+    quantity: int = Field(ge=1, le=999)
+
+
+ShoppingTargets = Annotated[list[ShoppingTarget], Field(max_length=200)]
+
+
 class GardenDocumentRequest(NamedRequest):
     schemaVersion: int = Field(ge=1, le=1)
     id: str = Field(min_length=1)
     revision: int = Field(ge=0, le=9223372036854775807)
     objects: list[GardenObject] = Field(max_length=200)
     photo: GardenPhoto | None = None
+    shoppingTargets: ShoppingTargets = Field(default_factory=list)
+
+    @field_validator("shoppingTargets")
+    @classmethod
+    def unique_targets(cls, value: list[ShoppingTarget]) -> list[ShoppingTarget]:
+        if len({target.key for target in value}) != len(value):
+            raise ValueError("duplicate shopping target")
+        return value
 
 
 class GardenDocument(ApiModel):
@@ -129,6 +146,7 @@ class GardenDocument(ApiModel):
     depth: float
     objects: list[GardenObject]
     photo: GardenPhoto | None
+    shoppingTargets: list[ShoppingTarget] = Field(default_factory=list)
 
 
 class GardenSummary(ApiModel):

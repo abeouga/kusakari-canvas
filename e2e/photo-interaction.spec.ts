@@ -6,6 +6,7 @@ import { createPhotoCamera } from '../frontend/src/three/photoCamera.js';
 import { syntheticPhoto, createScene, openScene, readGarden, shrub, capture } from './occlusion-helpers';
 import type { GardenDocument } from '../frontend/src/types/garden';
 import { moveSelectedObject, showTopView } from './transform-helpers';
+import { showProductsTab } from './catalog-fixture';
 
 async function point(page: Page, garden: GardenDocument, x: number, y: number, z: number) {
   const camera = createPhotoCamera(garden.photo!, garden.width, garden.depth)!;
@@ -19,6 +20,7 @@ test('photo selection switches through the selected outline', async ({ page, req
   const photo = await syntheticPhoto(page);
   const garden = await createScene(request, [], photo, [shrub(0, 0, 3), shrub(2.1, 0, 0.7)]);
   await openScene(page, garden);
+  await showProductsTab(page);
   const large = garden.objects.find(o => o.scale.x === 3)!;
   const small = garden.objects.find(o => o.scale.x === 0.7)!;
   await page.locator(`[data-object-id="${large.id}"]`).click();
@@ -37,6 +39,7 @@ test('3d view survives an autosave', async ({ page, request }) => {
   const garden = await createScene(request, [], await syntheticPhoto(page), [shrub(0, 0)]);
   await openScene(page, garden);
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
+  await showProductsTab(page);
   await page.getByTestId('object-row-0').click();
   await showTopView(page);
   await moveSelectedObject(page, request, garden.id, 1, 0);
@@ -77,6 +80,7 @@ for (const calibrated of [false, true]) {
     const ordered = (g: GardenDocument) => ({ ...g, objects: [...g.objects].sort((a, b) => Number(b.id === subjectId) - Number(a.id === subjectId)) });
     garden = ordered(garden);
     await openScene(page, garden);
+    await showProductsTab(page);
     await page.locator(`[data-object-id="${subjectId}"]`).click();
     const puts: string[] = [];
     page.on('request', r => { if (r.method() === 'PUT' && r.url().endsWith(`/gardens/${garden.id}`)) puts.push(r.url()); });

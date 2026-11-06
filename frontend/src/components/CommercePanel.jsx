@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { productImage, yen } from '../api/commerce';
-import { ecUrl } from '../domain/shopping';
+import { ecUrl, neededQuantity } from '../domain/shopping';
 import { PlacedObjects } from './PlacedObjects';
 import { ProductBrowser } from './ProductBrowser';
 import { ProductDragPreview, showDragPreview } from './ProductDragPreview';
@@ -10,7 +10,7 @@ import { placedProductAsset, productAsset, startProductDrag } from '../domain/pr
 import { useEditorStore } from '../stores/editorStore';
 
 export function CommercePanel({ document, assets, selectedObject, disabled, commerce, onSelectObject, onNavigate, width, onWidthChange }) {
-  const [tab, setTab] = useState('products');
+  const [tab, setTab] = useState('list');
   const isDirty = useEditorStore((state) => state.isDirty);
   const isSaving = useEditorStore((state) => state.isSaving);
   const saveError = useEditorStore((state) => state.saveError);
@@ -23,8 +23,8 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
     let next = tab === 'products' ? 'list' : 'products';
-    if (event.key === 'Home') next = 'products';
-    if (event.key === 'End') next = 'list';
+    if (event.key === 'Home') next = 'list';
+    if (event.key === 'End') next = 'products';
     setTab(next);
     event.currentTarget.querySelector('#commerce-tab-' + next).focus();
   }
@@ -33,8 +33,8 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
     <SidebarResize width={width} onChange={onWidthChange}/>
     <ProductDragPreview/>
     <div className="commerce-tabs" role="tablist" aria-label="商品一覧と買い物リストの切替" onKeyDown={tabKey}>
-      <button id="commerce-tab-products" type="button" role="tab" aria-selected={tab === 'products'} aria-controls="commerce-products" tabIndex={tab === 'products' ? 0 : -1} onClick={() => setTab('products')}>商品一覧</button>
       <button id="commerce-tab-list" type="button" role="tab" aria-selected={tab === 'list'} aria-controls="commerce-list" tabIndex={tab === 'list' ? 0 : -1} onClick={() => setTab('list')}>買い物リスト（{count}）</button>
+      <button id="commerce-tab-products" type="button" role="tab" aria-selected={tab === 'products'} aria-controls="commerce-products" tabIndex={tab === 'products' ? 0 : -1} onClick={() => setTab('products')}>商品一覧</button>
     </div>
     <div className="commerce-scroll">
       <section id="commerce-products" role="tabpanel" aria-labelledby="commerce-tab-products" hidden={tab !== 'products'}>
@@ -52,6 +52,9 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
         {commerce.rows.map((row) => {
           const object = document.objects.find((o) => row.productId ? o.productId === row.productId : !o.productId && o.assetId === row.assetId);
           const product = commerce.products.data?.find((p) => p.id === row.productId);
+          const placed = row.unplaced ? 0 : row.quantity;
+          const needed = neededQuantity(document, row);
+          const setNeeded = (quantity) => useEditorStore.getState().setShoppingTarget(row.key, quantity, commerce.rows.map((r) => r.key));
           let asset = null;
           if (object) asset = placedProductAsset(object, assets);
           else if (product) asset = productAsset(product, assets);
@@ -61,7 +64,13 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
               if (asset) showDragPreview(event, { name: product?.name ?? row.name, imageUrl: product ? productImage(product.imageUrl) : null });
             }}>
             {product ? <img src={productImage(product.imageUrl)} alt="" draggable={false}/> : <span className="commerce-product-noimage" aria-hidden="true"/>}
-            <div><strong>{product?.name ?? row.name}</strong><small data-testid="needed-quantity">必要数 {row.quantity}点</small>
+            <div><strong>{product?.name ?? row.name}</strong>
+              <div className="commerce-count">
+                <span data-testid="placement-count" aria-label={`配置数${placed} / 必要数${needed}`}>{placed}/{needed}</span>
+                <button type="button" aria-label="必要数を減らす" disabled={disabled || needed <= 1} onClick={() => setNeeded(needed - 1)}>−</button>
+                <button type="button" aria-label="必要数を増やす" disabled={disabled || needed >= 999} onClick={() => setNeeded(needed + 1)}>＋</button>
+                <small>配置数 / 必要数</small>
+              </div>
               {row.unplaced && <small data-testid="unplaced-ec-item">ECで追加（庭に未配置）</small>}
               {row.productId && commerce.products.isSuccess && !product && <p role="status">この店舗の販売対象ではないため購入できません。保存済みの配置は維持されます。</p>}
               {product && <p className="commerce-price"><small>小計の目安</small>{yen(product.priceYen * row.quantity)}</p>}

@@ -18,6 +18,7 @@ from .schemas import (
     GardenObject,
     GardenPhoto,
     GardenSummary,
+    ShoppingTarget,
     Vector,
 )
 from .validation import validate_document
@@ -37,9 +38,11 @@ def as_document(garden: Garden, objects: list[GardenObject], media: MediaStore |
     photo = json.loads(garden.photo_json) if garden.photo_json else None
     if photo and media:
         photo = media.load_photo(photo)
+    targets = json.loads(garden.shopping_targets_json) if garden.shopping_targets_json else []
     return GardenDocument(id=garden.id, revision=garden.revision, name=garden.name,
                           width=garden.width, depth=garden.depth, objects=objects,
-                          photo=GardenPhoto.model_validate(photo) if photo else None)
+                          photo=GardenPhoto.model_validate(photo) if photo else None,
+                          shoppingTargets=[ShoppingTarget.model_validate(t) for t in targets])
 
 
 def object_response(obj: PlacedObject) -> GardenObject:
@@ -123,6 +126,8 @@ def update_garden(session: Session, owner: str, id: str, document: GardenDocumen
         garden.revision += 1
         garden.updated_at = datetime.now(UTC).replace(tzinfo=None)
         garden.photo_json = json.dumps(photo, ensure_ascii=False, separators=(",", ":")) if photo else None
+        targets = [target.model_dump(mode="json") for target in document.shoppingTargets]
+        garden.shopping_targets_json = json.dumps(targets, separators=(",", ":")) if targets else None
         session.execute(delete(PlacedObject).where(PlacedObject.garden_id == id))
         response_objects = []
         for obj in document.objects:
@@ -137,7 +142,7 @@ def update_garden(session: Session, owner: str, id: str, document: GardenDocumen
         session.flush()
         response = GardenDocument(id=garden.id, revision=garden.revision, name=garden.name,
                                   width=garden.width, depth=garden.depth, objects=response_objects,
-                                  photo=document.photo)
+                                  photo=document.photo, shoppingTargets=document.shoppingTargets)
     return response
 
 
@@ -173,7 +178,7 @@ def duplicate_garden(session: Session, owner: str, id: str) -> GardenSummary:
         copy = Garden(id=str(uuid4()), owner_id=owner, name=duplicate_name(source.name), width=source.width,
                       depth=source.depth, revision=0, updated_at=datetime.now(UTC).replace(tzinfo=None),
                       # S3保存時はimageKeyの参照を共有します。キーは内容のハッシュで、庭の削除で消えません。
-                      photo_json=source.photo_json)
+                      photo_json=source.photo_json, shopping_targets_json=source.shopping_targets_json)
         session.add(copy)
         session.flush()
         objects = session.scalars(select(PlacedObject).where(PlacedObject.garden_id == source.id)

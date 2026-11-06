@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { expect, test } from './test.js';
 import type { Mesh, MeshStandardMaterial } from 'three';
 import { api } from './api-url.js';
+import { showProductsTab } from './catalog-fixture';
 
 // Detect repeated GPU resources, broken cutout leaves, oversized downloads and
 // mutations of other trees. Timings are evidence, not a machine-dependent pass threshold.
@@ -76,6 +77,7 @@ test('TREE50. Blender樹木50本の共有描画・独立編集・MySQL保存復�
     expect(report.calls).toBeLessThan(130);
     expect(report.triangles).toBeLessThan(280_000);
 
+    await showProductsTab(page);
     await page.getByTestId('object-row-0').click();
     const changedId = await page.getByTestId('object-row-0').getAttribute('data-object-id');
     await page.getByTestId('object-toolbar').getByRole('button', { name: '削除', exact: true }).click();

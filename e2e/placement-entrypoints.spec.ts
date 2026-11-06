@@ -4,7 +4,7 @@ import { PerspectiveCamera, Vector3 } from 'three';
 import { api } from './api-url';
 import { syntheticPhoto, createScene, openScene, readGarden, shrub } from './occlusion-helpers';
 import { createPhotoCamera } from '../frontend/src/three/photoCamera.js';
-import { createTestProduct } from './catalog-fixture';
+import { createTestProduct, showProductsTab } from './catalog-fixture';
 
 const directory='artifacts/e2e/placement-bounds';
 for (const mode of ['photo','3d']) test(`pointer drag and product drop reject the cutout (${mode})`, async ({page,request})=>{
@@ -30,6 +30,7 @@ for (const mode of ['photo','3d']) test(`pointer drag and product drop reject th
     const p=new Vector3(x,0,z).project(camera);
     return {x:box.x+(p.x+1)*box.width/2,y:box.y+(1-p.y)*box.height/2};
   }
+  await showProductsTab(page);
   const card=page.getByTestId(`browse-${product.id}`);
   // A product tile follows the pointer instead of the browser's ghost image and is gone after the drop.
   const tile=page.getByTestId('product-drag-tile');

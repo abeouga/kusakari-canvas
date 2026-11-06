@@ -189,6 +189,17 @@ export const useEditorStore = create((set, get) => ({
         if (!ids.has(selectedObjectId)) selectedObjectId = null;
         set({ document: next, selectedObjectId, loadedModelIds: state.loadedModelIds.filter((id) => ids.has(id)), failedModelIds: state.failedModelIds.filter((id) => ids.has(id)), isDirty: true, editError: null, saveError: null });
     },
+    // 必要数は買い物リストの行キーごとに保存し、表示中でない行の値は残しません。
+    setShoppingTarget: (key, quantity, rowKeys) => {
+        const state = get();
+        if (!state.document || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null) return;
+        if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) {
+            set({ editError: '必要数は1〜999の整数で指定してください。' });
+            return;
+        }
+        const kept = (state.document.shoppingTargets ?? []).filter((t) => t.key !== key && rowKeys.includes(t.key));
+        set({ document: { ...state.document, shoppingTargets: [...kept, { key, quantity }] }, isDirty: true, editError: null, saveError: null });
+    },
     setSaving: (isSaving) => set({ isSaving }),
     setTransformDragging: (isTransformDragging) => set({ isTransformDragging }),
     setSaveError: (saveError) => set({ saveError }),
