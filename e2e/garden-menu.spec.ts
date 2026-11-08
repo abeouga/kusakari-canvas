@@ -1,4 +1,5 @@
 import { placeTestPlant } from './catalog-fixture';
+import { seedGardenPhoto } from './garden-photo';
 import { expect, test } from './test.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
@@ -9,6 +10,8 @@ test('garden options duplicate and delete with persisted independent data', asyn
   const source = await (await request.post(`${api}/gardens`, { data: { name } })).json();
   let copyId = '';
   try {
+    // 庭写真が未アップロードの庭には配置できないため、先に確定済みの写真を保存します（#15）。
+    await seedGardenPhoto(page, source.id);
     await page.goto(`/gardens/${source.id}`);
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByRole('button', { name: '上から見る', exact: true }).click();

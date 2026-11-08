@@ -1,4 +1,5 @@
 import { placeTestPlant, showProductsTab } from './catalog-fixture';
+import { seedGardenPhoto } from './garden-photo';
 import { syntheticPhoto } from './occlusion-helpers';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -26,6 +27,25 @@ test('S. 作業面・独立開閉・ダイアログのフォーカス・未保�
     await expect.poll(async () => (await canvas.boundingBox())!.width).toBe(initialBox.width);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight)).toBe(true);
 
+    const dimensions = page.getByRole('button', { name: '土台設定', exact: true });
+    await dimensions.click();
+    await expect(page.getByLabel('幅 (m)', { exact: true })).toBeFocused();
+    await page.getByLabel('幅 (m)', { exact: true }).fill('11');
+    // The browser focus trap must contain keyboard navigation in the modal.
+    for (let i = 0; i < 9; i++) {
+      await page.keyboard.press('Tab');
+      expect(await page.evaluate(() => !!document.activeElement?.closest('dialog[open]'))).toBe(true);
+    }
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(dimensions).toBeFocused();
+    await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+
+    // 庭写真が未アップロードの庭には配置できないため、写真なしの土台設定を確認した後で確定済みの写真を保存します（#15）。
+    await seedGardenPhoto(page, created.id);
+    await page.reload();
+    await page.getByRole('button', { name: '3D庭', exact: true }).click();
+    await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     await page.getByRole('button', { name: '上から見る' }).click();
     const box = (await canvas.boundingBox())!;
     await placeTestPlant(page, box.x + box.width / 2, box.y + box.height / 2);
@@ -40,20 +60,6 @@ test('S. 作業面・独立開閉・ダイアログのフォーカス・未保�
     await mkdir(resolve('artifacts/e2e'), { recursive: true });
     await writeFile(resolve('artifacts/e2e/workspace-reloaded.json'), JSON.stringify(saved, null, 2));
     await page.screenshot({ path: resolve('artifacts/e2e/workspace-reloaded.png'), fullPage: true });
-
-    const dimensions = page.getByRole('button', { name: '土台設定', exact: true });
-    await dimensions.click();
-    await expect(page.getByLabel('幅 (m)', { exact: true })).toBeFocused();
-    await page.getByLabel('幅 (m)', { exact: true }).fill('11');
-    // The browser focus trap must contain keyboard navigation in the modal.
-    for (let i = 0; i < 9; i++) {
-      await page.keyboard.press('Tab');
-      expect(await page.evaluate(() => !!document.activeElement?.closest('dialog[open]'))).toBe(true);
-    }
-    await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(dimensions).toBeFocused();
-    await expect(page.getByTestId('save-status')).toHaveText('保存済み');
 
     await showProductsTab(page);
     await page.getByTestId('object-row-0').click();

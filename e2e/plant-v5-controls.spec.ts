@@ -1,4 +1,5 @@
 import { openPlantSettings, publishProduct } from './seller-wizard';
+import { seedGardenPhoto } from './garden-photo';
 import { test, expect } from './test.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -78,7 +79,8 @@ test('seller picks a species, adjusts stem, branch and leaf controls; the v5 mod
 
     const created = await request.post(`${api}/gardens`, { data: { name: `v5配置-${randomUUID().slice(0, 8)}`, width: 8, depth: 8 } });
     expect(created.status()).toBe(201);
-    garden = await created.json() as GardenDocument;
+    // 庭写真が未アップロードの庭には配置できないため、先に確定済みの写真を保存します（#15）。
+    garden = await seedGardenPhoto(page, (await created.json() as GardenDocument).id);
     await page.goto(`/gardens/${garden.id}`);
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await page.getByRole('button', { name: '上から見る', exact: true }).click();

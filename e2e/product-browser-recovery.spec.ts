@@ -1,5 +1,6 @@
 import { expect, test } from './test.js';
 import { createTestProduct, showProductsTab } from './catalog-fixture';
+import { seedGardenPhoto } from './garden-photo';
 
 test('EC接続失敗を表示し、再取得後に商品を配置・保存・復元できる', async ({ page, request }, testInfo) => {
   const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
@@ -10,6 +11,8 @@ test('EC接続失敗を表示し、再取得後に商品を配置・保存・復
   // Only the failure is injected. Recovery uses the real EC API and dedicated MySQL.
   const cartUrl = ((process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286') + '/api/cart');
   await page.route(cartUrl, (route) => route.abort('failed'));
+  // 庭写真が未アップロードの庭には配置できないため、先に確定済みの写真を保存します（#15）。
+  await seedGardenPhoto(page, garden.id);
   await page.goto(`/gardens/${garden.id}`);
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await showProductsTab(page);

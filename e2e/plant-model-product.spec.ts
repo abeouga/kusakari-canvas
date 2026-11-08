@@ -1,4 +1,5 @@
 import { openPlantSettings, publishProduct } from './seller-wizard';
+import { seedGardenPhoto } from './garden-photo';
 import { test, expect, Page } from './test.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -77,7 +78,8 @@ test('seller features create six plant compositions; catalog and shopping-list d
     for (const product of products) expect(catalog.find((item: TestProduct) => item.id === product.id).modelComposition).toEqual(product.modelComposition);
     const created = await page.request.post(`${api}/gardens`, { data: { name: `組立配置-${randomUUID().slice(0, 8)}`, width: 10, depth: 8 } });
     expect(created.status()).toBe(201);
-    garden = await created.json() as GardenDocument;
+    // 庭写真が未アップロードの庭には配置できないため、先に確定済みの写真を保存します（#15）。
+    garden = await seedGardenPhoto(page, (await created.json() as GardenDocument).id);
     await page.goto(`/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await showProductsTab(page);

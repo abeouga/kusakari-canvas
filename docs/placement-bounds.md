@@ -40,3 +40,11 @@ npm run test:e2e -- photo-scale.spec.ts --grep calibrated --reporter=list,json -
 ```
 
 JSON reporterの出力先は各実行で `PLAYWRIGHT_JSON_OUTPUT_NAME` を分けた。集計は `artifacts/e2e/placement-bounds/verification-summary.json`、再読み込み画面・庭JSONは同ディレクトリに保存。初回の失敗証拠は `artifacts/e2e/full-suite/test-results/`、再検証結果は `artifacts/e2e/placement-final-results.json` と `artifacts/e2e/placement-scale-recheck-results.json`。
+
+## 2026-11-06 庭写真が未アップロードの庭への新規配置（#15）
+
+- Context: 写真なしの庭は土台矩形を施工範囲としていたため、写真をアップロードする前に3D庭へ商品を配置できた。
+- Decision: 新規配置（3D庭のクリック配置、商品一覧・買い物リストからのドロップ）は `document.photo` がある庭だけで受け付ける。写真なしの3D庭では理由と「写真をアップロード」（写真タブへ切り替え）を常時表示し、配置操作をしたときも同じ理由をエラーとして示す。写真ありで輪郭が未確定の場合は従来どおり輪郭が空になり配置できない。
+- Alternatives: APIで写真なしの配置を拒否すると、#15以前に写真なしで配置した既存の庭が保存できなくなるため採用しない。商品カードのドラッグ自体を無効にすると理由が伝わらないため採用しない。写真なしの土台矩形判定（`groundOutline`）は既存配置の範囲判定と描画に使うため変更しない。
+- Consequences: 写真なしの既存配置は表示・移動・削除・保存でき、土台設定も写真なしの庭で引き続き使える。配置を検証する既存E2Eは、庭全体を輪郭とする確定済み写真を実APIで保存してから配置する（`e2e/garden-photo.ts`）。土台縮小時の配置チェックは、#15以前の配置済みの庭として配置を実APIで保存して検証する。
+- Verification: `e2e/photo-required-placement.spec.ts` で、画面から作った写真なしの庭へのドロップとクリック配置が保存されず理由が表示されること、写真タブで写真をアップロードし輪郭を確定した後にドロップで配置・保存・再読み込みできることを実API/MySQLで確認する。

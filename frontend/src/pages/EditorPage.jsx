@@ -1,4 +1,4 @@
-import { outsideObjects } from '../domain/placementBounds';
+import { outsideObjects, placementBlockedReason } from '../domain/placementBounds';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { gardenApi } from '../api/gardens';
@@ -209,6 +209,10 @@ export function EditorPage({ gardenId }) {
           <span>{saveError}</span>
           <button type="button" onClick={save} disabled={isSaving || isTransformDragging}>再試行</button>
         </div>)}
+      {viewMode === '3d' && placementBlockedReason(document) && <div className="editor-alert photo-progress" role="status" data-testid="photo-required">
+          <span>{placementBlockedReason(document)}</span>
+          <button type="button" onClick={() => setViewMode('photo')} disabled={isEditingDisabled}>写真をアップロード</button>
+        </div>}
       {!photoReady && !hasBoundaryDraft && !isCalibrating && <div className="editor-alert photo-progress" role="status">写真上の庭の輪郭と実寸範囲が確定すると自動保存され、3D庭を表示できます。</div>}
       {assetQuery.isError && (<div className="editor-alert notice-error" role="alert">
           <span>オブジェクトカタログを読み込めませんでした。</span>

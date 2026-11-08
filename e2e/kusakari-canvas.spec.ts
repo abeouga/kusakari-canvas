@@ -5,6 +5,7 @@ import { expect, test, type Page, type APIRequestContext } from './test.js';
 import { api as apiBase } from './api-url.js';
 import type { GardenDocument } from '../frontend/src/types/garden.js';
 import { createGardenFromList, renameGardenInEditor } from './garden-create';
+import { seedGardenPhoto } from './garden-photo';
 import { dragSelectedObject, moveSelectedObject, positionLabel, showTopView } from './transform-helpers';
 
 const artifactDirectory = resolve('artifacts/e2e');
@@ -30,6 +31,10 @@ async function createGarden(page: Page, name: string): Promise<string> {
 }
 
 async function placeTree(page: Page, x = 0.5, y = 0.5): Promise<void> {
+  // 庭写真が未アップロードの庭には配置できないため、先に確定済みの写真を保存します（#15）。
+  await seedGardenPhoto(page, new URL(page.url()).pathname.split('/').at(-1)!);
+  await page.reload();
+  await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await page.getByRole('button', { name: '上から見る' }).click();
   const canvas = page.locator('[data-testid="garden-canvas"] canvas');
@@ -182,12 +187,13 @@ test('C. 不正な寸法と配置位置を拒否し既存庭を維持', async ({
 
 test('D. 保存失敗後の編集保持と再試行', async ({ page, request }) => {
   const id = await createGarden(page, `E2E retry ${Date.now()}`);
-  const savedRevision = (await gardenJson(request, id)).revision;
   await page.route(`**/api/gardens/${id}`, async (route) => {
     if (route.request().method() === 'PUT') await route.abort('failed');
     else await route.continue();
   });
   await placeTree(page);
+  // placeTreeが実APIで保存した写真の版。以降の画面からの保存は遮断されます。
+  const savedRevision = (await gardenJson(request, id)).revision;
   const placed = await page.getByTestId('object-row-0').locator('small').textContent();
   // The failed save shows a banner that shifts the canvas; return to the top view before dragging.
   await expect(page.locator('.editor-alert[role="alert"]')).toContainText('自動保存できませんでした');

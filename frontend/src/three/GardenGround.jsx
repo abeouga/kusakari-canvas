@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { BufferGeometry, DoubleSide, Float32BufferAttribute, Shape, ShapeGeometry } from 'three';
 import { useEditorStore } from '../stores/editorStore';
 import { pointInPolygon } from '../domain/photoProjection';
-import { containsAnchor, groundOutline } from '../domain/placementBounds';
+import { containsAnchor, groundOutline, placementBlockedReason } from '../domain/placementBounds';
 export function GardenGround({ document, selectedAsset, disabled, invisible = false }) {
     const press = useRef(null);
     const isDragging = useEditorStore((state) => state.isTransformDragging);
@@ -26,6 +26,12 @@ export function GardenGround({ document, selectedAsset, disabled, invisible = fa
             return;
         if (!selectedAsset || disabled || isDragging)
             return;
+        const blocked = placementBlockedReason(document);
+        if (blocked) {
+            event.stopPropagation();
+            useEditorStore.getState().setEditError(blocked);
+            return;
+        }
         if (!containsAnchor(document, event.point))
             return;
         event.stopPropagation();

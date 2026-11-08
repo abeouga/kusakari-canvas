@@ -1,4 +1,5 @@
 import { openPlantSettings, publishProduct } from './seller-wizard';
+import { seedGardenPhoto } from './garden-photo';
 import { test, expect } from './test.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -73,6 +74,8 @@ test('five natural models, frozen v1-v4 snapshots, placement, edits and reload r
       rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } });
     const put = await request.put(`${api}/gardens/${garden.id}`, { data: garden });
     expect(put.status(), await put.text()).toBe(200);
+    // 庭写真が未アップロードの庭には配置できないため、先に確定済みの写真を保存します（#15）。
+    garden = await seedGardenPhoto(page, garden.id);
     await page.goto(`/gardens/${garden.id}?renderReview`);
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     const cart = await page.request.get(`${ec}/api/cart`);
