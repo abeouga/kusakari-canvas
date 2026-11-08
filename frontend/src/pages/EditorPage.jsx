@@ -206,7 +206,7 @@ export function EditorPage({ gardenId }) {
           <span>{saveError}</span>
           <button type="button" onClick={save} disabled={isSaving || isTransformDragging}>再試行</button>
         </div>)}
-      {!photoReady && !hasBoundaryDraft && !isCalibrating && <div className="editor-alert photo-progress" role="status">写真上の庭の輪郭と実寸範囲が確定すると自動保存されます。</div>}
+      {!photoReady && !hasBoundaryDraft && !isCalibrating && <div className="editor-alert photo-progress" role="status">写真上の庭の輪郭と実寸範囲が確定すると自動保存され、3D庭を表示できます。</div>}
       {assetQuery.isError && (<div className="editor-alert notice-error" role="alert">
           <span>オブジェクトカタログを読み込めませんでした。</span>
           <button type="button" onClick={() => assetQuery.refetch()}>再試行</button>
@@ -229,7 +229,7 @@ export function EditorPage({ gardenId }) {
             </div>
             <div className="view-mode-actions" role="group" aria-label="表示モード">
               <button type="button" aria-label="写真＋設計" title="写真＋設計" aria-pressed={viewMode === 'photo'} disabled={isEditingDisabled} onClick={() => setViewMode('photo')}><UiIcon name="photo"/><span>写真</span></button>
-              <button type="button" aria-label="3D庭" title="3D庭" aria-pressed={viewMode === '3d'} disabled={hasBoundaryDraft || isEditingDisabled} onClick={() => setViewMode('3d')}><UiIcon name="cube"/><span>3D</span></button>
+              <button type="button" aria-label="3D庭" title={photoReady || hasBoundaryDraft ? '3D庭' : '庭の輪郭を確定すると3D庭を表示できます'} aria-pressed={viewMode === '3d'} disabled={!photoReady || isEditingDisabled} onClick={() => setViewMode('3d')}><UiIcon name="cube"/><span>3D</span></button>
             </div>
             <div className="camera-actions">
               {viewMode === '3d' && !document.photo && <button type="button" aria-label="土台設定" title="土台設定" aria-haspopup="dialog" onClick={() => setDimensionsOpen(true)} disabled={isEditingDisabled}><UiIcon name="ruler"/><span>土台設定</span></button>}
