@@ -65,7 +65,7 @@ export function EditorPage({ gardenId }) {
     const [sidebarWidth, setSidebarWidth] = useSidebarWidth();
     const [propertiesCollapsed, setPropertiesCollapsed] = useState(false);
     const [dimensionsOpen, setDimensionsOpen] = useState(false);
-    const [leaveOpen, setLeaveOpen] = useState(false);
+    const [leaveOpen, setLeaveOpen] = useState(/** @type {false | 'draft' | 'photo'} */ (false));
     const [navigating, setNavigating] = useState(false);
     const navigationLocked = useRef(false);
     const [leaveDestination, setLeaveDestination] = useState(canvasUrl('/'));
@@ -137,9 +137,12 @@ export function EditorPage({ gardenId }) {
     async function requestNavigation(url) {
         const state = useEditorStore.getState();
         if (navigationLocked.current || state.isTransformDragging) return;
-        if (state.photoBoundaryDraft !== null || state.isCalibrating) {
+        // 輪郭が未確定の写真は保存できないため、写真を保存せずに戻るかを確認します。
+        const photo = state.document?.photo;
+        const unsavablePhoto = state.isDirty && photo && (!validSurface(photo) || calibratedBoundaryError(photo, state.document.width, state.document.depth));
+        if (state.photoBoundaryDraft !== null || state.isCalibrating || unsavablePhoto) {
             setLeaveDestination(url);
-            setLeaveOpen(true);
+            setLeaveOpen(state.photoBoundaryDraft === null && !state.isCalibrating ? 'photo' : 'draft');
             return;
         }
         navigationLocked.current = true;
@@ -250,9 +253,10 @@ export function EditorPage({ gardenId }) {
         {entryProductId && commerce.products.data && !commerce.products.data.some(item => item.id === entryProductId) && <p role="status">選択した商品は現在購入・新規配置できません。公開状態または店舗を確認してください。</p>}
         {!propertiesCollapsed && <CommercePanel document={document} assets={assets} selectedObject={selectedObject} disabled={isEditingDisabled || hasBoundaryDraft || assetQuery.isLoading || assetQuery.isError} commerce={commerce} onSelectObject={selectObject} onNavigate={requestNavigation} width={sidebarWidth} onWidthChange={setSidebarWidth}/>}
       </main>
-      {leaveOpen && <Dialog title="変更を保存せずに戻りますか？" description="保存していない編集内容は破棄されます。" onClose={() => setLeaveOpen(false)} footer={<>
+      {leaveOpen && <Dialog title={leaveOpen === 'photo' ? '庭写真を保存せずに戻りますか？' : '変更を保存せずに戻りますか？'}
+        description={leaveOpen === 'photo' ? '施工範囲（庭の輪郭）が確定していないため、この庭写真は保存されません。' : '保存していない編集内容は破棄されます。'} onClose={() => setLeaveOpen(false)} footer={<>
         <button type="button" className="button button-secondary" data-dialog-autofocus onClick={() => setLeaveOpen(false)}>編集を続ける</button>
-        <button type="button" className="button button-danger" disabled={isSaving} onClick={() => { allowNavigation.current = true; window.location.assign(leaveDestination); }}>変更を破棄して戻る</button>
+        <button type="button" className="button button-danger" disabled={isSaving} onClick={() => { allowNavigation.current = true; window.location.assign(leaveDestination); }}>{leaveOpen === 'photo' ? '写真を保存せず戻る' : '変更を破棄して戻る'}</button>
       </>}><p>「{document.name}」の最後に保存した状態は残ります。</p></Dialog>}
     </div>);
 }
