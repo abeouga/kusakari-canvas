@@ -4,6 +4,7 @@ import { test, expect, Page } from './test.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import type { GardenDocument, PlantComposition } from '../frontend/src/types/garden';
+import { showProductsTab } from './catalog-fixture';
 
 type TestProduct = { id: string; name: string; plantModelProfile: Record<string, unknown>;
   modelComposition: PlantComposition } & Record<string, unknown>;
@@ -81,6 +82,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
     garden = await seedGardenPhoto(page, (await created.json() as GardenDocument).id);
     await page.goto(`/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
+    await showProductsTab(page);
     const unsupported = page.getByTestId('browse-olive');
     await expect(unsupported).toContainText('3Dモデル未設定');
     await expect(unsupported).toHaveAttribute('draggable', 'false');
@@ -171,6 +173,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
     expect(photoSaved.status()).toBe(200);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 9 / 9');
+    await showProductsTab(page);
     const photoCard = page.getByTestId(`browse-${products[2].id}`);
     const photoTarget = page.getByTestId('photo-model-canvas').locator('canvas');
     const photoBounds = await photoTarget.boundingBox();

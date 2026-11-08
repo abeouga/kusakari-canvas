@@ -5,6 +5,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import type { GardenDocument, PlantComposition } from '../frontend/src/types/garden';
+import { showProductsTab } from './catalog-fixture';
 
 const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286');
 const canvas = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
@@ -73,6 +74,7 @@ test('two gardens have separate live lists; selection adds to the single EC cart
   try {
     await page.goto(`/gardens/${a.id}`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
+    await page.getByRole('tab', { name: '商品一覧', exact: true }).click();
     await page.getByLabel('商品を検索', { exact: true }).fill(product.name);
     const card = page.getByTestId(`browse-${product.id}`);
     await expect(card.getByRole('button', { name: 'カートに追加' })).toHaveCount(0);
@@ -80,10 +82,10 @@ test('two gardens have separate live lists; selection adds to the single EC cart
     await saved(page, 1);
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
     const listLine = page.getByTestId(`shopping-line-${product.id}`);
-    await expect(listLine.getByTestId('needed-quantity')).toHaveText('必要数 1点');
+    await expect(listLine.getByTestId('placement-count')).toHaveText('1/1');
     await drag(page, listLine, 0.65);
     await saved(page, 2);
-    await expect(listLine.getByTestId('needed-quantity')).toHaveText('必要数 2点');
+    await expect(listLine.getByTestId('placement-count')).toHaveText('2/2');
     expect((await page.request.get(`${ec}/api/cart`).then(r => r.json())).items).toHaveLength(0);
     const snapshotA = await loadGarden(request, a.id);
     const listA = await request.get(`${canvas}/gardens/${a.id}/shopping-list`).then(r => r.json());
@@ -206,6 +208,7 @@ test('autosave failure retains placements, blocks EC navigation and supports ret
   try {
     await page.goto(`/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
+    await showProductsTab(page);
     await page.getByLabel('商品を検索', { exact: true }).fill('ベンチ');
     await page.route('**/api/gardens/' + garden.id, async route => {
       if (route.request().method() === 'PUT') await route.abort('failed');
@@ -242,6 +245,7 @@ test('autosave revision conflict preserves the local placement and stops repeate
     await page.goto(`/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+    await showProductsTab(page);
     await page.getByLabel('商品を検索', { exact: true }).fill('ベンチ');
     const changed = await request.put(`${canvas}/gardens/${garden.id}`, { data: { ...garden, name: garden.name + ' 別画面更新' } });
     expect(changed.ok()).toBeTruthy();

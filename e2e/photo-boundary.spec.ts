@@ -1,4 +1,4 @@
-import { placeTestPlant } from './catalog-fixture';
+import { placeTestPlant, showProductsTab } from './catalog-fixture';
 import { createGardenFromList } from './garden-create';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -402,6 +402,7 @@ test('N. 木の3D・写真相互配置、固定カメラ、頂点番号非表示
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-photo-trees.png'), fullPage: true });
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 2 / 2');
+  await showProductsTab(page);
   await expect(page.getByTestId('object-row-1')).toBeVisible();
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-photo-trees-3d.png'), fullPage: true });
   await page.getByRole('button', { name: '写真＋設計' }).click();

@@ -1,5 +1,5 @@
 import { expect, test } from './test.js';
-import { createTestProduct } from './catalog-fixture';
+import { createTestProduct, showProductsTab } from './catalog-fixture';
 import { seedGardenPhoto } from './garden-photo';
 
 test('EC接続失敗を表示し、再取得後に商品を配置・保存・復元できる', async ({ page, request }, testInfo) => {
@@ -15,6 +15,7 @@ test('EC接続失敗を表示し、再取得後に商品を配置・保存・復
   await seedGardenPhoto(page, garden.id);
   await page.goto(`/gardens/${garden.id}`);
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
+  await showProductsTab(page);
   const browser = page.getByRole('region', { name: 'ECの商品一覧' });
   await expect(browser.getByRole('alert')).toContainText('ECへ接続できません');
   await expect(browser.getByText('商品を読み込んでいます…')).toHaveCount(0);
@@ -63,6 +64,7 @@ test('EC接続失敗を表示し、再取得後に商品を配置・保存・復
   await page.reload();
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
+  await showProductsTab(page);
   await expect(browser.locator('.browse-product').first()).toBeVisible();
   const reloaded = await (await request.get(`${api}/gardens/${garden.id}`)).json();
   expect(reloaded).toEqual(saved);

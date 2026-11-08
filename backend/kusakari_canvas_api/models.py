@@ -34,6 +34,7 @@ class Garden(Base):
     revision: Mapped[int] = mapped_column(BIGINT)
     updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(fsp=6))
     photo_json: Mapped[str | None] = mapped_column(LONGTEXT)
+    shopping_targets_json: Mapped[str | None] = mapped_column(LONGTEXT)
 
 
 class PlacedObject(Base):

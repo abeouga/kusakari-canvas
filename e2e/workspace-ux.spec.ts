@@ -1,4 +1,4 @@
-import { placeTestPlant } from './catalog-fixture';
+import { placeTestPlant, showProductsTab } from './catalog-fixture';
 import { seedGardenPhoto } from './garden-photo';
 import { syntheticPhoto } from './occlusion-helpers';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -61,6 +61,7 @@ test('S. 作業面・独立開閉・ダイアログのフォーカス・未保�
     await writeFile(resolve('artifacts/e2e/workspace-reloaded.json'), JSON.stringify(saved, null, 2));
     await page.screenshot({ path: resolve('artifacts/e2e/workspace-reloaded.png'), fullPage: true });
 
+    await showProductsTab(page);
     await page.getByTestId('object-row-0').click();
     await showTopView(page);
     await dragSelectedObject(page, saved, 1.7, 0);
@@ -87,6 +88,7 @@ test('S. 作業面・独立開閉・ダイアログのフォーカス・未保�
     await page.keyboard.press('Delete');
     await page.keyboard.press('Escape');
     await expect(back).toBeFocused();
+    await showProductsTab(page);
     await expect(page.getByTestId('object-row-0')).toBeVisible();
     await expect(page.getByTestId('object-row-0').locator('small')).toHaveText(local!);
     let unexpectedDialogs = 0;

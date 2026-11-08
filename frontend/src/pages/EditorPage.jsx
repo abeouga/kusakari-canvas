@@ -65,7 +65,7 @@ export function EditorPage({ gardenId }) {
     const [sidebarWidth, setSidebarWidth] = useSidebarWidth();
     const [propertiesCollapsed, setPropertiesCollapsed] = useState(false);
     const [dimensionsOpen, setDimensionsOpen] = useState(false);
-    const [leaveOpen, setLeaveOpen] = useState(false);
+    const [leaveOpen, setLeaveOpen] = useState(/** @type {false | 'draft' | 'photo'} */ (false));
     const [navigating, setNavigating] = useState(false);
     const navigationLocked = useRef(false);
     const [leaveDestination, setLeaveDestination] = useState(canvasUrl('/'));
@@ -137,9 +137,12 @@ export function EditorPage({ gardenId }) {
     async function requestNavigation(url) {
         const state = useEditorStore.getState();
         if (navigationLocked.current || state.isTransformDragging) return;
-        if (state.photoBoundaryDraft !== null || state.isCalibrating) {
+        // 輪郭が未確定の写真は保存できないため、写真を保存せずに戻るかを確認します。
+        const photo = state.document?.photo;
+        const unsavablePhoto = state.isDirty && photo && (!validSurface(photo) || calibratedBoundaryError(photo, state.document.width, state.document.depth));
+        if (state.photoBoundaryDraft !== null || state.isCalibrating || unsavablePhoto) {
             setLeaveDestination(url);
-            setLeaveOpen(true);
+            setLeaveOpen(state.photoBoundaryDraft === null && !state.isCalibrating ? 'photo' : 'draft');
             return;
         }
         navigationLocked.current = true;
@@ -210,7 +213,7 @@ export function EditorPage({ gardenId }) {
           <span>{placementBlockedReason(document)}</span>
           <button type="button" onClick={() => setViewMode('photo')} disabled={isEditingDisabled}>写真をアップロード</button>
         </div>}
-      {!photoReady && !hasBoundaryDraft && !isCalibrating && <div className="editor-alert photo-progress" role="status">写真上の庭の輪郭と実寸範囲が確定すると自動保存されます。</div>}
+      {!photoReady && !hasBoundaryDraft && !isCalibrating && <div className="editor-alert photo-progress" role="status">写真上の庭の輪郭と実寸範囲が確定すると自動保存され、3D庭を表示できます。</div>}
       {assetQuery.isError && (<div className="editor-alert notice-error" role="alert">
           <span>オブジェクトカタログを読み込めませんでした。</span>
           <button type="button" onClick={() => assetQuery.refetch()}>再試行</button>
@@ -233,7 +236,7 @@ export function EditorPage({ gardenId }) {
             </div>
             <div className="view-mode-actions" role="group" aria-label="表示モード">
               <button type="button" aria-label="写真＋設計" title="写真＋設計" aria-pressed={viewMode === 'photo'} disabled={isEditingDisabled} onClick={() => setViewMode('photo')}><UiIcon name="photo"/><span>写真</span></button>
-              <button type="button" aria-label="3D庭" title="3D庭" aria-pressed={viewMode === '3d'} disabled={hasBoundaryDraft || isEditingDisabled} onClick={() => setViewMode('3d')}><UiIcon name="cube"/><span>3D</span></button>
+              <button type="button" aria-label="3D庭" title={photoReady || hasBoundaryDraft ? '3D庭' : '庭の輪郭を確定すると3D庭を表示できます'} aria-pressed={viewMode === '3d'} disabled={!photoReady || isEditingDisabled} onClick={() => setViewMode('3d')}><UiIcon name="cube"/><span>3D</span></button>
             </div>
             <div className="camera-actions">
               {viewMode === '3d' && !document.photo && <button type="button" aria-label="土台設定" title="土台設定" aria-haspopup="dialog" onClick={() => setDimensionsOpen(true)} disabled={isEditingDisabled}><UiIcon name="ruler"/><span>土台設定</span></button>}
@@ -254,9 +257,10 @@ export function EditorPage({ gardenId }) {
         {entryProductId && commerce.products.data && !commerce.products.data.some(item => item.id === entryProductId) && <p role="status">選択した商品は現在購入・新規配置できません。公開状態または店舗を確認してください。</p>}
         {!propertiesCollapsed && <CommercePanel document={document} assets={assets} selectedObject={selectedObject} disabled={isEditingDisabled || hasBoundaryDraft || assetQuery.isLoading || assetQuery.isError} commerce={commerce} onSelectObject={selectObject} onNavigate={requestNavigation} width={sidebarWidth} onWidthChange={setSidebarWidth}/>}
       </main>
-      {leaveOpen && <Dialog title="変更を保存せずに戻りますか？" description="保存していない編集内容は破棄されます。" onClose={() => setLeaveOpen(false)} footer={<>
+      {leaveOpen && <Dialog title={leaveOpen === 'photo' ? '庭写真を保存せずに戻りますか？' : '変更を保存せずに戻りますか？'}
+        description={leaveOpen === 'photo' ? '施工範囲（庭の輪郭）が確定していないため、この庭写真は保存されません。' : '保存していない編集内容は破棄されます。'} onClose={() => setLeaveOpen(false)} footer={<>
         <button type="button" className="button button-secondary" data-dialog-autofocus onClick={() => setLeaveOpen(false)}>編集を続ける</button>
-        <button type="button" className="button button-danger" disabled={isSaving} onClick={() => { allowNavigation.current = true; window.location.assign(leaveDestination); }}>変更を破棄して戻る</button>
+        <button type="button" className="button button-danger" disabled={isSaving} onClick={() => { allowNavigation.current = true; window.location.assign(leaveDestination); }}>{leaveOpen === 'photo' ? '写真を保存せず戻る' : '変更を破棄して戻る'}</button>
       </>}><p>「{document.name}」の最後に保存した状態は残ります。</p></Dialog>}
     </div>);
 }

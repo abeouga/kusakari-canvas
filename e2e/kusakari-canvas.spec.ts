@@ -1,4 +1,4 @@
-import { placeTestPlant, seedLegacyObjects } from './catalog-fixture';
+import { placeTestPlant, seedLegacyObjects, showProductsTab } from './catalog-fixture';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test, type Page, type APIRequestContext } from './test.js';
@@ -85,6 +85,7 @@ test('A. 庭作成からGLB配置・変形・保存・再読み込みまで', as
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
   await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
   await expect(row).toHaveText(moved!);
+  await showProductsTab(page);
   await expect(page.getByTestId('object-row-0')).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: '上から見る' }).click();
   await page.screenshot({ path: resolve(artifactDirectory, 'garden-roundtrip.png'), fullPage: true });
