@@ -1,4 +1,4 @@
-import { createTestProduct, productPlacement } from './catalog-fixture';
+import { createTestProduct, productPlacement, showProductsTab } from './catalog-fixture';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { expect, test, type Page } from './test.js';
@@ -115,6 +115,7 @@ test('AI generation uses real EC selection, captures plant/furniture coverage, a
     const bench = { ...shrub(0, 1, 2), assetId: 'bench_wood' };
     const garden = await createScene(request, ids, photo, [plant, bench]);
     await openScene(page, garden);
+    await showProductsTab(page);
     await page.getByTestId('object-row-0').click();
     await page.getByRole('checkbox', { name: '配置', exact: true }).uncheck();
     const baseline = await capture(page);
@@ -228,6 +229,7 @@ test('coverage copy failure restores rendering and allows a complete retry', asy
     await openScene(page, garden);
     const baseline = await capture(page);
     await page.keyboard.press('Escape');
+    await showProductsTab(page);
     await page.getByTestId('object-row-0').click();
     await page.getByRole('checkbox', { name: '配置', exact: true }).uncheck();
     await page.evaluate(() => {

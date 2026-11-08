@@ -5,6 +5,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { plantPresetsV3, referenceProfiles } from '../scripts/plant-library-v3-presets.mjs';
 import { productInput } from '../scripts/plant-library-presets.mjs';
 import type { GardenDocument, PlantComposition } from '../frontend/src/types/garden';
+import { showProductsTab } from './catalog-fixture';
 
 const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286'), api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api'), evidence = 'artifacts/plant-v4/e2e';
 type Product = { id: string; name: string; canvasMaterialCode: string; modelComposition: PlantComposition };
@@ -78,6 +79,7 @@ test('five natural models, frozen v1-v4 snapshots, placement, edits and reload r
     expect(cart.status(), await cart.text()).toBe(200);
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 9 / 9', { timeout: 60000 });
     await page.getByRole('button', { name: '上から見る', exact: true }).click();
+    await showProductsTab(page);
     const card = page.getByTestId(`browse-${products[2].id}`); await card.scrollIntoViewIfNeeded();
     await card.dragTo(page.getByTestId('garden-canvas').locator('canvas'),
       { sourcePosition: { x: 35, y: 35 }, targetPosition: { x: 300, y: 400 } });

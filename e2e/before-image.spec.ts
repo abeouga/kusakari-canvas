@@ -5,6 +5,7 @@ import { expect, test, type APIRequestContext, type Page } from './test.js';
 import { PerspectiveCamera, Vector3 } from 'three';
 import { api } from './api-url.js';
 import type { GardenDocument } from '../frontend/src/types/garden.js';
+import { showProductsTab } from './catalog-fixture';
 
 const artifactDirectory = resolve('artifacts/e2e');
 const variants = [
@@ -221,6 +222,7 @@ for (const variant of variants) {
       expect(measurements.cornersMatch).toBe(true);
       for (const changed of measurements.nearBases) expect(changed).toBeGreaterThan(5);
 
+      await showProductsTab(page);
       await page.getByTestId('object-row-0').click();
       const selected = await captureImage(page);
       expect((await comparePixels(page, baseline, selected)).differences).toBe(0);
@@ -348,6 +350,7 @@ test('3D preview excludes move, rotate and scale controls without clearing selec
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 2 / 2');
     const baseline = await captureImage(page);
+    await showProductsTab(page);
     await page.getByTestId('object-row-0').click();
     for (const tool of ['move', 'rotate', 'scale']) {
       await page.getByTestId(`tool-${tool}`).click();
