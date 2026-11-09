@@ -104,7 +104,7 @@ def browser(fixture, ec_root, site, output):
            "KUSAKARI_EC_PREVIEW_API": f"http://127.0.0.1:{fixture.ports['ec']}",
            "KUSAKARI_CANVAS_PREVIEW_API": f"http://127.0.0.1:{fixture.ports['canvas']}"}
     command = [shutil.which("node"), str(ec_root / "node_modules/@playwright/test/cli.js"),
-               "test", "--config", "playwright.linux.config.js"]
+               "test", "--config", "e2e/configs/playwright.linux.config.js"]
     with (output / "browser.log").open("wb") as log:
         result = subprocess.run(command, cwd=ec_root, env=env, stdout=log, stderr=subprocess.STDOUT,
                                 timeout=240, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))

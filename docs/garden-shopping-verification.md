@@ -10,7 +10,7 @@
 | --- | ---: | --- |
 | Canvas `npm run test:shopping` | 9 | [新機能・植物モデル](../artifacts/e2e/shopping-lists/results.json) |
 | EC `npm run test:shopping-regression` | 13 | `kusakari-ec/artifacts/e2e/shopping-regression-results.json` |
-| EC `npx playwright test --config playwright.integration.config.js` | 3 | `kusakari-ec/artifacts/e2e/shopping-integration-results.json` |
+| EC `npx playwright test --config e2e/configs/playwright.integration.config.js` | 3 | `kusakari-ec/artifacts/e2e/shopping-integration-results.json` |
 
 所有者分離は実FastAPI・専用MySQLで別途4項目を確認した。[結果](../artifacts/e2e/shopping-lists/owner-isolation.json)
 

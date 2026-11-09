@@ -45,7 +45,7 @@ DBスキーマとGardenDocumentの形式は変更しない。既存の庭は配�
 
 ## Verification
 
-ECで `npm run build:api` の後、Canvasで `npm run test:shopping`。ECの既存出品・購入の回帰確認はECで `npm run test:shopping-regression`。EC起点の統合確認はECで `npx playwright test --config playwright.integration.config.js`。すべて実APIと専用MySQLを使用する。
+ECで `npm run build:api` の後、Canvasで `npm run test:shopping`。ECの既存出品・購入の回帰確認はECで `npm run test:shopping-regression`。EC起点の統合確認はECで `npx playwright test --config e2e/configs/playwright.integration.config.js`。すべて実APIと専用MySQLを使用する。
 
 所有者分離は固定所有者の画面から切り替えられないため、別所有者の一時庭を専用MySQLへ作成する `verification.verify_shopping_lists` で独立確認する。実FastAPIを通して一覧の非表示・詳細404・クライアントownerIdの無効を確認し、一時庭を削除する。
 
