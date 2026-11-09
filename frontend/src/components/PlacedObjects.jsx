@@ -9,7 +9,7 @@ export function PlacedObjects({ document, assets, selectedObject, disabled, onSe
           </div>
           <span className="count-tag">{document.objects.length} / 200</span>
         </div>
-        {document.objects.length === 0 ? (<div className="inspector-empty"><UiIcon name="leaf" size={30}/><strong>最初の商品を置く</strong><p>商品を庭へドラッグするか、<br />「庭に配置」を選んで地面をクリックします。</p></div>) : (<ul className="placed-list">
+        {document.objects.length === 0 ? (<div className="inspector-empty"><UiIcon name="leaf" size={30}/><strong>最初の商品を置く</strong><p>商品を庭の地面へドラッグして配置します。</p></div>) : (<ul className="placed-list">
             {document.objects.map((object, index) => {
                 const asset = assetForObject(object, assetMap);
                 return (<li key={object.id}>

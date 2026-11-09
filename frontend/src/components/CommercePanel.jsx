@@ -67,7 +67,6 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
               {row.unplaced && <small data-testid="unplaced-ec-item">ECで追加（庭に未配置）</small>}
               {row.productId && commerce.products.isSuccess && !product && <p role="status">この店舗の販売対象ではないため購入できません。保存済みの配置は維持されます。</p>}
               {product && <p className="commerce-price"><small>小計の目安</small>{yen(product.priceYen * row.quantity)}</p>}
-              <button type="button" disabled={disabled || !asset} onClick={() => useEditorStore.getState().selectAsset(asset.id)}>庭に配置</button>
             </div>
           </article>;
         })}

@@ -56,7 +56,7 @@
 
 - `npm run check:js`と`frontend/jsconfig.json`を追加。編集画面だけでなく`frontend/src`全体をcheckJsで検証する。既存のJavaScript推論に合わせstrictは無効。依存パッケージのJavaScript実装まで検査しないよう`maxNodeModuleJsDepth: 0`を明示する。アプリの検査除外やts-ignoreは追加しない。
 - Dialog等の任意props、DOMのHTMLElement/SVGElement判定、ApiError判定、OrbitControls/Meshの実クラス判定、CSS変数・カメラ座標・診断関数の型を修正。全体検査で発見した庭作成mutationの引数型と植物プレビューの任意objectIdも修正した。
-- 写真校正のテストOは、独立した庭に実APIで1本の初期樹木を保存し、現在の「買い物リスト → 庭に配置」から3地点を実マウスで配置する。初期fixture以外の配置をAPIやストア操作で代替しない。独立カメラによる座標・高さ投影の期待値は維持した。完成イメージは現在のメニューから開く。
+- 写真校正のテストOは、独立した庭に実APIで1本の初期樹木を保存し、買い物リストのカードを3地点へ実マウスでドラッグして配置する（issue #56 で「庭に配置」ボタンを削除したため）。初期fixture以外の配置をAPIやストア操作で代替しない。独立カメラによる座標・高さ投影の期待値は維持した。完成イメージは現在のメニューから開く。
 - 初期樹木を含む4モデルの読み込み、校正の適用・取消・実寸変更、再読み込みと実API JSONの一致、完成イメージを確認する。庭は検証後も保持する。画像とJSONは`artifacts/e2e/photo-calibration-current/`。
 - checkJs（全フロント）、対象3ファイルのE2E TypeScript検査、lint、フロントビルド、Python APIのlint/compileが成功。依存・ロックファイル、API契約、DB構造に変更なし。
 - 最終回帰: `npm run test:e2e -- e2e/photo-interaction.spec.ts e2e/editor-transform-regression.spec.ts e2e/photo-scale.spec.ts e2e/photo-calibration.spec.ts` → **11件成功、失敗0件（3.4分）**。レポートは`artifacts/e2e/type-ui-regression/report/index.html`、今回の実寸編集の画像/JSONは`artifacts/e2e/type-ui-regression/scale-evidence/`。全E2Eスイートではなく、本変更に関連する4ファイルを実行した結果である。

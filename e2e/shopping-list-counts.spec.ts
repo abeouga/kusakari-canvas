@@ -8,7 +8,7 @@ import { seedGardenPhoto } from './garden-photo';
 const evidence = 'artifacts/e2e/shopping-list-counts';
 const ec = process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286';
 
-// issue #54: 買い物リストのカードに −/＋（必要数）はなく、右上の丸囲み数字が庭に設置した数を配置・削除・再読み込み後も示す。
+// issue #54・#56: 買い物リストのカードに「庭に配置」と −/＋（必要数）はなく、右上の丸囲み数字が庭に設置した数を配置・削除・再読み込み後も示す。
 test('shopping list cards show the placed count as a circled badge without needed-count buttons', async ({ page, request }) => {
   await mkdir(evidence, { recursive: true });
   const product = await createTestProduct(request, 'E2E設置数-' + randomUUID().slice(0, 8));
@@ -33,6 +33,8 @@ test('shopping list cards show the placed count as a circled badge without neede
     await expect(panel).toBeVisible();
     await expect(panel.getByRole('button', { name: /必要数/ })).toHaveCount(0);
     await expect(panel).not.toContainText('必要数');
+    // issue #56: 配置はカードのドラッグで行い、「庭に配置」ボタンは置かない。
+    await expect(panel.getByRole('button', { name: '庭に配置' })).toHaveCount(0);
 
     const line = page.getByTestId(`shopping-line-${product.id}`);
     const badge = line.getByTestId('placement-count');
@@ -64,6 +66,9 @@ test('shopping list cards show the placed count as a circled badge without neede
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     await expect(badge).toHaveText('2');
     await expect(unplaced.getByTestId('placement-count')).toHaveCount(0);
+    // 証跡の画面が読み込み途中にならないよう、モデルと価格の表示を待つ。
+    await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 2 / 2');
+    await expect(line).toContainText('小計の目安');
     await line.screenshot({ path: `${evidence}/card-badge.png` });
     await page.screenshot({ path: `${evidence}/after-reload.png` });
     const saved = await read();
