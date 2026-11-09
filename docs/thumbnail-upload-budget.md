@@ -1,8 +1,8 @@
 # サムネイル送信容量（2026-10-19）
 
 ## Context
-Canvasの編集画面は庭サムネイルを表示しないが、ECの `/cart#garden-shopping-lists` は
-ShoppingListOverview → EC thumbnail API → Canvas thumbnail API経由で表示する。
+Canvasの編集画面は庭サムネイルを表示しないが、ECのカート画面の「庭に設置したものから追加」ポップアップ
+（2026-11-09以前は `/cart#garden-shopping-lists` の一覧）は、EC thumbnail API → Canvas thumbnail API経由で表示する。
 保存処理は未使用ではない。PNGを640×400へ縮小するだけでは詳細な写真で460,000バイトの
 リクエスト上限を超え、413となる。失敗は画面へ通知せず最大3回試行していた。
 

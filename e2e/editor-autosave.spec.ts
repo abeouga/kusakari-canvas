@@ -204,7 +204,7 @@ test('delayed save allows newer edits, serializes revisions and flushes before E
     await page.getByRole('button', { name: 'リストを確認', exact: true }).click();
     expect(page.url()).toContain(`/gardens/${garden.id}`);
     release();
-    await expect(page).toHaveURL(`${ec}/cart/gardens/${garden.id}`);
+    await expect(page).toHaveURL(`${ec}/cart?garden=${garden.id}`);
     const stored = await read(request, garden.id);
     expect(stored.revision).toBe(garden.revision + 2);
     expect(snapshots).toHaveLength(2);

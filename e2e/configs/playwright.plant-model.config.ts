@@ -3,6 +3,8 @@ import { fromRoot, repoRoot } from './paths.js';
 
 // Optional Google Fonts must not hold screenshots of already-loaded GLB models indefinitely.
 process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY = '1';
+// Same override as the full config: KUSAKARI_EC_DIRECTORY points at an EC checkout other than ../kusakari-ec.
+const ecDirectory = fromRoot(process.env.KUSAKARI_EC_DIRECTORY || '../kusakari-ec');
 
 export default defineConfig({
   testDir: fromRoot('e2e'), testMatch: 'plant-model-product.spec.ts', workers: 1, timeout: 360000,
@@ -16,12 +18,12 @@ export default defineConfig({
   webServer: [
     { command: 'npm run dev:api', cwd: repoRoot, url: 'http://127.0.0.1:18081/api/assets', reuseExistingServer: false, timeout: 120000,
       env: { KUSAKARI_CANVAS_PROFILE: 'e2e', KUSAKARI_CANVAS_PORT: '18081' } },
-    { command: 'node scripts/api.mjs e2e', cwd: fromRoot('../kusakari-ec'), url: 'http://127.0.0.1:18186/api/health',
+    { command: 'node scripts/api.mjs e2e', cwd: ecDirectory, url: 'http://127.0.0.1:18186/api/health',
       reuseExistingServer: false, timeout: 90000, env: { KUSAKARI_CANVAS_API_URL: 'http://127.0.0.1:18081',
         KUSAKARI_EC_E2E_API_PORT: '18186', KUSAKARI_EC_E2E_WEB_ORIGIN: 'http://127.0.0.1:15286' } },
     { command: 'npm --workspace frontend run dev -- --host 127.0.0.1 --port 15173 --strictPort', cwd: repoRoot, url: 'http://127.0.0.1:15173', reuseExistingServer: false,
       env: { KUSAKARI_CANVAS_API_TARGET: 'http://127.0.0.1:18081', VITE_KUSAKARI_EC_URL: 'http://127.0.0.1:15286/' } },
-    { command: 'npm --workspace frontend run dev -- --host 127.0.0.1 --port 15286 --strictPort', cwd: fromRoot('../kusakari-ec'), url: 'http://127.0.0.1:15286', reuseExistingServer: false,
+    { command: 'npm --workspace frontend run dev -- --host 127.0.0.1 --port 15286 --strictPort', cwd: ecDirectory, url: 'http://127.0.0.1:15286', reuseExistingServer: false,
       env: { KUSAKARI_EC_API_TARGET: 'http://127.0.0.1:18186', VITE_KUSAKARI_CANVAS_URL: 'http://127.0.0.1:15173/' } },
   ],
 });

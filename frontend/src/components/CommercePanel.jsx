@@ -79,7 +79,7 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
           </article>;
         })}
         <button className="button button-primary shopping-list-link" type="button" disabled={disabled}
-          onClick={() => onNavigate(new URL('/cart/gardens/' + document.id, ecUrl).href)}>リストを確認<UiIcon name="arrow" size={15}/></button>
+          onClick={() => onNavigate(new URL('/cart?garden=' + encodeURIComponent(document.id), ecUrl).href)}>リストを確認<UiIcon name="arrow" size={15}/></button>
       </section>
     </div>
   </aside>;
