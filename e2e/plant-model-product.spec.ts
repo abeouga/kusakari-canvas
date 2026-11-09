@@ -151,9 +151,9 @@ test('seller features create six plant compositions; catalog and shopping-list d
     await writeFile(`${evidence}/products.json`, JSON.stringify(products, null, 2));
     const ecPage = await context.newPage();
     expect((await ecPage.request.get(`${ec}/api/cart`).then((r) => r.json())).items).toHaveLength(0);
-    await ecPage.goto(`${ec}/cart/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
+    await ecPage.goto(`${ec}/cart?garden=${garden.id}`, { waitUntil: 'domcontentloaded' });
     await ecPage.getByRole('checkbox', { name: products[0].name + 'を選択', exact: true }).check();
-    await ecPage.getByRole('button', { name: '選択した商品をカートに追加', exact: true }).click();
+    await ecPage.getByRole('button', { name: /点をカートに追加$/ }).click();
     await ecPage.waitForURL(`${ec}/cart`);
     await expect(ecPage.getByText(products[0].name, { exact: true })).toBeVisible();
     await ecPage.close();

@@ -95,3 +95,23 @@ DBスキーマとGardenDocumentの形式は変更しない。Canvasで配置を�
 ### Verification
 
 ECで `npx playwright test --config playwright.shopping-picker.config.js`（実Cognito・実API・専用MySQL）の「a product saved from EC appears in the Canvas list…」で確認する。ECで追加 → Canvasで1点・未配置表示 → 1個配置しても1点 → 2個で2点 → 再読み込み後も2点、ECの詳細も同じ数量であることを確かめる。画面とJSONはEC側の `artifacts/shopping-picker/canvas-ec-item-*` に保存する。CanvasとECの両方を認証付きで起動する構成がEC側にあるため、検証はEC側に置く。
+
+## 2026-11-09: ECの庭専用リスト画面をやめ、カートのポップアップに統一（EC issue #88）
+
+### Context
+
+右パネルの「リストを確認」はECの `/cart/gardens/{gardenId}` を開いていた。ECにはカート下部の「庭に設置したものから追加」ポップアップ（EC issue #64）もあり、庭の商品をカートへ入れる入口が2つあった。
+
+### Decision
+
+- 「リストを確認」はEC `/cart?garden={gardenId}` を開く。ECはカート画面で「庭に設置したものから追加」ポップアップを自動で開き、遷移元の庭を選んだ状態にする。
+- 上記Decisionの「EC `/cart` に庭別一覧、`/cart/gardens/{gardenId}` に商品選択画面を設ける」と「全件見送りなら詳細画面に留まる」は廃止する。ECの古いURLはカート画面とポップアップへ転送される。
+- 保存を完了してから遷移する動作、移送APIと見送り理由の扱いは変えない。
+
+### Alternatives
+
+Canvasから配置商品をカートへ自動追加する方式（EC issue #80）は、購入する商品を利用者が選ぶ手順がなくなるため採用しない。
+
+### Consequences
+
+APIとGardenDocumentの形式は変更しない。ポップアップではカートにある商品を選び直せないため、ポップアップからは同じ商品の数量を加算しない（数量はカートで変更する）。

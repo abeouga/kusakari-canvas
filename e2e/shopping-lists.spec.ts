@@ -103,36 +103,31 @@ test('two gardens have separate live lists; selection adds to the single EC cart
     await saved(page, 1);
     expect(await loadGarden(request, a.id)).toEqual(snapshotA);
 
+    // EC issue #88: the garden-only list screens are gone; the cart's "add from garden" dialog lists each garden.
     const ecPage = await context.newPage();
-    await ecPage.goto(`${ec}/cart#garden-shopping-lists`, { waitUntil: 'domcontentloaded' });
-    await expect(ecPage.getByTestId(`garden-list-${a.id}`)).toContainText('必要数 2点');
-    await expect(ecPage.getByTestId(`garden-list-${b.id}`)).toContainText('必要数 1点');
-    await ecPage.getByTestId(`garden-list-${b.id}`).getByRole('button', { name: '買い物リストを開く' }).click();
-    const check = ecPage.getByRole('checkbox', { name: product.name + 'を選択', exact: true });
+    await ecPage.goto(`${ec}/cart?garden=${a.id}`, { waitUntil: 'domcontentloaded' });
+    const dialog = ecPage.getByRole('dialog', { name: '庭に設置したものから追加', exact: true });
+    const line = dialog.getByTestId(`garden-item-product:${product.id}`);
+    await expect(line).toContainText('必要数 2点');
+    await dialog.getByRole('button', { name: new RegExp(b.name) }).click();
+    await expect(line).toContainText('必要数 1点');
+    const check = line.getByRole('checkbox', { name: product.name + 'を選択', exact: true });
     await expect(check).not.toBeChecked();
     await check.check();
-    // A real update from the Canvas page is polled by the already-open EC detail page.
+    // A real update from the Canvas page is polled by the already-open EC dialog; a changed list clears the selection.
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
     await drag(page, page.getByTestId(`shopping-line-${product.id}`), 0.65);
     await saved(page, 2);
-    await expect(ecPage.getByTestId(`ec-shopping-line-product:${product.id}`)).toContainText('必要数 2点', { timeout: 5000 });
+    await expect(line).toContainText('必要数 2点', { timeout: 5000 });
     await expect(check).not.toBeChecked();
-    await ecPage.getByRole('button', { name: '全選択', exact: true }).click();
+    await dialog.getByRole('button', { name: 'すべて選択', exact: true }).click();
     await expect(check).toBeChecked();
-    await ecPage.getByRole('button', { name: '選択解除', exact: true }).click();
-    await expect(check).not.toBeChecked();
-    const cart = await ecPage.request.get(`${ec}/api/cart`).then(r => r.json());
-    expect((await ecPage.request.put(`${ec}/api/cart/items/${product.id}`, { data: { revision: cart.revision, quantity: 1 } })).ok()).toBeTruthy();
+    await dialog.getByRole('button', { name: '2点をカートに追加', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(ecPage).toHaveURL(`${ec}/cart`);
+    expect((await ecPage.request.get(`${ec}/api/cart`).then(r => r.json())).items[0].quantity).toBe(2);
     await ecPage.reload({ waitUntil: 'domcontentloaded' });
-    await check.check();
-    await ecPage.getByRole('button', { name: '選択した商品をカートに追加', exact: true }).click();
-    await ecPage.waitForURL(`${ec}/cart`);
-    expect((await ecPage.request.get(`${ec}/api/cart`).then(r => r.json())).items[0].quantity).toBe(3);
-    await ecPage.getByRole('tab', { name: '庭の買い物リスト', exact: true }).click();
-    await expect(ecPage.getByTestId(`garden-list-${b.id}`)).toContainText('必要数 2点');
-    await ecPage.getByRole('tab', { name: /^カート/ }).click();
-    await ecPage.reload({ waitUntil: 'domcontentloaded' });
-    await expect(ecPage.getByText(product.name, { exact: true })).toBeVisible();
+    await expect(ecPage.locator('.cart-line').filter({ hasText: product.name })).toHaveCount(1);
     await ecPage.screenshot({ path: `${evidence}/ec-cart-and-gardens.png`, fullPage: true });
     await writeFile(`${evidence}/garden-a.json`, JSON.stringify(snapshotA, null, 2));
     await writeFile(`${evidence}/garden-b.json`, JSON.stringify(await loadGarden(request, b.id), null, 2));
@@ -231,7 +226,8 @@ test('autosave failure retains placements, blocks EC navigation and supports ret
     await saved(page, 1);
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
     await page.getByRole('button', { name: 'リストを確認', exact: true }).click();
-    await expect(page).toHaveURL(`${ec}/cart/gardens/${garden.id}`);
+    await expect(page).toHaveURL(`${ec}/cart?garden=${garden.id}`);
+    await expect(page.getByRole('dialog', { name: '庭に設置したものから追加', exact: true })).toBeVisible();
     await expect(page.getByRole('checkbox')).toHaveCount(1);
     await expect(page.getByRole('checkbox')).not.toBeChecked();
     await mkdir(evidence, { recursive: true });
@@ -304,12 +300,12 @@ test('EC shows partial-add reasons and the shopping list fits a mobile screen', 
     const response = await request.put(`${canvas}/gardens/${garden.id}`, { data: { ...garden,
       objects: [object('plant_modular', 0, product), object('plant_modular', 1, product), object('bench_wood', 2)] } });
     expect(response.ok()).toBeTruthy();
-    await page.goto(`${ec}/cart/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${ec}/cart?garden=${garden.id}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('checkbox')).toHaveCount(2);
-    await page.getByRole('button', { name: '全選択', exact: true }).click();
+    await page.getByRole('button', { name: 'すべて選択', exact: true }).click();
     await expect(page.getByRole('checkbox', { name: product.name + 'を選択', exact: true })).toBeChecked();
     expect((await request.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1, expectedStock: body.stock } })).ok()).toBeTruthy();
-    await page.getByRole('button', { name: '選択した商品をカートに追加', exact: true }).click();
+    await page.getByRole('button', { name: '3点をカートに追加', exact: true }).click();
     await expect(page).toHaveURL(`${ec}/cart`);
     await expect(page.locator('.garden-transfer-result')).toContainText('1種類を追加しました');
     await expect(page.locator('.garden-transfer-result')).toContainText('在庫が不足');
@@ -318,7 +314,7 @@ test('EC shows partial-add reasons and the shopping list fits a mobile screen', 
     expect(cart.items[0].product.id).toBe('canvas-bench');
     await mkdir(evidence, { recursive: true });
     await page.screenshot({ path: `${evidence}/ec-partial-result.png`, fullPage: true });
-    await page.getByRole('button', { name: '庭のリストを再確認', exact: true }).click();
+    await page.getByRole('button', { name: '庭から選び直す', exact: true }).click();
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.getByRole('checkbox', { name: product.name + 'を選択', exact: true })).toBeDisabled();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -335,14 +331,14 @@ test('legacy placements with multiple candidates require an explicit purchase pr
   try {
     legacyCandidate(product.id);
     expect((await request.put(`${canvas}/gardens/${garden.id}`, { data: { ...garden, objects: [object('bench_wood')] } })).ok()).toBeTruthy();
-    await page.goto(`${ec}/cart/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${ec}/cart?garden=${garden.id}`, { waitUntil: 'domcontentloaded' });
     const check = page.getByRole('checkbox');
     await expect(check).toBeDisabled();
     await page.getByRole('combobox', { name: /の購入商品/ }).selectOption(product.id);
     await expect(check).toBeEnabled();
     await expect(check).not.toBeChecked();
     await check.check();
-    await page.getByRole('button', { name: '選択した商品をカートに追加', exact: true }).click();
+    await page.getByRole('button', { name: '1点をカートに追加', exact: true }).click();
     await expect(page).toHaveURL(`${ec}/cart`);
     const cart = await page.request.get(`${ec}/api/cart`).then(r => r.json());
     expect(cart.items).toHaveLength(1);
