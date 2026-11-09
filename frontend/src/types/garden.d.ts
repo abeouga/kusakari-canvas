@@ -67,6 +67,6 @@ export interface GardenDocument {
     depth: number;
     objects: GardenObject[];
     photo: GardenPhoto | null;
-    // 買い物リストで利用者が決めた必要数。未指定の行は配置数（ECで追加した未配置商品は1）を必要数とします。
+    // issue #40で保存していた必要数。issue #54で画面から編集・表示しなくなりました。既存の庭の値は読み込み・保存時にそのまま保持します（docs/shopping-targets.md）。
     shoppingTargets?: { key: string; quantity: number }[];
 }

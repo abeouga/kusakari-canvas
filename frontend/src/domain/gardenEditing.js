@@ -38,25 +38,6 @@ export function changeObjectTransform(document, objectId, transform) {
         objects: document.objects.map((object) => object.id === objectId ? { ...object, ...cloneTransform(transform) } : object),
     };
 }
-export function duplicateObject(document, objectId) {
-    const original = document.objects.find((object) => object.id === objectId);
-    if (!original || document.objects.length >= MAX_PLACED_OBJECTS)
-        return null;
-    const halfWidth = document.width / 2;
-    const halfDepth = document.depth / 2;
-    const copy = {
-        ...original,
-        id: crypto.randomUUID(),
-        position: {
-            x: Math.min(halfWidth, Math.max(-halfWidth, original.position.x + 0.5)),
-            y: 0,
-            z: Math.min(halfDepth, Math.max(-halfDepth, original.position.z + 0.5)),
-        },
-        rotation: { ...original.rotation },
-        scale: { ...original.scale },
-    };
-    return addObject(document, copy);
-}
 export function removeObject(document, objectId) {
     if (!document.objects.some((object) => object.id === objectId))
         return null;

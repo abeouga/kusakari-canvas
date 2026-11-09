@@ -82,10 +82,10 @@ test('two gardens have separate live lists; selection adds to the single EC cart
     await saved(page, 1);
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
     const listLine = page.getByTestId(`shopping-line-${product.id}`);
-    await expect(listLine.getByTestId('placement-count')).toHaveText('1/1');
+    await expect(listLine.getByTestId('placement-count')).toHaveText('1');
     await drag(page, listLine, 0.65);
     await saved(page, 2);
-    await expect(listLine.getByTestId('placement-count')).toHaveText('2/2');
+    await expect(listLine.getByTestId('placement-count')).toHaveText('2');
     expect((await page.request.get(`${ec}/api/cart`).then(r => r.json())).items).toHaveLength(0);
     const snapshotA = await loadGarden(request, a.id);
     const listA = await request.get(`${canvas}/gardens/${a.id}/shopping-list`).then(r => r.json());

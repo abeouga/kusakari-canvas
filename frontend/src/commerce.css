@@ -24,9 +24,10 @@
 .commerce-product .commerce-price small { font-weight: 400; }
 .commerce-product > div > button { margin-top: 6px; }
 .commerce-product button,.commerce-scroll .notice-error button { min-height: 32px; border: 1px solid #cbd7c6; padding: 6px 10px; background: #f5f8f2; border-radius: 5px; font-size: 12px; margin-top: 8px; }
-.commerce-count { display: flex; align-items: center; gap: 6px; }
-.commerce-count > span { color: #284d3b; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.commerce-product .commerce-count button { min-width: 28px; min-height: 28px; margin: 0; padding: 0 6px; font-size: 14px; line-height: 1; }
+.commerce-product { position: relative; }
+/* 庭に設置した数を①②…のような丸囲み数字で示す。21以上も同じ見た目にするため文字ではなく円で描く。 */
+.placed-count-badge { position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 6px; box-sizing: border-box; border: 2px solid #284d3b; border-radius: 13px; background: #fff; color: #284d3b; font-size: 13px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.commerce-product > .placed-count-badge + div { padding-right: 40px; }
 .commerce-product form { display: flex; align-items: end; gap: 6px; }
 .commerce-product label { display: grid; gap: 5px; }
 .commerce-product input { width: 70px; min-width: 0; padding: 6px; }
