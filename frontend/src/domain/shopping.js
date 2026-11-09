@@ -49,10 +49,3 @@ export function withSavedItems(rows, saved = []) {
   }
   return merged;
 }
-
-// 配置数は庭のobjects、必要数は保存された指定値（なければ配置数、未配置のEC追加は1）。
-export function neededQuantity(document, row) {
-  const target = document.shoppingTargets?.find((t) => t.key === row.key);
-  if (target) return target.quantity;
-  return row.unplaced ? 1 : row.quantity;
-}

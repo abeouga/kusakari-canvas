@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { productImage, yen } from '../api/commerce';
-import { ecUrl, neededQuantity } from '../domain/shopping';
+import { ecUrl } from '../domain/shopping';
 import { PlacedObjects } from './PlacedObjects';
 import { ProductBrowser } from './ProductBrowser';
 import { ProductDragPreview, showDragPreview } from './ProductDragPreview';
@@ -53,8 +53,6 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
           const object = document.objects.find((o) => row.productId ? o.productId === row.productId : !o.productId && o.assetId === row.assetId);
           const product = commerce.products.data?.find((p) => p.id === row.productId);
           const placed = row.unplaced ? 0 : row.quantity;
-          const needed = neededQuantity(document, row);
-          const setNeeded = (quantity) => useEditorStore.getState().setShoppingTarget(row.key, quantity, commerce.rows.map((r) => r.key));
           let asset = null;
           if (object) asset = placedProductAsset(object, assets);
           else if (product) asset = productAsset(product, assets);
@@ -64,17 +62,11 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
               if (asset) showDragPreview(event, { name: product?.name ?? row.name, imageUrl: product ? productImage(product.imageUrl) : null });
             }}>
             {product ? <img src={productImage(product.imageUrl)} alt="" draggable={false}/> : <span className="commerce-product-noimage" aria-hidden="true"/>}
+            {placed > 0 && <span className="placed-count-badge" data-testid="placement-count" role="img" aria-label={`庭に設置した数 ${placed}`}>{placed}</span>}
             <div><strong>{product?.name ?? row.name}</strong>
-              <div className="commerce-count">
-                <span data-testid="placement-count" aria-label={`配置数${placed} / 必要数${needed}`}>{placed}/{needed}</span>
-                <button type="button" aria-label="必要数を減らす" disabled={disabled || needed <= 1} onClick={() => setNeeded(needed - 1)}>−</button>
-                <button type="button" aria-label="必要数を増やす" disabled={disabled || needed >= 999} onClick={() => setNeeded(needed + 1)}>＋</button>
-                <small>配置数 / 必要数</small>
-              </div>
               {row.unplaced && <small data-testid="unplaced-ec-item">ECで追加（庭に未配置）</small>}
               {row.productId && commerce.products.isSuccess && !product && <p role="status">この店舗の販売対象ではないため購入できません。保存済みの配置は維持されます。</p>}
               {product && <p className="commerce-price"><small>小計の目安</small>{yen(product.priceYen * row.quantity)}</p>}
-              <button type="button" disabled={disabled || !asset} onClick={() => useEditorStore.getState().selectAsset(asset.id)}>庭に配置</button>
             </div>
           </article>;
         })}

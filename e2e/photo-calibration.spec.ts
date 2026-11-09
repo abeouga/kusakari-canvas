@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { expect, test, type Page } from './test.js';
+import { expect, test, type Locator, type Page } from './test.js';
 import { PerspectiveCamera, Vector3 } from 'three';
 import { api } from './api-url.js';
 import { shrub } from './occlusion-helpers';
@@ -17,6 +17,18 @@ function project(values: number[], camera = source): ImagePoint {
 }
 const corners = [[-5, 0, 4], [5, 0, 4], [5, 0, -4], [-5, 0, -4]].map((p) => project(p));
 const requestBody = { imageWidth: 1000, imageHeight: 750, points: corners, referenceWidth: 10, referenceDepth: 8 };
+
+// 写真上の地点（画像座標）へ、買い物リストのカードを実マウスでドラッグして配置する。
+async function dropAtPoint(page: Page, source: Locator, point: ImagePoint) {
+  const target = page.getByTestId('photo-model-canvas').locator('canvas');
+  await page.locator('.photo-stage').scrollIntoViewIfNeeded();
+  const screen = await page.locator('.photo-stage').evaluate((element, p) => {
+    const v = new DOMPoint(p.x * 1000, p.y * 750).matrixTransform((element as SVGSVGElement).getScreenCTM()!);
+    return { x: v.x, y: v.y };
+  }, point);
+  const bounds = (await target.boundingBox())!;
+  await source.dragTo(target, { sourcePosition: { x: 35, y: 35 }, targetPosition: { x: screen.x - bounds.x, y: screen.y - bounds.y } });
+}
 
 async function clickPoint(page: Page, selector: string, point: ImagePoint) {
   await page.locator(selector).scrollIntoViewIfNeeded();
@@ -81,8 +93,7 @@ test('O. 既知カメラの写真で校正・高さ投影・写真配置・MySQL
     const ids: string[] = [];
     for (const [i, location] of locations.entries()) {
       await page.getByRole('tab', { name: /買い物リスト/ }).click();
-      await page.getByTestId('shopping-line-tree_oak').getByRole('button', { name: '庭に配置' }).click();
-      await clickPoint(page, '.photo-stage', project(location));
+      await dropAtPoint(page, page.getByTestId('shopping-line-tree_oak'), project(location));
       await page.getByRole('tab', { name: '商品一覧', exact: true }).click();
       await expect(page.getByTestId(`object-row-${i + 1}`)).toBeVisible();
       ids.push((await page.getByTestId(`object-row-${i + 1}`).getAttribute('data-object-id'))!);
