@@ -38,3 +38,7 @@ test-results/
 *.pem
 *.key
 *accessKeys*.csv
+
+# SysOverRayの.NETビルド途中生成物。配布物の sysover-ray2/app/ は管理対象のまま。
+sysover-ray2/**/bin/
+sysover-ray2/**/obj/
