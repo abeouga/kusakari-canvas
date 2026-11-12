@@ -9,10 +9,10 @@ const evidence = 'artifacts/e2e/shopping-list-counts';
 const ec = process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286';
 
 // issue #54・#56: 買い物リストのカードに「庭に配置」と −/＋（必要数）はなく、右上の丸囲み数字が庭に設置した数を配置・削除・再読み込み後も示す。
-test('shopping list cards show the placed count as a circled badge without needed-count buttons', async ({ page, request }) => {
+test('shopping list cards show the placed count as a circled badge without needed-count buttons', async ({ page, request, seller }) => {
   await mkdir(evidence, { recursive: true });
-  const product = await createTestProduct(request, 'E2E設置数-' + randomUUID().slice(0, 8));
-  const ecOnly = await createTestProduct(request, 'E2E未設置-' + randomUUID().slice(0, 8));
+  const product = await createTestProduct('E2E設置数-' + randomUUID().slice(0, 8));
+  const ecOnly = await createTestProduct('E2E未設置-' + randomUUID().slice(0, 8));
   const created = await request.post(`${api}/gardens`, { data: { name: `設置数検証-${randomUUID().slice(0, 8)}` } });
   expect(created.status()).toBe(201);
   const garden = await created.json();
@@ -77,7 +77,7 @@ test('shopping list cards show the placed count as a circled badge without neede
     await writeFile(`${evidence}/garden.json`, JSON.stringify(saved, null, 2));
   } finally {
     await request.delete(`${api}/gardens/${garden.id}`);
-    await request.delete(`${ec}/api/products/${product.id}`);
-    await request.delete(`${ec}/api/products/${ecOnly.id}`);
+    await seller.delete(`${ec}/api/products/${product.id}`);
+    await seller.delete(`${ec}/api/products/${ecOnly.id}`);
   }
 });

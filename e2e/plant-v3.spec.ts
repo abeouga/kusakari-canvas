@@ -1,4 +1,4 @@
-import { openPlantSettings, publishProduct } from './seller-wizard';
+import { expectPreviewLoaded, openPlantSettings, publishProduct } from './seller-wizard';
 import { seedGardenPhoto } from './garden-photo';
 import { test, expect } from './test.js';
 import { randomUUID } from 'node:crypto';
@@ -11,47 +11,45 @@ import { showProductsTab } from './catalog-fixture';
 const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286'), api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api'), evidence = 'artifacts/plant-v4/e2e';
 type Product = { id: string; name: string; canvasMaterialCode: string; modelComposition: PlantComposition };
 
-test('effective seller controls and current preview persist through the real EC API', async ({ page, request }) => {
+test('effective seller controls and current preview persist through the real EC API', async ({ request, seller, sellerPage }) => {
   await mkdir(evidence, { recursive: true }); let productId: string | undefined;
   try {
-    await page.goto(`${ec}/seller/products/new`);
-    const form = page.locator('.product-form');
+    await sellerPage.goto(`${ec}/seller/products/new`);
+    const form = sellerPage.locator('.product-form');
     await form.getByLabel('商品名', { exact: true }).fill('V3設定検証');
-    await form.getByLabel('商品番号', { exact: true }).fill(`V3-${randomUUID().slice(0, 12)}`);
     await form.getByLabel('商品説明', { exact: true }).fill('専用DBの検証用データ');
     await form.getByLabel('選択店舗の在庫', { exact: true }).fill('10'); await openPlantSettings(form, '60');
     await form.getByRole('combobox', { name: '植物タイプ', exact: true }).selectOption('grass');
     await expect(form.locator('[name="modelCrownShape"]')).toBeHidden();
-    await expect(form.getByLabel('根元の太さ（cm）', { exact: true })).toBeHidden();
-    await expect(form.getByLabel('枝の角度（度）', { exact: true })).toBeHidden();
-    await form.getByLabel('植物の幅（cm）', { exact: true }).fill('70');
-    await form.getByLabel('葉の大きさ（cm）', { exact: true }).fill('25');
+    await expect(form.getByLabel('根元の太さ', { exact: true })).toBeHidden();
+    await expect(form.getByLabel('枝の角度', { exact: true })).toBeHidden();
+    await form.getByLabel('植物の幅', { exact: true }).fill('70');
+    await form.getByLabel('葉の大きさ', { exact: true }).fill('25');
     await form.getByRole('slider', { name: '葉の密度', exact: true }).focus();
     await form.getByRole('slider', { name: '葉の密度', exact: true }).press('End');
-    await form.getByRole('button', { name: '植物のプレビューを確認' }).click();
-    await page.locator('iframe[title="植物の3Dプレビュー"]').scrollIntoViewIfNeeded();
-    await expect(page.frameLocator('iframe[title="植物の3Dプレビュー"]').getByTestId('preview-loaded')).toHaveText('loaded', { timeout: 60000 });
-    const saving = page.waitForResponse((r) => r.url().endsWith('/api/products') && r.request().method() === 'POST');
+    await expectPreviewLoaded(sellerPage, form);
+    const saving = sellerPage.waitForResponse((r) => r.url().endsWith('/api/products') && r.request().method() === 'POST');
     await publishProduct(form);
     const response = await saving; expect(response.status(), await response.text()).toBe(200);
     const saved = await response.json(); productId = saved.id;
+    expect(saved.sku).toMatch(/^KS-\d{8}-/); // assigned by the server; the new-product form has no field for it
     expect(saved.modelComposition.version).toBe(5); expect(saved.modelComposition.catalogVersion).toBe(4); expect(saved.modelComposition.fitScale).toEqual([1, 1, 1]);
-    expect(saved.plantModelProfile.leafSizeCm).toBe(25);
-    await page.reload();
+    expect(saved.plantModelProfile).toMatchObject({ plantType: 'grass', widthCm: 70, leafSizeCm: 25, leafDensity: 'dense' });
+    await sellerPage.reload();
     const products = await request.get(`${ec}/api/products?storeId=1`).then((r) => r.json());
     expect(products.find((p: Product) => p.id === productId).modelComposition).toEqual(saved.modelComposition);
-    await page.screenshot({ path: `${evidence}/seller-reloaded.png` });
+    await sellerPage.screenshot({ path: `${evidence}/seller-reloaded.png` });
     await writeFile(`${evidence}/seller-product.json`, JSON.stringify(saved, null, 2));
-  } finally { if (productId) expect((await request.delete(`${ec}/api/products/${productId}`)).ok()).toBeTruthy(); }
+  } finally { if (productId) expect((await seller.delete(`${ec}/api/products/${productId}`)).ok()).toBeTruthy(); }
 });
 
-test('five natural models, frozen v1-v4 snapshots, placement, edits and reload retain canonical geometry', async ({ page, request }) => {
+test('five natural models, frozen v1-v4 snapshots, placement, edits and reload retain canonical geometry', async ({ page, request, seller }) => {
   await mkdir(evidence, { recursive: true }); const products: Product[] = [];
   let garden: GardenDocument | undefined; const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   try {
     for (const preset of plantPresetsV3.filter((p) => Object.hasOwn(referenceProfiles, String(p.key)))) {
-      const response = await request.post(`${ec}/api/products`, { data: { ...productInput(preset, preset.imageUrl),
+      const response = await seller.post(`${ec}/api/products`, { data: { ...productInput(preset, preset.imageUrl),
         sku: `V3-${randomUUID().slice(0, 12)}`, name: `V3検証-${preset.name}` } });
       expect(response.status(), await response.text()).toBe(200);
       const product = await response.json(); products.push(product);
@@ -101,6 +99,6 @@ test('five natural models, frozen v1-v4 snapshots, placement, edits and reload r
     await writeFile(`${evidence}/products.json`, JSON.stringify(products, null, 2));
   } finally {
     if (garden) expect((await request.delete(`${api}/gardens/${garden.id}`)).ok()).toBeTruthy();
-    for (const p of products) expect((await request.delete(`${ec}/api/products/${p.id}`)).ok()).toBeTruthy();
+    for (const p of products) expect((await seller.delete(`${ec}/api/products/${p.id}`)).ok()).toBeTruthy();
   }
 });

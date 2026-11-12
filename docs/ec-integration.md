@@ -59,3 +59,21 @@ Alternatives: AI のリクエストに `storeId` を任意の項目として残�
 
 Consequences: 庭の持ち主は今までどおり EC の会員 ID（UUID）で、DB の変更はない。EC と Canvas の DB は、両方を初期化する必要がある（[手順](database-reset.md)）。次のものは含めていない。店舗側のアカウントに Canvas を使わせない制限（#64）。配置した商品が買えなくなったときに配置を外す処理、配置と買い物リストへの店舗名の表示、「在庫なし」の表示（#65）。E2E の準備では、テスト用の出店者を「サンプルの店舗1の MANAGER の担当者」として作る。
 
+
+## 2026-11-12 Canvas を購入者のアカウントだけにする（#64）
+
+Context: EC の会員の種別が5つ（`USER`・`ADMIN`・`SHOP_OWNER`・`SHOP_STAFF`・`SHOP_OWNER_APPLICANT`）になり、店舗側のアカウント（オーナー・担当者）と申請中のアカウントは購入できないと決まった（abeouga/kusakari-ec#108・#109、2026-11-12 の決定）。Canvas は庭の配置から EC の買い物リストへ商品を送る購入者の機能なので、購入できないアカウントが庭を作っても使い道がない。Canvas はこれまで、ログインしているかと会員 ID だけを見て、種別を見ていなかった。
+
+Decision:
+
+- 画面：EC の `GET /api/auth/me` の `accountType` が `SHOP_OWNER`・`SHOP_STAFF`・`SHOP_OWNER_APPLICANT` のとき、庭の一覧・編集画面を出さずに「Canvas は購入者のアカウントで使えます。」と案内し、EC のトップへ戻るリンクを出す（`AuthGate`）。
+- API：`auth.py` は、EC から受け取ったログイン情報（読み取りは `/api/auth/me`、書き込みは `/api/auth/verify`）の `accountType` が上の3つなら、403（`BUYER_ACCOUNT_REQUIRED`、「Canvas は購入者のアカウントで使えます。」）を返す。`USER` と `ADMIN` は今までどおり使える。知らない種別や種別のない応答は、認証を確かめられないものとして 503 にする。
+- 例外：植物モデルの組み立て（`POST /api/model-assemblies/resolve`）と、植物のプレビュー画面（`/model-preview`）は店舗側のアカウントにも開く。EC の出店者の商品登録が、プレビューを枠で表示し、保存のときに EC のサーバーから出店者のログイン情報でこの API を呼ぶため。庭のデータは扱わない計算だけの API で、ログインは引き続き必要。
+
+Alternatives:
+
+- 店舗側のアカウントにも Canvas を使わせる案は採用しない。店舗側は購入できないと決まっており、庭から買い物リストへ送る導線が使えないため。
+- 植物モデルの API も止める案は採用しない。出店者が植物の商品を登録できなくなるため。
+- EC の `/api/auth/verify` が種別で拒否するのを待つ案は採用しない。読み取り（`/api/auth/me`）は拒否されないので、Canvas の側で種別を見る必要がある。
+
+Consequences: 店舗側・申請中のアカウントで Canvas を開くと、案内だけが出て、API も 403 を返す。運営（`ADMIN`）は今までどおり使える。E2E は、Canvas と買い物リストを購入者のテストアカウント（`test.user@example.com`、`USER`）で、商品の登録・変更・削除を出店者のテストアカウント（`test.seller@example.com`、店舗1の MANAGER）で行う。`e2e/buyer-only.spec.ts` で、テスト用の出店者の種別を EC の E2E 用 DB で `SHOP_STAFF`・`SHOP_OWNER`・`SHOP_OWNER_APPLICANT`・`ADMIN` に変えて確かめ、終わったら元に戻す。

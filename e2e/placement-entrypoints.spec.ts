@@ -12,7 +12,7 @@ for (const mode of ['photo','3d']) test(`pointer drag and product drop reject th
   const photo=await syntheticPhoto(page);
   photo.boundary=[{x:.1,y:.9},{x:.9,y:.9},{x:.9,y:.5},{x:.5,y:.5},{x:.5,y:.1},{x:.1,y:.1}];
   const garden=await createScene(request,[],photo,[]);
-  const product=await createTestProduct(request,`E2E placement ${mode}`);
+  const product=await createTestProduct(`E2E placement ${mode}`);
   await openScene(page,garden);
   if(mode==='3d') {
     await page.getByRole('button',{name:'3D庭',exact:true}).click();

@@ -121,6 +121,7 @@ async function comparePixels(page: Page, first: string, second: string, photoSou
     let photo = null;
     if (photoSource) photo = await decode(photoSource);
     let differences = 0;
+    let maximum = 0;
     let alphaDifferences = 0;
     let coverageDifferences = 0;
     let plantSquaredError = 0;
@@ -133,6 +134,7 @@ async function comparePixels(page: Page, first: string, second: string, photoSou
         const leftValue = left.pixels[index + channel];
         const rightValue = right.pixels[index + channel];
         if (leftValue !== rightValue) differences++;
+        maximum = Math.max(maximum, Math.abs(leftValue - rightValue));
         if (channel === 3 && leftValue !== rightValue) alphaDifferences++;
         if (channel < 3) squaredError += (leftValue - rightValue) ** 2;
         if (photo) {
@@ -149,7 +151,7 @@ async function comparePixels(page: Page, first: string, second: string, photoSou
     }
     let plantRgbRmse = 0;
     if (plantPixelCount > 0) plantRgbRmse = Math.sqrt(plantSquaredError / (plantPixelCount * 3));
-    return { differences, alphaDifferences, coverageDifferences, plantRgbRmse };
+    return { differences, maximum, alphaDifferences, coverageDifferences, plantRgbRmse };
   }, { first, second, photoSource });
 }
 
@@ -249,9 +251,13 @@ for (const variant of variants) {
       await mkdir(artifactDirectory, { recursive: true });
       await writeFile(resolve(artifactDirectory, `hidden-${variant.name}-before.png`), hiddenViewBefore);
       await writeFile(resolve(artifactDirectory, `hidden-${variant.name}-after.png`), hiddenViewAfter);
+      // The screen shot also takes the photo (an SVG image) under the transparent WebGL canvas. Chromium draws the
+      // downscaled portrait photo's text in one of two ways that differ by one level (about 200 values), even
+      // between two screen shots in a row with no operation (canvas#69). The WebGL output itself is compared exactly
+      // above (captureImage), so only a one-level difference is accepted here.
       expect((await comparePixels(page,
         `data:image/png;base64,${hiddenViewBefore.toString('base64')}`,
-        `data:image/png;base64,${hiddenViewAfter.toString('base64')}`)).differences).toBe(0);
+        `data:image/png;base64,${hiddenViewAfter.toString('base64')}`)).maximum).toBeLessThanOrEqual(1);
 
       if (variant.calibrated) {
         // Explicit capture-copy fault verifies finally restores visibility and renderer dimensions.

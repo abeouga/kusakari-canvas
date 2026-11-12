@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import type { GardenDocument, PlantComposition } from '../frontend/src/types/garden';
 import { showProductsTab } from './catalog-fixture';
+import { sellerRequest } from './seller-session.js';
 
 const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286');
 const canvas = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
@@ -18,12 +19,13 @@ const profile = { plantType: 'flower', heightCm: 55, widthCm: 65, crownShape: 'r
   leafColor: '#4f793b', flowerEnabled: true, flowerShape: 'five', flowerSizeCm: 8, flowerColor: '#9062ba', seed: 12345 };
 
 async function createProduct(request: APIRequestContext) {
+  const seller = await sellerRequest();
   const products = await request.get(`${ec}/api/products?storeId=1`).then(r => r.json());
   const excluded = new Set(['id', 'unit', 'source', 'sourceUpdatedAt', 'publishedAt', 'active', 'publicationStatus', 'modelComposition', 'canvasMaterialCode', 'sellerStoreId', 'sellerStoreName']);
   const input = Object.fromEntries(Object.entries(products[0]).filter(([key]) => !excluded.has(key)));
   const body = { ...input, storeId: 1, name: 'リスト用草花-' + randomUUID().slice(0, 8),
     sku: 'SL-' + randomUUID().slice(0, 12), stock: 20, heightCm: 55, plantModelProfile: profile };
-  const response = await request.post(`${ec}/api/products`, { data: body });
+  const response = await seller.post(`${ec}/api/products`, { data: body });
   expect(response.status()).toBe(200);
   return { product: await response.json() as Product, body };
 }
@@ -64,7 +66,7 @@ function legacyCandidate(productId: string, remove = false) {
   if (result.status !== 0) throw new Error('Dedicated legacy candidate fixture failed: ' + result.stderr);
 }
 
-test('two gardens have separate live lists; selection adds to the single EC cart and survives reload', async ({ page, context, request }) => {
+test('two gardens have separate live lists; selection adds to the single EC cart and survives reload', async ({ page, context, request, seller }) => {
   await mkdir(evidence, { recursive: true });
   const { product } = await createProduct(request);
   // 庭写真が未アップロードの庭には配置できないため、先に確定済みの写真を保存します（#15）。
@@ -137,11 +139,11 @@ test('two gardens have separate live lists; selection adds to the single EC cart
   } finally {
     await request.delete(`${canvas}/gardens/${a.id}`);
     await request.delete(`${canvas}/gardens/${b.id}`);
-    await request.delete(`${ec}/api/products/${product.id}`);
+    await seller.delete(`${ec}/api/products/${product.id}`);
   }
 });
 
-test('partial transfer, duplicate requests, cart limits, stale gardens and invalid selections use real transactions', async ({ request }) => {
+test('partial transfer, duplicate requests, cart limits, stale gardens and invalid selections use real transactions', async ({ request, seller }) => {
   const { product, body } = await createProduct(request);
   const garden = await createGarden(request, 'A');
   try {
@@ -154,7 +156,7 @@ test('partial transfer, duplicate requests, cart limits, stale gardens and inval
     expect(detail.items).toHaveLength(2);
     const selected = detail.items.map((line: Line) => ({ key: line.key, productId: line.products[0].id }));
     const input = { cartRevision: cart.revision, gardenRevision: saved.revision, listRevision: detail.listRevision, items: selected };
-    expect((await request.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1, expectedStock: body.stock } })).ok()).toBeTruthy();
+    expect((await seller.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1, expectedStock: body.stock } })).ok()).toBeTruthy();
     const url = `${ec}/api/cart/shopping-lists/${garden.id}/items`;
     const concurrent = await Promise.all([request.post(url, { data: input }), request.post(url, { data: input })]);
     expect(concurrent.map(r => r.status()).sort()).toEqual([200, 409]);
@@ -181,7 +183,7 @@ test('partial transfer, duplicate requests, cart limits, stale gardens and inval
       items: [{ key: bench.key, productId: bench.products[0].id }] } }).then(r => r.json());
     expect(limit.added).toHaveLength(0);
     expect(limit.skipped[0].code).toBe('QUANTITY_LIMIT');
-    expect((await request.delete(`${ec}/api/products/${product.id}`)).ok()).toBeTruthy();
+    expect((await seller.delete(`${ec}/api/products/${product.id}`)).ok()).toBeTruthy();
     const archivedCart = await request.get(`${ec}/api/cart`).then(r => r.json());
     const archivedList = await request.get(`${ec}/api/shopping-lists/${garden.id}`).then(r => r.json());
     const archived = await request.post(url, { data: { gardenRevision: current.revision, cartRevision: archivedCart.revision,
@@ -195,7 +197,7 @@ test('partial transfer, duplicate requests, cart limits, stale gardens and inval
     expect((await request.get(`${ec}/api/shopping-lists/${garden.id}`)).status()).toBe(404);
   } finally {
     await request.delete(`${canvas}/gardens/${garden.id}`);
-    await request.delete(`${ec}/api/products/${product.id}`);
+    await seller.delete(`${ec}/api/products/${product.id}`);
   }
 });
 
@@ -264,7 +266,7 @@ test('autosave revision conflict preserves the local placement and stops repeate
   } finally { await request.delete(`${canvas}/gardens/${garden.id}`); }
 });
 
-test('a full cart skips a new product without changing its existing fifty product lines', async ({ request }) => {
+test('a full cart skips a new product without changing its existing fifty product lines', async ({ request, seller }) => {
   const { product, body } = await createProduct(request);
   const garden = await createGarden(request, 'A');
   const ids = [product.id];
@@ -272,7 +274,7 @@ test('a full cart skips a new product without changing its existing fifty produc
     const saved = await request.put(`${canvas}/gardens/${garden.id}`, { data: { ...garden, objects: [object('bench_wood')] } }).then(r => r.json());
     let cart = await request.get(`${ec}/api/cart`).then(r => r.json());
     for (let i = 0; i < 50; i++) {
-      const response = await request.post(`${ec}/api/products`, { data: { ...body, plantModelProfile: null,
+      const response = await seller.post(`${ec}/api/products`, { data: { ...body, plantModelProfile: null,
         name: 'カート上限検証-' + i, sku: 'SL-LIMIT-' + randomUUID().slice(0, 12) } });
       expect(response.ok()).toBeTruthy();
       const created = await response.json();
@@ -290,11 +292,11 @@ test('a full cart skips a new product without changing its existing fifty produc
     expect(result.cart).toEqual(cart);
   } finally {
     await request.delete(`${canvas}/gardens/${garden.id}`);
-    for (const id of ids) await request.delete(`${ec}/api/products/${id}`);
+    for (const id of ids) await seller.delete(`${ec}/api/products/${id}`);
   }
 });
 
-test('EC shows partial-add reasons and the shopping list fits a mobile screen', async ({ page, request }) => {
+test('EC shows partial-add reasons and the shopping list fits a mobile screen', async ({ page, request, seller }) => {
   const { product, body } = await createProduct(request);
   const garden = await createGarden(request, 'A');
   try {
@@ -305,7 +307,7 @@ test('EC shows partial-add reasons and the shopping list fits a mobile screen', 
     await expect(page.getByRole('checkbox')).toHaveCount(2);
     await page.getByRole('button', { name: 'すべて選択', exact: true }).click();
     await expect(page.getByRole('checkbox', { name: product.name + 'を選択', exact: true })).toBeChecked();
-    expect((await request.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1, expectedStock: body.stock } })).ok()).toBeTruthy();
+    expect((await seller.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1, expectedStock: body.stock } })).ok()).toBeTruthy();
     await page.getByRole('button', { name: '3点をカートに追加', exact: true }).click();
     await expect(page).toHaveURL(`${ec}/cart`);
     await expect(page.locator('.garden-transfer-result')).toContainText('1種類を追加しました');
@@ -322,11 +324,11 @@ test('EC shows partial-add reasons and the shopping list fits a mobile screen', 
     await page.screenshot({ path: `${evidence}/mobile-shopping-list.png`, fullPage: true });
   } finally {
     await request.delete(`${canvas}/gardens/${garden.id}`);
-    await request.delete(`${ec}/api/products/${product.id}`);
+    await seller.delete(`${ec}/api/products/${product.id}`);
   }
 });
 
-test('legacy placements with multiple candidates require an explicit purchase product and checkbox', async ({ page, request }) => {
+test('legacy placements with multiple candidates require an explicit purchase product and checkbox', async ({ page, request, seller }) => {
   const { product } = await createProduct(request);
   const garden = await createGarden(request, 'A');
   try {
@@ -348,6 +350,6 @@ test('legacy placements with multiple candidates require an explicit purchase pr
   } finally {
     legacyCandidate(product.id, true);
     await request.delete(`${canvas}/gardens/${garden.id}`);
-    await request.delete(`${ec}/api/products/${product.id}`);
+    await seller.delete(`${ec}/api/products/${product.id}`);
   }
 });

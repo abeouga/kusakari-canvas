@@ -237,7 +237,6 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
     {calibrating && photo && <PhotoCalibrationEditor document={document} photo={photo} returnFocus={cameraButton} onClose={() => useEditorStore.getState().setCalibrating(false)}/>}
     <input ref={fileInput} type="file" accept="image/jpeg,image/png" disabled={disabled} aria-label="庭の写真を選択" onChange={(event) => { void readPhoto(event.target.files?.[0]); event.target.value = ''; }} hidden/>
     {error && <p role="alert" className="notice-error">{error}</p>}
-    {vertexError && editMode && <p role="alert" className="notice-error" data-testid="vertex-error">{vertexError}</p>}
     {calibrationError && <p role="alert" className="notice-error">{calibrationError}</p>}
     {!photo && renderOverlay(null)}
     {!photo ? <button type="button" className="photo-empty" disabled={disabled} onClick={() => fileInput.current?.click()}>
@@ -261,6 +260,8 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
       </div>}
       <div className="photo-stage-shell">
       {renderOverlay(photoTools)}
+      {/* Over the photo, so a rejected vertex move does not shift the photo under the pointer. */}
+      {vertexError && editMode && <p role="alert" className="notice-error photo-vertex-error" data-testid="vertex-error">{vertexError}</p>}
       <svg ref={svg} className="photo-stage" viewBox={`0 0 ${photo.imageWidth} ${photo.imageHeight}`} onClick={onImageClick} onPointerMove={(event) => { if (disabled)
             return; const p = imagePoint(event.clientX, event.clientY); if (!p)
             return; if (dragging !== null)

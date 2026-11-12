@@ -64,4 +64,6 @@
 @container (max-width: 420px) {
   .view-mode-suffix { display: none; }
   .document-identity { gap: 4px; }
+  /* The rename button sits next to the garden name; icon-only modes keep the name readable at 320px. */
+  .canvas-tools .view-mode-actions button > span { display: none; }
 }
