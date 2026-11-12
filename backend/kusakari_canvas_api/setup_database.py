@@ -203,6 +203,24 @@ def existing_admin(config: dict):
     raise AssertionError('Unreachable')
 
 
+def migrate_and_verify(configs: list[dict]) -> list[dict]:
+    """Run Alembic to head for each profile and confirm the seeded assets. Shared with reset_database."""
+    results = []
+    for item in configs:
+        settings = configured_settings(item)
+        result = migrate(settings)
+        engine = create_engine(settings.database_url, hide_parameters=True)
+        try:
+            with engine.connect() as connection:
+                expected = {'tree_oak', 'shrub_boxwood', 'brick_paver', 'bench_wood'}
+                if not expected <= set(connection.scalars(text('SELECT id FROM assets'))):
+                    raise ValueError('初期アセットが不足しています。DBを確認してください。')
+        finally:
+            engine.dispose()
+        results.append({'profile': item['profile'], 'database': item['database'], 'revision': result['revision']})
+    return results
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', choices=('auto', 'existing', 'managed'), default='auto')
@@ -262,19 +280,7 @@ def main() -> int:
                     with admin.cursor() as cursor:
                         cursor.execute("SELECT RELEASE_LOCK('kusakari_canvas_database_setup')")
             admin_password = ''
-        results = []
-        for item in configs:
-            settings = configured_settings(item)
-            result = migrate(settings)
-            engine = create_engine(settings.database_url, hide_parameters=True)
-            try:
-                with engine.connect() as connection:
-                    expected = {'tree_oak', 'shrub_boxwood', 'brick_paver', 'bench_wood'}
-                    if not expected <= set(connection.scalars(text('SELECT id FROM assets'))):
-                        raise ValueError('初期アセットが不足しています。DBを確認してください。')
-            finally:
-                engine.dispose()
-            results.append({'profile': item['profile'], 'database': item['database'], 'revision': result['revision']})
+        results = migrate_and_verify(configs)
         print(json.dumps({'database_setup': 'passed', 'profiles': results}, ensure_ascii=False), flush=True)
         print('MySQLの認証・DB・権限・テーブル準備を確認しました。', flush=True)
         return 0
