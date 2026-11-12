@@ -12,7 +12,6 @@ export type QualityPayload = {
   beforeDataUrl: string;
   coverageDataUrl: string;
   layout: unknown[];
-  storeId: number;
   references: { assetId: string; productId: string; photoDataUrl: string }[];
 };
 export const fixtureDirectory = resolve('e2e/fixtures/ai-quality');
@@ -97,7 +96,7 @@ export async function saveRequest(directory: string, payload: QualityPayload) {
   }
   await saveJson(directory, 'request.json', { submitted: true, generationId: payload.generationId,
     layout: payload.layout,
-    gardenSnapshot: 'snapshot.json', storeId: payload.storeId, coverage: 'coverage.png',
+    gardenSnapshot: 'snapshot.json', coverage: 'coverage.png',
     coverageIsProviderReference: false, inputOrder, placementAssumption,
     providerPadding: 'Before画像は生成寸法へ変換。参照写真は別途不透明化。',
   });

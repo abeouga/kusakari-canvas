@@ -28,8 +28,9 @@ async function request(path, method = 'GET', payload) {
 }
 export const commerceApi = {
     cart: () => request('/cart'),
-    products: (storeId) => request(`/products?storeId=${storeId}`),
-    quote: (storeId, items) => request('/materials/quote', 'POST', { storeId, items }),
+    // A product belongs to one store, so the list covers every open store; EC has no "current store".
+    products: () => request('/products'),
+    quote: (items) => request('/materials/quote', 'POST', { storeId: null, items }),
     savedItems: (gardenId) => request(`/shopping-lists/${encodeURIComponent(gardenId)}/saved-items`),
 };
 export function productImage(path) {

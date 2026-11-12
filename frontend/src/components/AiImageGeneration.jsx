@@ -12,7 +12,6 @@ import '../ai-image.css';
 
 export function AiImageGeneration({ image, onBusyChange, onUnsavedChange }) {
   const queryClient = useQueryClient();
-  const storeId = image.storeId ?? 1;
   const [plants] = useState(() => plantReferenceRows(image.document, image.assets));
   const [photos, setPhotos] = useState({});
   const [pending, setPending] = useState(false);
@@ -96,7 +95,6 @@ export function AiImageGeneration({ image, onBusyChange, onUnsavedChange }) {
       beforeDataUrl: image.dataUrl,
       coverageDataUrl: image.coverageDataUrl,
       layout: image.layout,
-      storeId,
       references,
     };
     if (new Blob([JSON.stringify(request)]).size > 48_000_000) {

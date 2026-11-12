@@ -43,7 +43,6 @@ class AiImageRequest(ApiModel):
     beforeDataUrl: str = Field(max_length=MAX_DATA_URL_LENGTH, repr=False)
     coverageDataUrl: str = Field(max_length=MAX_DATA_URL_LENGTH, repr=False)
     layout: list[LayoutPlacement] = Field(min_length=1, max_length=200, repr=False)
-    storeId: int = Field(gt=0)
     references: list[ReferenceRequest] = Field(min_length=1, max_length=15, repr=False)
 
 

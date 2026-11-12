@@ -60,7 +60,7 @@ def frozen_plan(case: str, prompt_version: str = DEFAULT_PROMPT_VERSION,
         if item["kind"] == "uploaded-reference":
             references.append({"assetId": item["assetId"], "productId": item["productId"],
                                "photoDataUrl": file_data_url(folder / item["file"])})
-    request = AiImageRequest(document=snapshot, storeId=saved["storeId"], layout=saved["layout"],
+    request = AiImageRequest(document=snapshot, layout=saved["layout"],
                              beforeDataUrl=file_data_url(folder / "before.png"),
                              coverageDataUrl=file_data_url(folder / "coverage.png"),
                              references=references)

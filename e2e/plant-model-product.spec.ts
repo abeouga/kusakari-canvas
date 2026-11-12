@@ -135,8 +135,8 @@ test('seller features create six plant compositions; catalog and shopping-list d
     expect(reloaded).toEqual(snapshot);
     // Editing the product creates a new composition; the garden retains its saved snapshot.
     const p = products[0];
-    const { id, unit, source, sourceUpdatedAt, publishedAt, active, publicationStatus, modelComposition, canvasMaterialCode, sellerStoreId, ...input } = p;
-    void id; void unit; void source; void sourceUpdatedAt; void publishedAt; void active; void publicationStatus; void modelComposition; void canvasMaterialCode; void sellerStoreId;
+    const { id, unit, source, sourceUpdatedAt, publishedAt, active, publicationStatus, modelComposition, canvasMaterialCode, sellerStoreId, sellerStoreName, ...input } = p;
+    void id; void unit; void source; void sourceUpdatedAt; void publishedAt; void active; void publicationStatus; void modelComposition; void canvasMaterialCode; void sellerStoreId; void sellerStoreName;
     const changed = await page.request.put(`${ec}/api/products/${p.id}`, {
       data: { ...input, storeId: 1, plantModelProfile: { ...p.plantModelProfile, leafShape: 'needle' } },
     });
@@ -211,7 +211,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
 test('model validation, legacy product updates and exact-product material quote use real APIs', async ({ request }) => {
   const catalog = await request.get(`${ec}/api/products?storeId=1`).then((response) => response.json());
   const responseFields = new Set(['id', 'unit', 'source', 'sourceUpdatedAt', 'publishedAt', 'active', 'publicationStatus',
-    'modelComposition', 'canvasMaterialCode', 'plantModelProfile', 'sellerStoreId']);
+    'modelComposition', 'canvasMaterialCode', 'plantModelProfile', 'sellerStoreId', 'sellerStoreName']);
   const input = Object.fromEntries(Object.entries(catalog[0]).filter(([key]) => !responseFields.has(key)));
   const profile = { plantType: 'tree', heightCm: 200, widthCm: 100, crownShape: 'round', branchCount: 12,
     branchAngle: 45, trunkThicknessCm: 8, leafShape: 'oval', leafSizeCm: 12, leafDensity: 'medium',
