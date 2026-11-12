@@ -34,9 +34,9 @@ function memberId(id = process.env.KUSAKARI_E2E_MEMBER_ID) {
   return id;
 }
 
-// Each test starts with a new member cart, as separate guest carts did before sign-in was required.
+// Each test starts with an empty cart. A member has exactly one cart, so its lines are removed instead of the cart.
 export function detachTestSellerCart() {
-  ecSql(`UPDATE carts SET member_id=NULL WHERE member_id='${memberId()}';`);
+  ecSql(`DELETE FROM cart_items WHERE cart_id IN (SELECT id FROM carts WHERE member_id='${memberId()}');`);
 }
 
 export async function signInTestSeller() {
@@ -51,10 +51,18 @@ export async function signInTestSeller() {
     const member = await page.request.get(`${ecWeb()}/api/auth/me`).then((r) => r.json());
     expect(member.authenticated).toBe(true);
     process.env.KUSAKARI_E2E_MEMBER_ID = memberId(member.id);
-    ecSql(`UPDATE auth_members SET role='SELLER',store_id=1,enabled=TRUE,withdrawn_at=NULL WHERE id='${memberId()}';`);
-    // Products created by earlier runs are archived, as a seller's delete does, so the catalog that every
-    // editor load fetches does not grow with each run. Seed products have no owner and are kept.
-    ecSql(`UPDATE products SET active=FALSE WHERE owner_member_id='${memberId()}' AND active=TRUE;`);
+    // The test seller runs sample store 1 as a staff account with the MANAGER role (it may register products).
+    // The foreign keys accept an owner only as SHOP_OWNER and a staff row only as SHOP_STAFF, so old ties go first.
+    ecSql(`UPDATE organizations SET owner_member_id=NULL WHERE owner_member_id='${memberId()}';
+      DELETE FROM organization_members WHERE member_id='${memberId()}';
+      UPDATE members SET account_type='SHOP_STAFF',enabled=TRUE,withdrawn_at=NULL WHERE id='${memberId()}';
+      INSERT INTO organization_members(organization_id,member_id) VALUES(1,'${memberId()}');
+      INSERT INTO store_members(store_id,member_id,organization_id,role) VALUES(1,'${memberId()}',1,'MANAGER');`);
+    // Products created at store 1 by earlier runs are marked deleted, as a seller's delete does, so the catalog
+    // that every editor load fetches does not grow with each run. Seed products have short ids and are kept;
+    // products registered through the API have UUID ids.
+    ecSql(`UPDATE inventory i JOIN products p ON p.id=i.product_id SET i.publication_status='DELETED'
+      WHERE p.store_id=1 AND p.id REGEXP '^[0-9a-f]{8}-[0-9a-f]{4}-' AND i.publication_status<>'DELETED';`);
     await page.context().storageState({ path: authStatePath });
   } finally {
     await browser.close();

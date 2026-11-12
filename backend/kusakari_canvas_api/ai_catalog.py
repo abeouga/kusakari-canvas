@@ -56,9 +56,10 @@ def read_response(response: httpx.Response, limit: int) -> bytes:
     return bytes(content)
 
 
-def quote_products(settings: AiSettings, store_id: int, asset_id: str) -> list[CatalogProduct]:
+def quote_products(settings: AiSettings, asset_id: str) -> list[CatalogProduct]:
     code = material_code(asset_id)
-    body = {"storeId": store_id, "items": [{"materialCode": code, "quantity": 1, "unit": "piece"}]}
+    # A product belongs to one store, so EC matches candidates across every open store (storeId null).
+    body = {"storeId": None, "items": [{"materialCode": code, "quantity": 1, "unit": "piece"}]}
     try:
         with httpx.Client(timeout=10, follow_redirects=False, trust_env=False) as client:
             with client.stream("POST", settings.ec_origin + "/api/materials/quote", json=body) as response:
@@ -82,7 +83,7 @@ def quote_products(settings: AiSettings, store_id: int, asset_id: str) -> list[C
         raise ApiError(504, "AI_CATALOG_TIMEOUT", "ECの商品候補照合がタイムアウトしました。") from None
     except httpx.HTTPStatusError as error:
         if error.response.status_code in {400, 404}:
-            bad_request("AI_CATALOG_STORE_INVALID", "指定店舗の商品候補を取得できません。店舗を確認してください。")
+            bad_request("AI_CATALOG_REQUEST_INVALID", "商品候補を取得できません。植物アセットを確認してください。")
         raise ApiError(502, "AI_CATALOG_UNAVAILABLE", "ECの商品候補照合に失敗しました。") from None
     except httpx.RequestError:
         raise ApiError(502, "AI_CATALOG_UNAVAILABLE", "ECへ接続できません。ECの起動と接続先を確認してください。") from None
@@ -90,8 +91,8 @@ def quote_products(settings: AiSettings, store_id: int, asset_id: str) -> list[C
         raise ApiError(502, "AI_CATALOG_INVALID", "ECの商品候補応答の形式が不正です。") from None
 
 
-def candidates(settings: AiSettings, store_id: int, asset_id: str) -> list[AiCandidate]:
-    products = quote_products(settings, store_id, asset_id)
+def candidates(settings: AiSettings, asset_id: str) -> list[AiCandidate]:
+    products = quote_products(settings, asset_id)
     return [AiCandidate(assetId=asset_id, productId=product.id, productName=product.name,
                         imageUrl=candidate_image_url(settings, product.imageUrl),
                         requiresUpload=raster_url(settings, product.imageUrl) is None)
@@ -193,16 +194,15 @@ def catalog_image(settings: AiSettings, product: CatalogProduct) -> bytes:
         raise
 
 
-def resolve_reference(settings: AiSettings, store_id: int,
-                      reference: ReferenceRequest,
+def resolve_reference(settings: AiSettings, reference: ReferenceRequest,
                       products: dict[str, CatalogProduct] | None = None) -> tuple[bytes, ReferenceSummary]:
     if reference.assetId == "plant_modular":
         product = (products if products is not None else linked_products(settings, [reference.productId])).get(reference.productId)
     else:
-        product = next((item for item in quote_products(settings, store_id, reference.assetId)
+        product = next((item for item in quote_products(settings, reference.assetId)
                         if item.id == reference.productId), None)
     if product is None:
-        bad_request("AI_REFERENCE_PRODUCT_MISMATCH", "選択商品が指定店舗・植物アセットの商品候補に含まれていません。")
+        bad_request("AI_REFERENCE_PRODUCT_MISMATCH", "選択商品が植物アセットの商品候補に含まれていません。")
     source = "catalog"
     if reference.photoDataUrl is not None:
         # Uploaded photos are user references, never represented as EC-registered photographs.

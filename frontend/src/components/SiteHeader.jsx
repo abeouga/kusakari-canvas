@@ -17,8 +17,8 @@ export function SiteHeader({ onNavigate = undefined, disabled = false }) {
       logoUrl={canvasUrl('/icons/kusakari_ico.png')}
       activeSection="canvas"
       authenticated={session?.authenticated ?? false}
-      showAdmin={session?.authenticated && session.email === 'test.admin@example.com' && session.role === 'ADMIN'}
-      showSeller={session?.authenticated && ['SELLER', 'ADMIN'].includes(session.role || '')}
+      showAdmin={session?.authenticated && session.email === 'test.admin@example.com' && session.accountType === 'ADMIN'}
+      showSeller={session?.authenticated && ['SHOP_OWNER', 'SHOP_STAFF', 'ADMIN'].includes(session.accountType || '')}
       onNavigate={onNavigate}
       disabled={disabled}
     />

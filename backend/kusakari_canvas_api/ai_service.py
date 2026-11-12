@@ -104,7 +104,7 @@ def generate_image(session: Session, settings: AiSettings, owner: str, garden_id
         product_ids = [item.productId for item in request.references if item.assetId == "plant_modular"]
         products = linked_products(settings, product_ids) if product_ids else None
         for reference in request.references:
-            content, summary = resolve_reference(settings, request.storeId, reference, products)
+            content, summary = resolve_reference(settings, reference, products)
             images.append(content)
             summaries.append(summary)
         mask = None

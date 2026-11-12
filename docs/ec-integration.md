@@ -42,3 +42,20 @@ ECの商品詳細・カートから `?productId=...` を保持してCanvasへ移
 通常の庭所有者はECのCognitoセッションから取得します。固定所有者は明示した隔離試験設定以外で使用できません。ECのOrigin制限フィルターは認証より先に、許可されたEC/Canvasの接続元を検証します。認証・CSRF・所有者確認は省略しません。
 
 実Cognito・専用MySQLでの両アプリ試験はEC側 `npm run test:business` で実行します。資格情報を含むtrace/HARは記録しません。
+
+## 2026-11-12 EC の新しい DB 構成（v3）への追従
+
+Context: EC で、商品がそれぞれ1つの店舗に属する形に改め、カートの「閲覧中の店舗」をなくした（abeouga/kusakari-ec#107・#119）。Canvas は、カートの店舗を使って商品一覧と AI の候補を取っていたため、そのままでは商品一覧を取得できない。EC のログイン情報の応答も、`role` から `accountType` に変わった。
+
+Decision:
+
+- 商品一覧は、EC の `GET /api/products`（店舗の指定なし）から取る。全店舗の、購入者に見える商品が対象になる。
+- AI の商品候補（`POST /api/materials/quote`）は、`storeId` に `null` を渡して全店舗から探す。AI 画像生成のリクエスト（`POST /api/gardens/{id}/ai-image`）と、候補の取得（`GET /api/ai/candidates`）から `storeId` をなくした。
+- ヘッダーの「出店者」「管理者画面」の表示は、`accountType`（`SHOP_OWNER`・`SHOP_STAFF`・`ADMIN`）で決める。
+- 買い物リストの「この店舗の販売対象ではないため購入できません」を、「現在は販売されていないため購入できません」に変えた。
+- GardenDocument の形は変えない。商品から店舗が決まるので、配置に店舗を持たせる必要がないため。
+
+Alternatives: AI のリクエストに `storeId` を任意の項目として残す案は採用しない。使われない項目が残り、店舗を選べるように見えるため。
+
+Consequences: 庭の持ち主は今までどおり EC の会員 ID（UUID）で、DB の変更はない。EC と Canvas の DB は、両方を初期化する必要がある（[手順](database-reset.md)）。次のものは含めていない。店舗側のアカウントに Canvas を使わせない制限（#64）。配置した商品が買えなくなったときに配置を外す処理、配置と買い物リストへの店舗名の表示、「在庫なし」の表示（#65）。E2E の準備では、テスト用の出店者を「サンプルの店舗1の MANAGER の担当者」として作る。
+

@@ -65,7 +65,7 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
             {placed > 0 && <span className="placed-count-badge" data-testid="placement-count" role="img" aria-label={`庭に設置した数 ${placed}`}>{placed}</span>}
             <div><strong>{product?.name ?? row.name}</strong>
               {row.unplaced && <small data-testid="unplaced-ec-item">ECで追加（庭に未配置）</small>}
-              {row.productId && commerce.products.isSuccess && !product && <p role="status">この店舗の販売対象ではないため購入できません。保存済みの配置は維持されます。</p>}
+              {row.productId && commerce.products.isSuccess && !product && <p role="status">現在は販売されていないため購入できません。保存済みの配置は維持されます。</p>}
               {product && <p className="commerce-price"><small>小計の目安</small>{yen(product.priceYen * row.quantity)}</p>}
             </div>
           </article>;

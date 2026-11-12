@@ -7,7 +7,7 @@ import { GenerationHistory } from './GenerationHistory';
 import { UiIcon } from './UiIcon';
 import '../image-studio.css';
 
-export function CompletionImageAction({ garden, assets, photoMode, captureRef, storeId, disabled, drawingBoundary = false }) {
+export function CompletionImageAction({ garden, assets, photoMode, captureRef, disabled, drawingBoundary = false }) {
   const [image, setImage] = useState(null);
   const [capturing, setCapturing] = useState(false);
   const [aiBusy, setAiBusy] = useState(false);
@@ -37,7 +37,7 @@ export function CompletionImageAction({ garden, assets, photoMode, captureRef, s
       const document = structuredClone(garden);
       const capturedAssets = structuredClone(assets);
       const result = await captureImage(document, photoMode, captureRef.current, { includeCoverage: photoMode });
-      setImage({ ...result, document, assets: capturedAssets, storeId });
+      setImage({ ...result, document, assets: capturedAssets });
     } catch (reason) {
       let message = '完成イメージを作成できません。再試行してください。';
       if (reason instanceof Error) message = reason.message;

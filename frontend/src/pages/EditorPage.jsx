@@ -250,7 +250,7 @@ export function EditorPage({ gardenId }) {
           </Dialog>}
           {viewMode === 'photo' ? <PhotoOverlay document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={isEditingDisabled} retryRequest={retryRequest} onModelLoaded={markModelLoaded} onModelFailed={markModelFailed} renderOverlay={renderOverlay} captureRef={captureRef}/> : assetQuery.isLoading ? (<div className="canvas-loading" role="status">アセット一覧を読み込んでいます…</div>) : (<GardenCanvas document={document} assets={assets} selectedAssetId={selectedAssetId} disabled={isEditingDisabled || hasBoundaryDraft} retryRequest={retryRequest} onModelLoaded={markModelLoaded} onModelFailed={markModelFailed} editorOverlay={renderOverlay(null)} captureRef={captureRef}/>)}
           <CompletionImageAction key={document.id} garden={document} assets={assets} photoMode={viewMode === 'photo'} captureRef={captureRef}
-            storeId={commerce.cart.data?.storeId} disabled={isEditingDisabled || hasBoundaryDraft} drawingBoundary={hasBoundaryDraft}/>
+            disabled={isEditingDisabled || hasBoundaryDraft} drawingBoundary={hasBoundaryDraft}/>
           {/* 操作説明のフッターは表示しない。モデルの読み込み状況だけを支援技術へ伝えます。 */}
           <span className="visually-hidden" role="status" data-testid="model-loaded">読み込み済み: {loadedModelIds.length} / {document.objects.length}</span>
         </section>

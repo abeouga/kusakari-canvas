@@ -156,12 +156,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return stores(ai_settings)
 
     @router.get("/api/ai/candidates", response_model=list[AiCandidate])
-    def ai_candidates(db: Db, storeId: Annotated[int, Query(gt=0)],
-                      assetId: Annotated[str, Query(min_length=1, max_length=64)]):
+    def ai_candidates(db: Db, assetId: Annotated[str, Query(min_length=1, max_length=64)]):
         # Only serve known, supported plant assets; release the DB read before EC I/O.
         service.require_asset(db, assetId)
         material_code(assetId)
-        return candidates(ai_settings, storeId, assetId)
+        return candidates(ai_settings, assetId)
 
     @router.post("/api/gardens/{id}/ai-image", response_model=AiImageResponse)
     def ai_image(id: str, request: AiImageRequest, db: Db, owner: Owner):
