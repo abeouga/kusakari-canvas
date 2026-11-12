@@ -1,4 +1,4 @@
-import { openPlantSettings, publishProduct } from './seller-wizard';
+import { expectPreviewLoaded, openPlantSettings, publishProduct } from './seller-wizard';
 import { seedGardenPhoto } from './garden-photo';
 import { test, expect, Page } from './test.js';
 import { randomUUID } from 'node:crypto';
@@ -22,41 +22,38 @@ async function dragProduct(page: Page, source: ReturnType<Page['locator']>, inde
     y: bounds.height * (0.4 + Math.floor(index / 3) * 0.15) }, sourcePosition: { x: 35, y: 35 } });
 }
 
-test('seller features create six plant compositions; catalog and shopping-list drag placements survive reload', async ({ page, context, request }) => {
+test('seller features create six plant compositions; catalog and shopping-list drag placements survive reload', async ({ page, context, request, seller, sellerPage }) => {
   // Preserve the budget from e2e/configs/playwright.plant-model.config.ts in the full suite.
   test.setTimeout(360000);
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
+  sellerPage.on('pageerror', (error) => errors.push(error.message));
   await mkdir(evidence, { recursive: true });
   const products: TestProduct[] = [];
   let garden: GardenDocument | undefined;
   let failure: unknown;
   try {
-    await page.goto(`${ec}/seller/products/new`);
-    const form = page.locator('.product-form');
+    await sellerPage.goto(`${ec}/seller/products/new`);
+    const form = sellerPage.locator('.product-form');
     for (const type of ['tree', 'shrub', 'flower']) {
       for (let variant = 0; variant < 2; variant++) {
         const name = `組立検証-${type}-${variant}-${randomUUID().slice(0, 4)}`;
         await form.getByLabel('商品名', { exact: true }).fill(name);
-        await form.getByLabel('商品番号', { exact: true }).fill(`MOD-${randomUUID().slice(0, 12)}`);
         await form.getByLabel('商品説明', { exact: true }).fill('専用MySQLで植物構成の保存・復元を検証します。');
         await form.getByLabel('選択店舗の在庫', { exact: true }).fill('20');
         await openPlantSettings(form, type === 'tree' ? '250' : type === 'shrub' ? '100' : '55');
         await form.getByRole('combobox', { name: '植物タイプ', exact: true }).selectOption(type);
-        await form.getByLabel('植物の幅（cm）', { exact: true }).fill(String(type === 'tree' ? 140 + variant * 60 : 60 + variant * 30));
+        await form.getByLabel('植物の幅', { exact: true }).fill(String(type === 'tree' ? 140 + variant * 60 : 60 + variant * 30));
         await form.getByRole('combobox', { name: '葉の形', exact: true }).selectOption(variant ? 'narrow' : 'oval');
         await form.getByRole('slider', { name: '葉の密度', exact: true }).press('Home');
         await form.getByRole('slider', { name: '葉の密度', exact: true }).press(variant ? 'End' : 'ArrowRight');
         if (type === 'flower' || (type === 'shrub' && variant)) {
-          await form.getByLabel('花がある', { exact: true }).check();
+          await form.getByRole('switch', { name: '花を付ける' }).check();
           await form.getByRole('combobox', { name: '花の形', exact: true }).selectOption(variant ? 'eight' : 'five');
         }
-        await form.getByRole('button', { name: '植物のプレビューを確認' }).click();
-        await form.locator('iframe').scrollIntoViewIfNeeded();
-        const preview = page.frameLocator('iframe[title="植物の3Dプレビュー"]');
-        await expect(preview.getByTestId('preview-loaded')).toHaveText('loaded');
-        await form.locator('iframe').screenshot({ path: `${evidence}/${type}-${variant}-preview.png` });
-        const saved = page.waitForResponse((response) => response.url().endsWith('/api/products') && response.request().method() === 'POST', { timeout: 20000 });
+        await expectPreviewLoaded(sellerPage, form);
+        await form.locator('iframe[title="植物の3Dプレビュー"]').screenshot({ path: `${evidence}/${type}-${variant}-preview.png` });
+        const saved = sellerPage.waitForResponse((response) => response.url().endsWith('/api/products') && response.request().method() === 'POST', { timeout: 20000 });
         await publishProduct(form);
         const response = await saved;
         expect(response.status()).toBe(200);
@@ -66,15 +63,17 @@ test('seller features create six plant compositions; catalog and shopping-list d
         const dimensions = product.modelComposition.baseDimensions;
         expect(Math.abs(dimensions.height / (product.plantModelProfile.heightCm as number / 100) - 1)).toBeLessThan(0.005);
         expect(Math.abs(Math.max(dimensions.width, dimensions.depth) / (product.plantModelProfile.widthCm as number / 100) - 1)).toBeLessThan(0.005);
-        const resolved = await page.request.post(`${api}/model-assemblies/resolve`, { data: product.plantModelProfile });
+        const resolved = await sellerPage.request.post(`${api}/model-assemblies/resolve`, { data: product.plantModelProfile });
         expect(resolved.ok()).toBeTruthy();
         expect(await resolved.json()).toEqual(product.modelComposition);
+        // The product number is assigned by the server; the new-product form has no field for it.
+        expect(product.sku).toMatch(/^KS-\d{8}-/);
         products.push(product);
-        await expect(page).toHaveURL(`${ec}/seller/products`);
-        await page.goto(`${ec}/seller/products/new`);
+        await expect(sellerPage).toHaveURL(`${ec}/seller/products`);
+        await sellerPage.goto(`${ec}/seller/products/new`);
       }
     }
-    const catalog = await page.request.get(`${ec}/api/products?storeId=1`).then((response) => response.json());
+    const catalog = await sellerPage.request.get(`${ec}/api/products?storeId=1`).then((response) => response.json());
     for (const product of products) expect(catalog.find((item: TestProduct) => item.id === product.id).modelComposition).toEqual(product.modelComposition);
     const created = await page.request.post(`${api}/gardens`, { data: { name: `組立配置-${randomUUID().slice(0, 8)}`, width: 10, depth: 8 } });
     expect(created.status()).toBe(201);
@@ -137,7 +136,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
     const p = products[0];
     const { id, unit, source, sourceUpdatedAt, publishedAt, active, publicationStatus, modelComposition, canvasMaterialCode, sellerStoreId, sellerStoreName, ...input } = p;
     void id; void unit; void source; void sourceUpdatedAt; void publishedAt; void active; void publicationStatus; void modelComposition; void canvasMaterialCode; void sellerStoreId; void sellerStoreName;
-    const changed = await page.request.put(`${ec}/api/products/${p.id}`, {
+    const changed = await seller.put(`${ec}/api/products/${p.id}`, {
       data: { ...input, storeId: 1, plantModelProfile: { ...p.plantModelProfile, leafShape: 'needle' } },
     });
     expect(changed.status()).toBe(200);
@@ -194,10 +193,10 @@ test('seller features create six plant compositions; catalog and shopping-list d
     failure = error;
   } finally {
     const cleanupErrors: string[] = [];
-    const urls = products.map((product) => `${ec}/api/products/${product.id}`);
-    if (garden) urls.unshift(`${api}/gardens/${garden.id}`);
-    for (const url of urls) {
-      try { await request.delete(url, { timeout: 5000 }); }
+    const deletions: [typeof request, string][] = products.map((product) => [seller, `${ec}/api/products/${product.id}`]);
+    if (garden) deletions.unshift([request, `${api}/gardens/${garden.id}`]);
+    for (const [client, url] of deletions) {
+      try { await client.delete(url, { timeout: 5000 }); }
       catch (error) { cleanupErrors.push(String(error)); }
     }
     if (cleanupErrors.length) {
@@ -208,7 +207,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
   if (failure) throw failure;
 });
 
-test('model validation, legacy product updates and exact-product material quote use real APIs', async ({ request }) => {
+test('model validation, legacy product updates and exact-product material quote use real APIs', async ({ request, seller }) => {
   const catalog = await request.get(`${ec}/api/products?storeId=1`).then((response) => response.json());
   const responseFields = new Set(['id', 'unit', 'source', 'sourceUpdatedAt', 'publishedAt', 'active', 'publicationStatus',
     'modelComposition', 'canvasMaterialCode', 'plantModelProfile', 'sellerStoreId', 'sellerStoreName']);
@@ -221,7 +220,7 @@ test('model validation, legacy product updates and exact-product material quote 
     sku: `API-MOD-${randomUUID().slice(0, 8)}` };
   let id: string | undefined;
   try {
-    const created = await request.post(`${ec}/api/products`, { data: { ...body, plantModelProfile: profile } });
+    const created = await seller.post(`${ec}/api/products`, { data: { ...body, plantModelProfile: profile } });
     expect(created.status()).toBe(200);
     const product = await created.json();
     id = product.id;
@@ -233,7 +232,7 @@ test('model validation, legacy product updates and exact-product material quote 
     expect(matches[0].candidates).toHaveLength(1);
     expect(matches[0].candidates[0].product.id).toBe(id);
     expect(matches[0].candidates[0].purchaseQuantity).toBe(2);
-    const updated = await request.put(`${ec}/api/products/${id}`, { data: { ...body, stock: 10, expectedStock: body.stock } });
+    const updated = await seller.put(`${ec}/api/products/${id}`, { data: { ...body, stock: 10, expectedStock: body.stock } });
     expect(updated.status()).toBe(200);
     const saved = await updated.json();
     expect(saved.modelComposition).toEqual(product.modelComposition);
@@ -241,21 +240,21 @@ test('model validation, legacy product updates and exact-product material quote 
     expect(saved.stock).toBe(10);
     // Later requests edit the product as it is now, so they test validation, not a stale stock conflict.
     body.stock = 10;
-    const invalid = await request.put(`${ec}/api/products/${id}`, {
+    const invalid = await seller.put(`${ec}/api/products/${id}`, {
       data: { ...body, name: '失敗時はこの名前を保存しない', plantModelProfile: { ...profile, heightCm: 250 } },
     });
     expect(invalid.status()).toBe(400);
-    expect((await request.put(`${ec}/api/products/${id}`, {
+    expect((await seller.put(`${ec}/api/products/${id}`, {
       data: { ...body, modelComposition: product.modelComposition },
     })).status()).toBe(400);
     const missingPrice: Record<string, unknown> = { ...body };
     delete missingPrice.priceYen;
-    expect((await request.post(`${ec}/api/products`, { data: missingPrice })).status()).toBe(400);
+    expect((await seller.post(`${ec}/api/products`, { data: missingPrice })).status()).toBe(400);
     const current = await request.get(`${ec}/api/products?storeId=1`).then((response) => response.json());
     expect(current.find((item: TestProduct) => item.id === id)).toEqual(saved);
     await mkdir(evidence, { recursive: true });
     await writeFile(`${evidence}/material-quote.json`, JSON.stringify(matches, null, 2));
   } finally {
-    if (id) await request.delete(`${ec}/api/products/${id}`);
+    if (id) await seller.delete(`${ec}/api/products/${id}`);
   }
 });

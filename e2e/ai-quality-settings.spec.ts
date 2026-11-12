@@ -77,7 +77,7 @@ test('fixed-input guard accepts the actual browser capture before a real no-key 
     const directory = resolve('artifacts/e2e/ai-quality', baseline, 'single');
     await mkdir(directory, { recursive: true });
     const photo = await qualityPhoto(page);
-    const product = await createTestProduct(request, '品質固定入力');
+    const product = await createTestProduct('品質固定入力');
     const garden = await createScene(request, ids, photo, [productPlacement(product)]);
     await openScene(page, garden);
     const image = await capture(page);

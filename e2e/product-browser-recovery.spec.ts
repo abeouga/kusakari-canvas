@@ -7,7 +7,7 @@ test('EC接続失敗を表示し、再取得後に商品を配置・保存・復
   const response = await request.post(`${api}/gardens`, { data: { name: `商品接続検証 ${Date.now()}` } });
   expect(response.ok()).toBeTruthy();
   const garden = await response.json();
-  const fixtureProduct = await createTestProduct(request, '接続復旧検証用');
+  const fixtureProduct = await createTestProduct('接続復旧検証用');
   // Only the failure is injected. Recovery uses the real EC API and dedicated MySQL.
   const cartUrl = ((process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286') + '/api/cart');
   await page.route(cartUrl, (route) => route.abort('failed'));

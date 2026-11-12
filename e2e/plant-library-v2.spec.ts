@@ -1,4 +1,4 @@
-import { openPlantSettings, publishProduct } from './seller-wizard';
+import { expectPreviewLoaded, openPlantSettings, publishProduct } from './seller-wizard';
 import { seedGardenPhoto } from './garden-photo';
 import { test, expect } from './test.js';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -11,43 +11,41 @@ const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286');
 const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
 const evidence = 'artifacts/plant-v4/library-regression';
 
-test('seller can publish current grass; incompatible leaves are excluded and rejected', async ({ page, request }) => {
+test('seller can publish current grass; incompatible leaves are excluded and rejected', async ({ request, seller, sellerPage }) => {
   let id: string | undefined;
   try {
-    await page.goto(`${ec}/seller/products/new`);
-    const form = page.locator('.product-form');
+    await sellerPage.goto(`${ec}/seller/products/new`);
+    const form = sellerPage.locator('.product-form');
     await form.getByLabel('商品名', { exact: true }).fill('グラス出品入力検証');
-    await form.getByLabel('商品番号', { exact: true }).fill(`GRASS-${randomUUID().slice(0, 8)}`);
     await form.getByLabel('商品説明', { exact: true }).fill('新しい植物形態の出品操作を検証します。');
     await form.getByLabel('選択店舗の在庫', { exact: true }).fill('20');
     await openPlantSettings(form, '60');
     await form.getByRole('combobox', { name: '植物タイプ', exact: true }).selectOption('grass');
     await expect(form.getByRole('combobox', { name: '葉の形', exact: true })).toHaveValue('grass');
     await expect(form.locator('[name="modelLeafShape"] option')).toHaveCount(1);
-    await form.getByLabel('花がある', { exact: true }).check();
+    await form.getByRole('switch', { name: '花を付ける' }).check();
     await form.getByRole('combobox', { name: '花の形', exact: true }).selectOption('plume');
-    await form.getByRole('button', { name: '植物のプレビューを確認' }).click();
-    await form.locator('iframe').scrollIntoViewIfNeeded();
-    await expect(page.frameLocator('iframe[title="植物の3Dプレビュー"]').getByTestId('preview-loaded')).toHaveText('loaded');
-    const saved = page.waitForResponse((response) => response.url().endsWith('/api/products') && response.request().method() === 'POST');
+    await expectPreviewLoaded(sellerPage, form);
+    const saved = sellerPage.waitForResponse((response) => response.url().endsWith('/api/products') && response.request().method() === 'POST');
     await publishProduct(form);
     const response = await saved;
     expect(response.status()).toBe(200);
     const product = await response.json(); id = product.id;
+    expect(product.sku).toMatch(/^KS-\d{8}-/); // assigned by the server; the new-product form has no field for it
     expect(product.modelComposition.version).toBe(5);
     expect(product.plantModelProfile.plantType).toBe('grass');
     // Canvas intentionally returns 400 for all RequestValidationError failures.
     expect((await request.post(`${api}/model-assemblies/resolve`, { data: { ...product.plantModelProfile, leafShape: 'split' } })).status()).toBe(400);
-    await page.reload();
+    await sellerPage.reload();
     const catalog = await request.get(`${ec}/api/products?storeId=1`).then((r) => r.json());
     expect(catalog.find((p: { id: string }) => p.id === id).modelComposition).toEqual(product.modelComposition);
     await mkdir(evidence, { recursive: true });
-    await page.screenshot({ path: `${evidence}/seller-after-reload.png` });
+    await sellerPage.screenshot({ path: `${evidence}/seller-after-reload.png` });
     await writeFile(`${evidence}/seller-product.json`, JSON.stringify(product, null, 2));
-  } finally { if (id) expect((await request.delete(`${ec}/api/products/${id}`)).ok()).toBeTruthy(); }
+  } finally { if (id) expect((await seller.delete(`${ec}/api/products/${id}`)).ok()).toBeTruthy(); }
 });
 
-test('30 plant products: actual GLBs, preview, drag, save, reload and exact purchase mapping', async ({ page, request }) => {
+test('30 plant products: actual GLBs, preview, drag, save, reload and exact purchase mapping', async ({ page, request, seller }) => {
   test.setTimeout(360000);
   await mkdir(evidence, { recursive: true });
   const errors: string[] = [];
@@ -67,7 +65,7 @@ test('30 plant products: actual GLBs, preview, drag, save, reload and exact purc
       expect((await glb.body()).subarray(0, 4).toString()).toBe('glTF');
     }
     for (const preset of plantPresets) {
-      const response = await request.post(`${ec}/api/products`, { data: {
+      const response = await seller.post(`${ec}/api/products`, { data: {
         ...productInput(preset, '/images/olive.png'), sku: `V2-${run}-${preset.key}`, name: preset.name,
       } });
       expect(response.status(), await response.text()).toBe(200);
@@ -136,7 +134,7 @@ test('30 plant products: actual GLBs, preview, drag, save, reload and exact purc
   finally {
     try {
       if (garden) expect((await request.delete(`${api}/gardens/${garden.id}`)).ok()).toBeTruthy();
-      for (const product of products) expect((await request.delete(`${ec}/api/products/${product.id}`)).ok()).toBeTruthy();
+      for (const product of products) expect((await seller.delete(`${ec}/api/products/${product.id}`)).ok()).toBeTruthy();
     } catch (error) {
       await test.info().attach('cleanup-error', { body: String(error), contentType: 'text/plain' });
       if (!failure) failure = error;

@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { expect, type Page, type APIRequestContext } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { productInput } from '../scripts/plant-library-presets.mjs';
 import { plantPresetsV3 } from '../scripts/plant-library-v3-presets.mjs';
 import { api } from './api-url';
+import { sellerRequest } from './seller-session';
 import type { PlantComposition } from '../frontend/src/types/garden';
 type Product = { id: string; name: string; canvasMaterialCode: string; modelComposition: PlantComposition };
 
@@ -28,11 +29,12 @@ export async function showProductsTab(page: Page) {
 
 const selectedProducts = new WeakMap<Page, string>();
 
-export async function createTestProduct(request: APIRequestContext, name = 'E2E配置用', imageUrl = '/images/e2e-reference.svg') {
+// The store 1 MANAGER registers the product; the buyer then places it in a garden.
+export async function createTestProduct(name = 'E2E配置用', imageUrl = '/images/e2e-reference.svg') {
   const origin = process.env.KUSAKARI_EC_E2E_WEB_URL;
   if (!origin) throw new Error('Use e2e/configs/playwright.full.config.ts for real catalog placement');
   const preset = plantPresetsV3.find(item => item.key === 'soft-grass')!;
-  const response = await request.post(`${origin}/api/products`, { data: {
+  const response = await (await sellerRequest()).post(`${origin}/api/products`, { data: {
     ...productInput(preset, imageUrl), sku: `E2E-${randomUUID()}`, name,
   } });
   expect(response.status(), await response.text()).toBe(200);
@@ -53,7 +55,7 @@ export async function placeTestPlant(page: Page, x: number, y: number) {
     const origin = process.env.KUSAKARI_EC_E2E_WEB_URL;
     if (!origin) throw new Error('Use e2e/configs/playwright.full.config.ts for real catalog placement');
     const preset = plantPresetsV3.find(item => item.key === 'soft-grass')!;
-    const response = await page.request.post(`${origin}/api/products`, { data: {
+    const response = await (await sellerRequest()).post(`${origin}/api/products`, { data: {
       ...productInput(preset, preset.imageUrl), sku: `E2E-${randomUUID()}`,
       name: `E2E配置用-${randomUUID().slice(0, 8)}`,
     } });
