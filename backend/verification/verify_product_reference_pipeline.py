@@ -32,7 +32,7 @@ def main():
     layout = layout_manifest(request, categories)
     summaries, images = [], []
     for reference in request.references:
-        content, summary = resolve_reference(settings, request.storeId, reference, products)
+        content, summary = resolve_reference(settings, reference, products)
         image = decode_image(content, expected_format="PNG")
         assert summary.productId == reference.productId and summary.source == "catalog"
         summaries.append(summary)

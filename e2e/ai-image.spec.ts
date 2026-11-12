@@ -15,7 +15,6 @@ type GenerationPayload = {
   beforeDataUrl: string;
   coverageDataUrl: string;
   layout: Layout[];
-  storeId: number;
   references: { assetId: string; productId: string; photoDataUrl?: string }[];
 };
 

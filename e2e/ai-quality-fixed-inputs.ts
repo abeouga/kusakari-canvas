@@ -13,7 +13,6 @@ export async function verifyFixedInputs(payload: QualityPayload, name: QualityCa
   expect(payload.document.depth).toBe(snapshot.depth);
   expect(payload.document.objects).toEqual(snapshot.objects);
   expect(payload.layout).toEqual(baseline.layout);
-  expect(payload.storeId).toBe(baseline.storeId);
   expect(imageBytes(payload.beforeDataUrl).equals(await readFile(resolve(directory, 'before.png')))).toBe(true);
   expect(imageBytes(payload.coverageDataUrl).equals(await readFile(resolve(directory, 'coverage.png')))).toBe(true);
   const references = baseline.inputOrder.filter((item: { kind: string }) => item.kind === 'uploaded-reference');

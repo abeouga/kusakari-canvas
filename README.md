@@ -34,6 +34,8 @@ MySQLが未稼働で接続先も未指定の場合は、Kusakari Canvas用MySQL�
 
 再実行では接続設定と既存データを再利用します。認証・権限・スキーマの確認に失敗した場合は「完了」と表示せず、原因を表示します。別PCへはソースと同梱アセットを渡し、`.env`・`.env.e2e`・`node_modules`・`backend/.venv`・MySQLデータはコピーしないでください。詳細は[`docs/windows-setup.md`](docs/windows-setup.md)を参照してください。
 
+`setup.bat`は既存のデータを消しません。開発用・E2E用のDBを消して作り直すときは、`DB-reset.bat`を使います。対象の決め方と実行のしかたは[docs/database-reset.md](docs/database-reset.md)にあります。
+
 ## 起動
 
 リポジトリ直下の`start.bat`をダブルクリックすると、必要な依存関係を確認・準備してからAPIとWebを同じコンソールに出力して起動します。プロジェクトのフォルダーを移動しても、バッチ自身の場所からPowerShellスクリプトや依存ファイルを解決します。起動後はその画面を閉じず、停止時にCtrl+Cを押してください。`Terminate batch job (Y/N)?`が表示されたら`N`を押すと、起動スクリプトの停止処理が完了します。その後、キー入力でコンソールを閉じます。

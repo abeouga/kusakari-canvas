@@ -20,7 +20,7 @@ def main():
     products = linked_products(settings, [item["productId"] for item in metadata])
     images = []
     for item in metadata:
-        content, summary = resolve_reference(settings, 1, ReferenceRequest(
+        content, summary = resolve_reference(settings, ReferenceRequest(
             assetId="plant_modular", productId=item["productId"]), products)
         image = decode_image(content, expected_format="PNG")
         assert summary.source == "catalog" and summary.productId == item["productId"]
