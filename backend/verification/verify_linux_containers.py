@@ -168,7 +168,7 @@ def main():
                           headers={"Origin": fixture.origin}, timeout=30, trust_env=False) as client:
             persisted = media_roundtrip(fixture, client)
             passed("S3 photo/history/thumbnail bytes and DB references match", objectCount=persisted["objectCount"])
-            products_url = f"http://127.0.0.1:{fixture.ports['ec']}/api/products?storeId=1"
+            products_url = f"http://127.0.0.1:{fixture.ports['ec']}/api/products"
             products = httpx.get(products_url, timeout=30, trust_env=False).json()
             for name in (ec, canvas):
                 started = time.monotonic()
