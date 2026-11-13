@@ -40,11 +40,11 @@ def inspect_cart_growth(engine, baseline):
             "\n".join(encoded).encode()).hexdigest() == baseline["sha256"]
         empty = True
         for row in added:
+            # EC v3: a cart belongs to one member and has no store or cart_details (kusakari-ec#107, #119).
             linked = connection.execute(text("SELECT (SELECT COUNT(*) FROM cart_items WHERE cart_id=:id) + "
-                                             "(SELECT COUNT(*) FROM cart_details WHERE cart_id=:id) + "
                                              "(SELECT COUNT(*) FROM orders WHERE cart_id=:id)"),
                                         {"id": row["id"]}).scalar_one()
-            empty = empty and linked == 0 and row["revision"] == 0 and row["store_id"] == 1
+            empty = empty and linked == 0 and row["revision"] == 0
     return {"originalCount": baseline["count"], "originalRowsUnchanged": unchanged,
             "addedCount": len(added), "additionsAreEmptyUnmodifiedCarts": empty,
             "additionTimes": [str(row["created_at"]) for row in added], "rowsDeleted": 0 if unchanged else None}

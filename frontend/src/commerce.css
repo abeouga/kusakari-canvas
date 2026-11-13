@@ -67,3 +67,4 @@
   /* The rename button sits next to the garden name; icon-only modes keep the name readable at 320px. */
   .canvas-tools .view-mode-actions button > span { display: none; }
 }
+.commerce-scroll .commerce-product .commerce-availability { color: #9a3b2f; font-weight: 600; }

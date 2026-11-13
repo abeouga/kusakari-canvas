@@ -77,3 +77,36 @@ Alternatives:
 - EC の `/api/auth/verify` が種別で拒否するのを待つ案は採用しない。読み取り（`/api/auth/me`）は拒否されないので、Canvas の側で種別を見る必要がある。
 
 Consequences: 店舗側・申請中のアカウントで Canvas を開くと、案内だけが出て、API も 403 を返す。運営（`ADMIN`）は今までどおり使える。E2E は、Canvas と買い物リストを購入者のテストアカウント（`test.user@example.com`、`USER`）で、商品の登録・変更・削除を出店者のテストアカウント（`test.seller@example.com`、店舗1の MANAGER）で行う。`e2e/buyer-only.spec.ts` で、テスト用の出店者の種別を EC の E2E 用 DB で `SHOP_STAFF`・`SHOP_OWNER`・`SHOP_OWNER_APPLICANT`・`ADMIN` に変えて確かめ、終わったら元に戻す。
+
+
+## 2026-11-13 買えなくなった商品の配置を外し、店舗名と在庫なしを出す（#65）
+
+Context: EC で商品がそれぞれ1つの店舗に属し、店舗の閉鎖・停止、組織の停止、商品の削除で買えなくなるようになった（abeouga/kusakari-ec#109・#119・#79）。EC のカートは、戻らない理由で買えなくなった明細を開いたときに外して知らせる（2026-11-12 の決定）。庭には GardenDocument に productId だけを持つ配置が残り、Canvas は買えるかどうかも、どの店舗の商品かも出していなかった。EC の商品の一括照会 `POST /api/products/references` は、削除済みの商品も含めて `storeName`・`stock`・`purchasable`・`unavailableReason` を返す。
+
+Decision:
+
+- 庭を開いたとき、画面が配置済みの productId（と EC で買い物リストに入れた商品）を EC の一括照会で1回調べる。`unavailableReason` が `DELETED`・`STORE_CLOSED`・`STORE_SUSPENDED`・`ORGANIZATION_SUSPENDED`（戻らない理由。EC の `CatalogService.REMOVED_REASONS` と同じ）の配置を編集中の GardenDocument から外し、今の自動保存で1回保存する（新しい revision）。GardenDocument の形は変えない。外した商品は「○○の商品は購入できなくなったため、庭から外しました。」とポップアップで知らせる。
+- 在庫0（`OUT_OF_STOCK`）・非公開（`HIDDEN`）・閉鎖予定（`STORE_CLOSING`）・店舗の非公開（`STORE_UNPUBLISHED`）・組織の受付停止（`ORGANIZATION_NOT_ACCEPTING`）・商品の停止（`PRODUCT_SUSPENDED`）は一時的なので配置を残し、買い物リストに在庫0なら「在庫なし」、それ以外なら「現在は購入できません」と出す。
+- 照会に失敗したとき（EC が止まっている、通信が切れた、照会した ID のどれかが EC に無く 404 が返った）は、買えるかどうかが分からないので配置を外さず、その回の判定をやめる。買い物リストは今までどおり、商品一覧に無い商品に「現在は販売されていないため購入できません」と出す。次に庭を開いて照会に成功したときに外す。
+- 商品一覧・配置の一覧・買い物リストに、照会結果（商品一覧は `GET /api/products` の `sellerStoreName`）から商品の店舗名を出す。
+- 照会は画面から EC へ直接送る（商品一覧・買い物リストと同じ経路）。EC 向けの庭の買い物リスト API（`GET /api/gardens/{id}/shopping-list`、`shopping.py`）には店舗名を足さない。店舗名・買えるかは EC が自分の DB から求められるため。
+
+Alternatives:
+
+- Canvas のバックエンドで庭を読むたびに照会して外す案は採用しない。GET で庭を書き換えることになり、各操作から保存しない規約と、revision の比較による全体保存の流れから外れるため。
+- 在庫0・非公開でも外す案は採用しない。入荷・再公開で買えるようになるため（#65 の不採用案）。
+- 照会に失敗したら全部外す、または照会できない配置を外す案は採用しない。EC の障害で利用者の庭が消えるため。
+
+Consequences: 外した配置は戻さない（店舗の再開・組織の再開後も、配置し直す必要がある）。照会は配置した商品が変わるたびに取り直すが、外すのは庭を開いたときの1回だけ（編集中に店舗が停止しても、次に開くまで残る）。自動保存が止まる状態（輪郭が未確定、範囲外の配置がある）では、外した結果はその状態が解消してから保存される。E2E は `e2e/unavailable-placements.spec.ts`（削除・在庫0・非公開・店舗停止・照会の遮断）。
+
+### 検証用スクリプトの EC v3 への追従
+
+EC v3 で `carts.store_id`・`cart_details`・`inventory.store_id`・`products.active` がなくなり、カートは会員ごとの1つになった。
+
+- 直したもの：`backend/verification/deployment_preservation.py`（カートの増加の確認から `store_id` と `cart_details` を外した。`digest_database` は他のスクリプトから使われている）、`verify_database_tls.py`・`verify_linux_containers.py`（商品一覧を店舗1の指定なしで取る。店舗1が無い DB でも動く）。
+- **EC v3 では使えないもの**（消さずに残す。2026-10 時点の特定のデータに対する1回限りの作業の記録で、package.json・E2E からは呼ばれていない。参考として残し、使う場合は作り直す）：
+  - `backend/verification/retire_product_catalog.py`（prepare・apply・verify・repair-profiles。`products.active`、`carts.store_id`・`cart_details`、2026-10 時点の45商品を前提にする。`load`・`save` だけは他のスクリプトから使われていて、構成に依存しない）
+  - `backend/verification/retire_legacy_oak.py`（`products.active` を比べる）
+  - `backend/verification/verify_catalog_archive.py`（`inventory.store_id` と `products.active` で試験用の商品を作る）
+  - `backend/verification/ai_product_test_data.py`（後片付けが、Cookie で作られる匿名のカートと `carts.store_id` を前提にする。v3 のカートは会員ごとで、`material_products`・`inventory` 以外の参照もある）
+  - いずれも EC の `.env`（開発用 DB）を読むので、試験用 DB での実行にも向かない。

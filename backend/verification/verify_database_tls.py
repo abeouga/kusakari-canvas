@@ -186,7 +186,7 @@ def main():
         wait_api(ec_api, ec_port, "/api/health/ready")
         headers = {"Host": "private.example.invalid", "Origin": "https://private.example.invalid"}
         with httpx.Client(headers=headers, timeout=15, trust_env=False) as client:
-            products = client.get(f"http://127.0.0.1:{ec_port}/api/products?storeId=1")
+            products = client.get(f"http://127.0.0.1:{ec_port}/api/products")
             assert products.status_code == 200 and products.json()
             garden = client.post(f"http://127.0.0.1:{canvas_port}/canvas/api/gardens", json={"name": "TLS fixture"})
             assert garden.status_code == 201

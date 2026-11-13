@@ -11,6 +11,7 @@ import { useSidebarWidth } from '../components/SidebarResize';
 import { ObjectToolbar } from '../components/ObjectToolbar';
 import { CommercePanel } from '../components/CommercePanel';
 import { useCommerce } from '../hooks/useCommerce';
+import { useUnavailablePlacements } from '../hooks/useUnavailablePlacements';
 import { GardenDimensions } from '../components/GardenDimensions';
 import { clearGardenModelCache, GardenCanvas } from '../three/GardenCanvas';
 import { useEditorStore } from '../stores/editorStore';
@@ -28,6 +29,7 @@ export function EditorPage({ gardenId }) {
     const assetQuery = useQuery({ queryKey: ['assets'], queryFn: gardenApi.listAssets, staleTime: Infinity });
     const document = useEditorStore((state) => state.document);
     const commerce = useCommerce(document, assetQuery.data ?? []);
+    const unavailable = useUnavailablePlacements(gardenId, document, commerce.references);
     const entryProductId = new URLSearchParams(window.location.search).get('productId');
     const selectedEntry = useRef(null);
     useEffect(() => {
@@ -257,6 +259,12 @@ export function EditorPage({ gardenId }) {
         {entryProductId && commerce.products.data && !commerce.products.data.some(item => item.id === entryProductId) && <p role="status">選択した商品は現在購入・新規配置できません。公開状態または店舗を確認してください。</p>}
         {!propertiesCollapsed && <CommercePanel document={document} assets={assets} selectedObject={selectedObject} disabled={isEditingDisabled || hasBoundaryDraft || assetQuery.isLoading || assetQuery.isError} commerce={commerce} onSelectObject={selectObject} onNavigate={requestNavigation} width={sidebarWidth} onWidthChange={setSidebarWidth}/>}
       </main>
+      {unavailable.removed.length > 0 && <Dialog title="庭から外した商品があります" onClose={unavailable.dismiss} footer={
+        <button type="button" className="button button-primary" data-dialog-autofocus onClick={unavailable.dismiss}>OK</button>}>
+        <ul className="removed-placements" data-testid="removed-placements">
+          {unavailable.removed.map((name) => <li key={name}>{name}の商品は購入できなくなったため、庭から外しました。</li>)}
+        </ul>
+      </Dialog>}
       {leaveOpen && <Dialog title={leaveOpen === 'photo' ? '庭写真を保存せずに戻りますか？' : '変更を保存せずに戻りますか？'}
         description={leaveOpen === 'photo' ? '施工範囲（庭の輪郭）が確定していないため、この庭写真は保存されません。' : '保存していない編集内容は破棄されます。'} onClose={() => setLeaveOpen(false)} footer={<>
         <button type="button" className="button button-secondary" data-dialog-autofocus onClick={() => setLeaveOpen(false)}>編集を続ける</button>

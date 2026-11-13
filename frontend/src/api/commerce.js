@@ -30,6 +30,8 @@ export const commerceApi = {
     cart: () => request('/cart'),
     // A product belongs to one store, so the list covers every open store; EC has no "current store".
     products: () => request('/products'),
+    // Placed products, including deleted ones, with their store, stock and why they cannot be bought now.
+    references: (productIds) => request('/products/references', 'POST', { productIds }),
     quote: (items) => request('/materials/quote', 'POST', { storeId: null, items }),
     savedItems: (gardenId) => request(`/shopping-lists/${encodeURIComponent(gardenId)}/saved-items`),
 };
