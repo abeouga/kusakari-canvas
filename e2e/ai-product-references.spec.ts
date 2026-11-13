@@ -7,6 +7,7 @@ import { plantPresetsV3 } from '../scripts/plant-library-v3-presets.mjs';
 import { productInput } from '../scripts/plant-library-presets.mjs';
 import { capture, createScene, openScene, readGarden, syntheticPhoto } from './occlusion-helpers';
 import { showProductsTab } from './catalog-fixture';
+import { ecSql } from './auth-session';
 
 const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
 const ec = (process.env.KUSAKARI_EC_E2E_API_PORT ? 'http://127.0.0.1:' + process.env.KUSAKARI_EC_E2E_API_PORT + '/api' : 'http://127.0.0.1:18186/api');
@@ -77,6 +78,12 @@ test('linked products are automatic, grouped by product, archived-readable and p
     expect((await request.post(`${api}/ai/product-references`, { data: { productIds: [ids[0], ids[0]] } })).status()).toBe(400);
     const status = await request.get(`${api}/ai/status`).then((response) => response.json());
     expect(status.configured).toBe(false); // A real no-key response; never send a paid generation.
+    // canvas#65: opening a garden removes placements of deleted products. This test is about AI references to a
+    // product that is no longer listed, so before the editor opens the product is made hidden instead (a temporary
+    // reason that keeps the placement). The deleted case is covered above through the API and in
+    // e2e/unavailable-placements.spec.ts.
+    if (!/^[a-f0-9-]{36}$/.test(ids[0])) throw new Error('Only a newly created test product is changed.');
+    ecSql(`UPDATE inventory SET publication_status='HIDDEN' WHERE product_id='${ids[0]}';`);
     await page.goto('/');
     const photo = await syntheticPhoto(page);
     const garden = await createScene(request, fixtures.gardenIds, photo,

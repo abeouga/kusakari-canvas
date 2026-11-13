@@ -51,3 +51,4 @@
 .calibration-result small { display: block; font-size: 10px; color: #839d6f; }
 .calibration-settings p.notice-error { color: var(--danger); margin-top: 10px; }
 @media (max-width: 1000px) { .calibration-dialog { width: calc(100vw - 32px); } .calibration-layout { grid-template-columns: minmax(0, 1fr) 260px; } .calibration-settings { padding: 18px; } .reference-order { gap: 10px; padding: 16px 8px; } .dialog-footer-note { display: none; } }
+.removed-placements { margin: 0; padding-left: 1.2em; line-height: 1.7; }

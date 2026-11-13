@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { addObject, changeObjectTransform, createPlacedObject, removeObject } from '../domain/gardenEditing';
+import { addObject, changeObjectTransform, createPlacedObject, removeObject, removeObjects } from '../domain/gardenEditing';
 import { validSurface, withPhotoBoundary } from '../domain/photoProjection';
 import { dimensionError } from '../domain/gardenDimensions';
 import { applyEdgeLength, withEdgeLengthsForBoundary } from '../domain/edgeCalibration';
@@ -163,6 +163,25 @@ export const useEditorStore = create((set, get) => ({
             editError: null,
             saveError: null,
         });
+    },
+    // 買えなくなった商品の配置を外します。自動保存がこの変更を1回の保存にまとめます。
+    removeObjects: (objectIds) => {
+        const state = get();
+        const next = state.document ? removeObjects(state.document, objectIds) : null;
+        if (!next)
+            return false;
+        const removed = new Set(objectIds);
+        const selectedObjectId = removed.has(state.selectedObjectId) ? next.objects[0]?.id ?? null : state.selectedObjectId;
+        set({
+            document: next,
+            selectedObjectId,
+            loadedModelIds: state.loadedModelIds.filter((id) => !removed.has(id)),
+            failedModelIds: state.failedModelIds.filter((id) => !removed.has(id)),
+            isDirty: true,
+            editError: null,
+            saveError: null,
+        });
+        return true;
     },
     setSaving: (isSaving) => set({ isSaving }),
     setTransformDragging: (isTransformDragging) => set({ isTransformDragging }),

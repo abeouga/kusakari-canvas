@@ -43,6 +43,12 @@ export function removeObject(document, objectId) {
         return null;
     return { ...document, objects: document.objects.filter((object) => object.id !== objectId) };
 }
+export function removeObjects(document, objectIds) {
+    const removed = new Set(objectIds);
+    if (!document.objects.some((object) => removed.has(object.id)))
+        return null;
+    return { ...document, objects: document.objects.filter((object) => !removed.has(object.id)) };
+}
 export function isValidTransform(document, transform) {
     const { position, rotation, scale } = transform;
     const finite = [...Object.values(position), ...Object.values(rotation), ...Object.values(scale)].every(Number.isFinite);
