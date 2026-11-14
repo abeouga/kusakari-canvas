@@ -235,10 +235,10 @@ test('offline save keeps edits, stops retry storms and supports an explicit retr
   await page.keyboard.press('Escape');
   await page.getByRole('tab', { name: /買い物リスト/ }).click();
   await page.getByRole('button', { name: 'リストを確認', exact: true }).click();
-  await expect(page.locator('.editor-alert')).toContainText('自動保存できませんでした');
+  await expect(page.locator('.editor-alert.notice-error')).toContainText('自動保存できませんでした');
   expect(page.url()).toContain(`/gardens/${garden.id}`);
   await page.unroute(`**/api/gardens/${garden.id}`);
-  await page.locator('.editor-alert').getByRole('button', { name: '再試行', exact: true }).click();
+  await page.locator('.editor-alert.notice-error').getByRole('button', { name: '再試行', exact: true }).click();
   const recovered = await saved(page, request, garden.id, garden.revision + 1);
   expect(positionLabel(recovered.objects[0].position)).toBe(local);
   await reloadedEvidence(page, request, garden.id, 'offline-recovered');
@@ -318,7 +318,7 @@ test('a real revision conflict preserves both remote and local changes without r
   page.on('request', req => { if (req.method() === 'PUT' && req.url().endsWith(`/api/gardens/${garden.id}`)) attempts++; });
   await showTopView(page);
   await dragSelectedObject(page, garden, 4, 0);
-  await expect(page.locator('.editor-alert')).toContainText('競合しました');
+  await expect(page.locator('.editor-alert.notice-error')).toContainText('競合しました');
   await expect(page.getByTestId('object-row-0').locator('small')).not.toHaveText(positionLabel(garden.objects[0].position));
   await page.waitForTimeout(1200);
   expect(attempts).toBe(1);

@@ -109,7 +109,7 @@ test('AI generation uses real EC selection, captures plant/furniture coverage, a
     expect(status.status()).toBe(200);
     expect(await status.json()).toEqual({ configured: false, model: 'gpt-image-2.5-sunburst', quality: 'medium' });
     const photo = await syntheticPhoto(page, 1201, 801);
-    const product = await createTestProduct(request, '低木');
+    const product = await createTestProduct('低木');
     const plant = productPlacement(product, 0.3, -1.8, 1.2);
     const bench = { ...shrub(0, 1, 2), assetId: 'bench_wood' };
     const garden = await createScene(request, ids, photo, [plant, bench]);

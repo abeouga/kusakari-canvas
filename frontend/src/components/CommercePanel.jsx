@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { productImage, yen } from '../api/commerce';
+import { availabilityNote } from '../domain/productAvailability';
 import { ecUrl } from '../domain/shopping';
 import { PlacedObjects } from './PlacedObjects';
 import { ProductBrowser } from './ProductBrowser';
@@ -39,7 +40,7 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
     <div className="commerce-scroll">
       <section id="commerce-products" role="tabpanel" aria-labelledby="commerce-tab-products" hidden={tab !== 'products'}>
         <ProductBrowser assets={assets} commerce={commerce} disabled={disabled}/>
-        <PlacedObjects document={document} assets={assets} selectedObject={selectedObject} disabled={disabled} onSelectObject={onSelectObject}/>
+        <PlacedObjects document={document} assets={assets} selectedObject={selectedObject} disabled={disabled} references={commerce.referenceMap} onSelectObject={onSelectObject}/>
       </section>
       <section id="commerce-list" role="tabpanel" aria-labelledby="commerce-tab-list" hidden={tab !== 'list'}>
         <h3>{document.name}の買い物リスト</h3>
@@ -52,6 +53,8 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
         {commerce.rows.map((row) => {
           const object = document.objects.find((o) => row.productId ? o.productId === row.productId : !o.productId && o.assetId === row.assetId);
           const product = commerce.products.data?.find((p) => p.id === row.productId);
+          const reference = row.productId ? commerce.referenceMap.get(row.productId) : undefined;
+          const note = availabilityNote(reference);
           const placed = row.unplaced ? 0 : row.quantity;
           let asset = null;
           if (object) asset = placedProductAsset(object, assets);
@@ -63,9 +66,12 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
             }}>
             {product ? <img src={productImage(product.imageUrl)} alt="" draggable={false}/> : <span className="commerce-product-noimage" aria-hidden="true"/>}
             {placed > 0 && <span className="placed-count-badge" data-testid="placement-count" role="img" aria-label={`庭に設置した数 ${placed}`}>{placed}</span>}
-            <div><strong>{product?.name ?? row.name}</strong>
+            <div><strong>{product?.name ?? reference?.name ?? row.name}</strong>
+              {reference?.storeName && <small data-testid="store-name">{reference.storeName}</small>}
               {row.unplaced && <small data-testid="unplaced-ec-item">ECで追加（庭に未配置）</small>}
-              {row.productId && commerce.products.isSuccess && !product && <p role="status">現在は販売されていないため購入できません。保存済みの配置は維持されます。</p>}
+              {note && <p role="status" className="commerce-availability" data-testid="availability">{note}</p>}
+              {/* EC の照会に失敗したときは、商品一覧に無いことだけで判断し、配置は外さない。 */}
+              {row.productId && !reference && commerce.products.isSuccess && !product && <p role="status">現在は販売されていないため購入できません。保存済みの配置は維持されます。</p>}
               {product && <p className="commerce-price"><small>小計の目安</small>{yen(product.priceYen * row.quantity)}</p>}
             </div>
           </article>;

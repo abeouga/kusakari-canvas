@@ -7,6 +7,12 @@ import httpx
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
+# Canvas is a buyer feature: shop-side and applicant accounts cannot buy, so they cannot design gardens either.
+BUYER_ACCOUNT_TYPES = frozenset({"USER", "ADMIN"})
+SHOP_ACCOUNT_TYPES = frozenset({"SHOP_OWNER", "SHOP_STAFF", "SHOP_OWNER_APPLICANT"})
+# The seller's product form previews and saves a plant model through this pure calculation (no garden data).
+SHOP_ALLOWED = ("POST", "/api/model-assemblies/resolve")
+
 
 class AuthBoundary:
     def __init__(self, settings):
@@ -61,6 +67,11 @@ class AuthBoundary:
                 raise ValueError("Invalid auth response.")
             if data.get("mode") != "cognito" or data.get("authenticated") is not True:
                 return self.error(401, "LOGIN_REQUIRED", "ログインしてください。")
+            account_type = data.get("accountType")
+            if account_type not in BUYER_ACCOUNT_TYPES | SHOP_ACCOUNT_TYPES:
+                raise ValueError("Unknown account type.")
+            if account_type in SHOP_ACCOUNT_TYPES and (request.method, path) != SHOP_ALLOWED:
+                return self.error(403, "BUYER_ACCOUNT_REQUIRED", "Canvas は購入者のアカウントで使えます。")
             request.state.owner_id = str(UUID(data["id"]))
             return None
         except (httpx.HTTPError, ValueError, KeyError, TypeError):

@@ -23,7 +23,7 @@ async function showTop3d(page: Page) {
 }
 
 test('写真未アップロードの3D庭はクリック・ドラッグとも配置せず理由を示し、写真と輪郭の確定後は配置できる', async ({ page, request }) => {
-  const product = await createTestProduct(request, `E2E写真必須-${Date.now()}`);
+  const product = await createTestProduct(`E2E写真必須-${Date.now()}`);
   const id = await createGardenFromList(page);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   await showTop3d(page);

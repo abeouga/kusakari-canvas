@@ -12,10 +12,12 @@ test('共通ヘッダー・ECへの移動確認・未保存の変更保護', asy
     const header = page.locator('.kusakari-site-header');
     await expect(header.locator('.kusakari-feature-name')).toHaveCount(0);
     await expect(header.getByRole('link', { name: 'Canvas', exact: true })).toBeVisible();
+    // The full suite runs signed in as the buyer (USER): the account link replaces login, with no shop or admin links.
     await expect(header.getByRole('link', { name: '出店者', exact: true })).toHaveCount(0);
-    await expect(header.getByRole('link', { name: 'アカウント', exact: true })).toHaveCount(0);
+    await expect(header.getByRole('link', { name: '管理者画面', exact: true })).toHaveCount(0);
+    await expect(header.getByRole('link', { name: 'アカウント', exact: true })).toHaveAttribute('href', /\/account$/);
     await expect(header.getByRole('link', { name: '注文履歴' })).toHaveAttribute('href', /\/purchases$/);
-    await expect(header.getByRole('link', { name: 'ログイン', exact: true })).toHaveAttribute('href', /\?panel=login$/);
+    await expect(header.getByRole('link', { name: 'ログイン', exact: true })).toHaveCount(0);
     await expect(header.getByRole('link', { name: /^カートを開く/ })).toHaveAttribute('href', /\/cart$/);
     await expect(header.locator('.bag-text')).toHaveText('カート');
     await expect(page.locator('.announcement')).toContainText('ひと鉢からはじまる、緑のある暮らし。');

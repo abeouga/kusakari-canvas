@@ -7,6 +7,7 @@ import { plantPresetsV3 } from '../scripts/plant-library-v3-presets.mjs';
 import { productInput } from '../scripts/plant-library-presets.mjs';
 import { capture, createScene, openScene, readGarden, syntheticPhoto } from './occlusion-helpers';
 import { showProductsTab } from './catalog-fixture';
+import { ecSql } from './auth-session';
 
 const api = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
 const ec = (process.env.KUSAKARI_EC_E2E_API_PORT ? 'http://127.0.0.1:' + process.env.KUSAKARI_EC_E2E_API_PORT + '/api' : 'http://127.0.0.1:18186/api');
@@ -33,10 +34,10 @@ test.afterEach(async ({ page }) => {
   }
   await recordFixtures();
 });
-async function product(request: APIRequestContext, key: string): Promise<Product> {
+async function product(seller: APIRequestContext, key: string): Promise<Product> {
   const preset = plantPresetsV3.find((item) => item.key === key)!;
   const input = { ...productInput(preset, preset.imageUrl), sku: `AIREF-${randomUUID().slice(0, 12)}` };
-  const response = await request.post(`${ec}/products`, { data: input });
+  const response = await seller.post(`${ec}/products`, { data: input });
   expect(response.status(), await response.text()).toBe(200);
   const created = await response.json() as Product;
   fixtures.productIds.push(created.id);
@@ -49,10 +50,10 @@ function placement(item: Product, x: number, z: number): GardenObject {
     position: { x, y: 0, z }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } };
 }
 
-test('linked products are automatic, grouped by product, archived-readable and persisted without changing the garden', async ({ page, request }) => {
+test('linked products are automatic, grouped by product, archived-readable and persisted without changing the garden', async ({ page, request, seller }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  const products = [await product(request, 'split-leaf'), await product(request, 'soft-grass')];
+  const products = [await product(seller, 'split-leaf'), await product(seller, 'soft-grass')];
   try {
     const ids = products.map((item) => item.id);
     const metadata = await request.post(`${ec}/products/references`, { data: { productIds: ids } });
@@ -61,7 +62,7 @@ test('linked products are automatic, grouped by product, archived-readable and p
     expect(await metadata.text()).not.toContain('modelComposition');
     expect((await request.post(`${ec}/products/references`, { data: { productIds: [ids[0], ids[0]] } })).status()).toBe(400);
     expect((await request.post(`${ec}/products/references`, { data: { productIds: [randomUUID()] } })).status()).toBe(404);
-    expect((await request.delete(`${ec}/products/${ids[0]}`)).status()).toBe(200);
+    expect((await seller.delete(`${ec}/products/${ids[0]}`)).status()).toBe(200);
     const catalog = await request.get(`${ec}/products?storeId=1`).then((response) => response.json());
     expect(catalog.some((item: { id: string }) => item.id === ids[0])).toBe(false);
     const resolved = await request.post(`${api}/ai/product-references`, { data: { productIds: ids } });
@@ -77,6 +78,12 @@ test('linked products are automatic, grouped by product, archived-readable and p
     expect((await request.post(`${api}/ai/product-references`, { data: { productIds: [ids[0], ids[0]] } })).status()).toBe(400);
     const status = await request.get(`${api}/ai/status`).then((response) => response.json());
     expect(status.configured).toBe(false); // A real no-key response; never send a paid generation.
+    // canvas#65: opening a garden removes placements of deleted products. This test is about AI references to a
+    // product that is no longer listed, so before the editor opens the product is made hidden instead (a temporary
+    // reason that keeps the placement). The deleted case is covered above through the API and in
+    // e2e/unavailable-placements.spec.ts.
+    if (!/^[a-f0-9-]{36}$/.test(ids[0])) throw new Error('Only a newly created test product is changed.');
+    ecSql(`UPDATE inventory SET publication_status='HIDDEN' WHERE product_id='${ids[0]}';`);
     await page.goto('/');
     const photo = await syntheticPhoto(page);
     const garden = await createScene(request, fixtures.gardenIds, photo,
@@ -172,7 +179,7 @@ test('linked products are automatic, grouped by product, archived-readable and p
   } finally {
     for (const id of fixtures.gardenIds) expect((await request.delete(`${api}/gardens/${id}`)).status()).toBe(204);
     fixtures.gardenIds = [];
-    for (const item of products) expect((await request.delete(`${ec}/products/${item.id}`)).status()).toBe(200);
+    for (const item of products) expect((await seller.delete(`${ec}/products/${item.id}`)).status()).toBe(200);
     await recordFixtures();
   }
 });

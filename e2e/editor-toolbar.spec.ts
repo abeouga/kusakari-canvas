@@ -16,7 +16,11 @@ test('editor controls preserve state and the merged canvas toolbar fits narrow s
     const bar = page.locator('.canvas-tools');
     await expect(bar.locator('.toolbar-status')).toHaveCount(0);
     await expect(page.getByTestId('save-garden')).toHaveCount(0);
-    await expect(bar.locator('.document-identity').getByRole('button')).toHaveCount(1);
+    // Next to the garden name: back to the list, and rename (#21).
+    const identityButtons = bar.locator('.document-identity').getByRole('button');
+    await expect(identityButtons).toHaveCount(2);
+    await expect(identityButtons.nth(0)).toHaveAccessibleName('← 庭一覧');
+    await expect(identityButtons.nth(1)).toHaveAccessibleName('庭の名前を変更');
     await expect(page.locator('.editor-shell > .plan-actions')).toHaveCount(0);
     for (const width of [1440, 1280, 1100, 1024, 768, 390, 320]) {
       await page.setViewportSize({ width, height: 960 });

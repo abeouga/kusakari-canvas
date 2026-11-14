@@ -99,3 +99,4 @@
   .transform-section { padding: 18px 16px; }
 }
 @media (max-height: 760px) { .asset-preview { height: 52px; } .catalog-heading { height: 36px; } }
+.placed-copy .placed-store { color: #718166; font-size: 11px; }

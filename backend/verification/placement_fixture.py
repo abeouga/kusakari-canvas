@@ -16,6 +16,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('garden_id', type=UUID)
     parser.add_argument('--legacy', action='store_true')
+    # The full suite signs in through Cognito, so the test buyer's EC member id owns the garden.
+    parser.add_argument('--owner', type=UUID, help='owner of the fixture garden (default: the isolated test owner)')
     args = parser.parse_args()
     os.environ['KUSAKARI_CANVAS_PROFILE'] = 'e2e'
     settings = Settings.from_env()
@@ -24,7 +26,8 @@ def main():
     engine = create_database_engine(settings)
     with Session(engine) as session, session.begin():
         garden = session.get(Garden, str(args.garden_id))
-        if not garden or garden.owner_id != settings.owner_id or not garden.name.startswith('E2E placement '):
+        owner = str(args.owner) if args.owner else settings.owner_id
+        if not garden or garden.owner_id != owner or not garden.name.startswith('E2E placement '):
             raise ValueError('Only this suite fixture may be inspected or modified')
         objects = list(session.scalars(select(PlacedObject).where(PlacedObject.garden_id == garden.id)
                                        .order_by(PlacedObject.id)))

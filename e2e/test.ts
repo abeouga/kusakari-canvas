@@ -1,28 +1,15 @@
-import { test as base, type APIRequestContext } from '@playwright/test';
-import { detachTestSellerCart } from './auth-session.js';
+import { test as base, type APIRequestContext, type Page } from '@playwright/test';
+import { detachTestBuyerCart, sellerStatePath } from './auth-session.js';
+import { sellerRequest, withCsrf } from './seller-session.js';
 
 export * from '@playwright/test';
 
-const patched = new WeakSet<APIRequestContext>();
-
-// Direct API writes carry the EC session's CSRF token, as the Canvas UI does. Browser traffic is untouched.
-function withCsrf(context: APIRequestContext) {
-  const ec = process.env.KUSAKARI_EC_E2E_WEB_URL;
-  if (!ec || patched.has(context)) return;
-  patched.add(context);
-  const fetch = context.fetch.bind(context);
-  context.fetch = async (urlOrRequest, options = {}) => {
-    const method = (options.method ?? 'GET').toUpperCase();
-    if (typeof urlOrRequest !== 'string' || method === 'GET' || method === 'HEAD') return fetch(urlOrRequest, options);
-    const csrf = await fetch(`${ec}/api/auth/csrf`).then((r) => r.json());
-    return fetch(urlOrRequest, { ...options, headers: { [csrf.headerName]: csrf.token, ...options.headers } });
-  };
-}
-
-export const test = base.extend<{ freshCart: void }>({
+// `page`, `context` and `request` are the buyer, who uses Canvas and the cart. `seller` and `sellerPage` are the
+// store 1 MANAGER, who registers, changes and deletes the test products in the EC.
+export const test = base.extend<{ freshCart: void, seller: APIRequestContext, sellerPage: Page }>({
   // eslint-disable-next-line no-empty-pattern -- Playwright fixtures require a destructured first argument.
   freshCart: [async ({}, use) => {
-    if (process.env.KUSAKARI_E2E_MEMBER_ID) detachTestSellerCart();
+    if (process.env.KUSAKARI_E2E_MEMBER_ID) detachTestBuyerCart();
     await use();
   }, { auto: true }],
   context: async ({ context }, use) => {
@@ -32,5 +19,15 @@ export const test = base.extend<{ freshCart: void }>({
   request: async ({ request }, use) => {
     withCsrf(request);
     await use(request);
+  },
+  // eslint-disable-next-line no-empty-pattern -- Playwright fixtures require a destructured first argument.
+  seller: async ({}, use) => {
+    await use(await sellerRequest());
+  },
+  sellerPage: async ({ browser, baseURL }, use) => {
+    const context = await browser.newContext({ storageState: sellerStatePath, baseURL, viewport: { width: 1440, height: 960 } });
+    withCsrf(context.request);
+    await use(await context.newPage());
+    await context.close();
   },
 });

@@ -50,7 +50,7 @@ test('3d view survives an autosave', async ({ page, request }) => {
   await expect(page.getByTestId('photo-model-canvas')).toBeVisible();
   await page.screenshot({ path: 'artifacts/e2e/photo-interaction/reloaded.png' });
   await page.getByRole('button', { name: '3D庭', exact: true }).click();
-  await page.locator('.document-identity button').click();
+  await page.locator('.document-identity').getByRole('button', { name: '← 庭一覧', exact: true }).click();
   await page.waitForURL('/');
   await page.locator('.garden-card').filter({ hasText: garden.name }).locator('.garden-card-open').click();
   await expect(page.getByTestId('photo-model-canvas')).toBeVisible();

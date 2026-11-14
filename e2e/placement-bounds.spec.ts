@@ -10,7 +10,10 @@ import { createPhotoCamera } from '../frontend/src/three/photoCamera.js';
 
 function database(id:string, legacy=false) {
   const python=resolve('backend/.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python');
-  return JSON.parse(execFileSync(python,['-m','verification.placement_fixture',id,...(legacy?['--legacy']:[])],
+  // The garden belongs to the signed-in test buyer; the fixture refuses any other owner's garden.
+  const owner=process.env.KUSAKARI_E2E_MEMBER_ID;
+  return JSON.parse(execFileSync(python,['-m','verification.placement_fixture',id,...(legacy?['--legacy']:[]),
+    ...(owner?['--owner',owner]:[])],
     {cwd:resolve('backend'),encoding:'utf8'}));
 }
 async function nameFixture(request:APIRequestContext, garden:GardenDocument):Promise<GardenDocument> {

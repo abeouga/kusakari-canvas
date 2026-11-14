@@ -40,6 +40,7 @@ export function ProductBrowser({ assets, commerce, disabled }) {
         }}>
         <img src={productImage(product.imageUrl)} alt="" loading="lazy" draggable={false}/>
         <div><strong>{product.name}</strong><small>{product.category}</small>
+          {product.sellerStoreName && <small data-testid="browse-store">{product.sellerStoreName}</small>}
           <p className="browse-price">{yen(product.priceYen)}</p>
           {!asset && <small>3Dモデル未設定</small>}
         </div>
