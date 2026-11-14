@@ -7,7 +7,7 @@ from kusakari_canvas_api.ai_catalog import linked_products, resolve_reference
 from kusakari_canvas_api.ai_config import AiSettings
 from kusakari_canvas_api.ai_images import decode_image
 from kusakari_canvas_api.ai_schemas import ReferenceRequest
-from verification.retire_product_catalog import load, save
+from verification.evidence_files import load, save
 
 
 def main():

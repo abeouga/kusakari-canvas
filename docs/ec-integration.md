@@ -104,9 +104,4 @@ Consequences: 外した配置は戻さない（店舗の再開・組織の再開
 EC v3 で `carts.store_id`・`cart_details`・`inventory.store_id`・`products.active` がなくなり、カートは会員ごとの1つになった。
 
 - 直したもの：`backend/verification/deployment_preservation.py`（カートの増加の確認から `store_id` と `cart_details` を外した。`digest_database` は他のスクリプトから使われている）、`verify_database_tls.py`・`verify_linux_containers.py`（商品一覧を店舗1の指定なしで取る。店舗1が無い DB でも動く）。
-- **EC v3 では使えないもの**（消さずに残す。2026-10 時点の特定のデータに対する1回限りの作業の記録で、package.json・E2E からは呼ばれていない。参考として残し、使う場合は作り直す）：
-  - `backend/verification/retire_product_catalog.py`（prepare・apply・verify・repair-profiles。`products.active`、`carts.store_id`・`cart_details`、2026-10 時点の45商品を前提にする。`load`・`save` だけは他のスクリプトから使われていて、構成に依存しない）
-  - `backend/verification/retire_legacy_oak.py`（`products.active` を比べる）
-  - `backend/verification/verify_catalog_archive.py`（`inventory.store_id` と `products.active` で試験用の商品を作る）
-  - `backend/verification/ai_product_test_data.py`（後片付けが、Cookie で作られる匿名のカートと `carts.store_id` を前提にする。v3 のカートは会員ごとで、`material_products`・`inventory` 以外の参照もある）
-  - いずれも EC の `.env`（開発用 DB）を読むので、試験用 DB での実行にも向かない。
+- **EC v3 では使えないものは削除した**（2026-11-14、ユーザー判断）：2026-10 時点の特定のデータに対する1回限りの作業の記録で、package.json・E2E から呼ばれておらず、EC の開発用 DB を読むため試験用 DB でも使えなかった。`retire_product_catalog.py`（`products.active`・`carts.store_id`・`cart_details` と2026-10 時点の45商品が前提）、`retire_legacy_oak.py`、`verify_catalog_archive.py`、`ai_product_test_data.py`。他のスクリプトが使っていた `load`・`save` は `backend/verification/evidence_files.py` に移した。過去の作業の内容は Git の履歴に残る。
