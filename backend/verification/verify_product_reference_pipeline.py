@@ -12,7 +12,7 @@ from kusakari_canvas_api.ai_images import decode_image
 from kusakari_canvas_api.ai_layout import layout_manifest
 from kusakari_canvas_api.ai_prompt import generation_prompt, image_roles
 from kusakari_canvas_api.ai_schemas import AiImageRequest
-from verification.retire_product_catalog import load, save
+from verification.evidence_files import load, save
 
 
 def main():

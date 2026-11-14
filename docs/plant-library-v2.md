@@ -137,7 +137,7 @@ https://www.rhs.org.uk/plants/544537/hesperocyparis-macrocarpa-goldcrest/details
 
 ### Verification
 
-- `backend/verification/retire_product_catalog.py` は事前退避・変更競合検出・明示した14 IDのみの適用を行う。
+- `backend/verification/retire_product_catalog.py`（2026-11-14 に削除。EC v3 では使えないため。Git の履歴に残る） は事前退避・変更競合検出・明示した14 IDのみの適用を行う。
   実行先は通常ローカルDBに限定し、成果物は `D:\KusakariVerification\catalog-cleanup-20261018` に保存した。
 - 初回適用で既存ECの全列更新による旧プロフィール7件への `botanicalForm:null` 追加を検出した。
   当該7列だけを退避データから復元し、販売状態以外の全商品列が完全一致することを確認した。
@@ -159,7 +159,7 @@ https://www.rhs.org.uk/plants/544537/hesperocyparis-macrocarpa-goldcrest/details
 
 利用者が「木」も削除可と変更したため、`canvas-oak` 1件を追加で販売停止した。
 EC/Canvasの新規一覧は新しい30商品のみ。既存庭の参照整合性のためアセットとGLBは残す。
-`backend/verification/retire_legacy_oak.py` が事前退避、対象ID・SKUの照合、全テーブル比較を行う。
+`backend/verification/retire_legacy_oak.py`（2026-11-14 に削除。EC v3 では使えないため。Git の履歴に残る） が事前退避、対象ID・SKUの照合、全テーブル比較を行う。
 前回の31件という検証結果は履歴として保持し、今回の退避・検証資料は
 `D:\KusakariVerification\ai-products-20261019` に分離した。画像生成側の変更は
 [配置商品の自動参照](ai-image-generation.md)を参照する。
