@@ -76,7 +76,7 @@ Alternatives:
 - 植物モデルの API も止める案は採用しない。出店者が植物の商品を登録できなくなるため。
 - EC の `/api/auth/verify` が種別で拒否するのを待つ案は採用しない。読み取り（`/api/auth/me`）は拒否されないので、Canvas の側で種別を見る必要がある。
 
-Consequences: 店舗側・申請中のアカウントで Canvas を開くと、案内だけが出て、API も 403 を返す。運営（`ADMIN`）は今までどおり使える。E2E は、Canvas と買い物リストを購入者のテストアカウント（`test.user@example.com`、`USER`）で、商品の登録・変更・削除を出店者のテストアカウント（`test.seller@example.com`、店舗1の MANAGER）で行う。`e2e/buyer-only.spec.ts` で、テスト用の出店者の種別を EC の E2E 用 DB で `SHOP_STAFF`・`SHOP_OWNER`・`SHOP_OWNER_APPLICANT`・`ADMIN` に変えて確かめ、終わったら元に戻す。
+Consequences: 店舗側・申請中のアカウントで Canvas を開くと、案内だけが出て、API も 403 を返す。運営（`ADMIN`）は今までどおり使える。E2E は、Canvas と買い物リストを購入者のテストアカウント（`user01@example.com`、`USER`）で、商品の登録・変更・削除を出店者のテストアカウント（`manager01@example.com`、店舗1の MANAGER）で行う。`e2e/buyer-only.spec.ts` で、テスト用の出店者の種別を EC の E2E 用 DB で `SHOP_STAFF`・`SHOP_OWNER`・`SHOP_OWNER_APPLICANT`・`ADMIN` に変えて確かめ、終わったら元に戻す。
 
 
 ## 2026-11-13 買えなくなった商品の配置を外し、店舗名と在庫なしを出す（#65）
