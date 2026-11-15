@@ -7,8 +7,8 @@ import { chromium, expect, request } from '@playwright/test';
 // Canvas is a buyer feature, so every test runs as the buyer. The seller session only registers the test products.
 export const authStatePath = resolve('artifacts/e2e/full-suite/.auth/test-buyer.json');
 export const sellerStatePath = resolve('artifacts/e2e/full-suite/.auth/test-seller.json');
-const buyerEmail = 'test.user@example.com';
-const sellerEmail = 'test.seller@example.com';
+const buyerEmail = 'user01@example.com';
+const sellerEmail = 'manager01@example.com';
 
 function ecWeb() {
   const url = process.env.KUSAKARI_EC_E2E_WEB_URL;
