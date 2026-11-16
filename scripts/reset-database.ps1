@@ -3,52 +3,38 @@ param(
   # 対象を表示するだけで、何も変更しない。
   [switch]$DryRun,
   # 消す前のバックアップを取らない。
-  [switch]$NoBackup,
-  # 確認の文字を引数で渡す（検証用）。指定しないときは画面で入力を求める。
-  [ValidatePattern('^[^"\r\n]*$')]
-  [string]$ConfirmText,
-  # 管理者として起動し直したときに、起動した人のユーザー名を渡す（スクリプト自身が使う）。
-  [ValidatePattern('^[^"\r\n]*$')]
-  [string]$RequestedBy
+  [switch]$NoBackup
 )
 
 $ErrorActionPreference = 'Stop'
 
-function Test-Administrator {
-  $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-  return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-}
-
-$currentUser = [Security.Principal.WindowsIdentity]::GetCurrent().Name
-
-# DB の初期化は、Windows の管理者として実行する。管理者でないときは、確認を出して起動し直す。
-if (-not (Test-Administrator)) {
-  Write-Host 'DB の初期化は、Windows の管理者として実行します。'
-  Write-Host 'Windows の確認（ユーザー アカウント制御）が表示されます。別のウィンドウで続きを行います。'
-  $arguments = @('-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', ('"{0}"' -f $PSCommandPath),
-    '-RequestedBy', ('"{0}"' -f $currentUser))
-  if ($DryRun) { $arguments += '-DryRun' }
-  if ($NoBackup) { $arguments += '-NoBackup' }
-  if ($PSBoundParameters.ContainsKey('ConfirmText')) { $arguments += @('-ConfirmText', ('"{0}"' -f $ConfirmText)) }
-  try {
-    $elevated = Start-Process -FilePath (Join-Path $PSHOME 'powershell.exe') -Verb RunAs -ArgumentList $arguments -Wait -PassThru
-  } catch {
-    Write-Host '管理者としての起動が取り消されたか、失敗しました。DB は変更していません。'
-    exit 1
-  }
-  exit $elevated.ExitCode
-}
-
+# 実行したらそのまま最後まで進める。確認の入力も管理者の権限も使わない（2026-11-16 の決定、docs/database-reset.md）。
+# DB の操作は Canvas 用の DB ユーザーの権限で足りる。
 $exitCode = 1
 try {
-  # 別のユーザーの管理者として起動すると、設定や専用 MySQL の記録の場所が変わり、対象を取り違える。
-  if ($RequestedBy -and $RequestedBy -ne $currentUser) {
-    throw "起動した人 ($RequestedBy) と違うユーザー ($currentUser) の管理者権限では実行できません。DB は変更していません。"
-  }
-
   . (Join-Path $PSScriptRoot 'paths.ps1')
   $repoRoot = Get-KusakariCanvasRepoRoot -StartPath $PSScriptRoot
   $backendRoot = Join-Path $repoRoot 'backend'
+
+  # 新しいコードを取得した後でも DB-reset.bat だけで済むように、このフォルダーの start.bat（start.ps1）を止め、
+  # Python の依存をロックファイルに合わせる。作り直しの後の確認は、この .venv でマイグレーションを実行するため。
+  if (-not $DryRun) {
+    $startScript = Join-Path $repoRoot 'start.ps1'
+    # start.ps1 が起動した API と Web は、その子プロセス。ほかの作業フォルダーの start.ps1 はパスが違うので止めない。
+    # ほかの方法で起動したものは、作り直しの前に DB への接続を切る。
+    $running = @(Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' OR Name = 'pwsh.exe'" |
+      Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -and $_.CommandLine.IndexOf($startScript, [StringComparison]::OrdinalIgnoreCase) -ge 0 })
+    foreach ($process in $running) {
+      Write-Host "このフォルダーの Kusakari Canvas（PID $($process.ProcessId)）を止めます。"
+      & (Join-Path $env:SystemRoot 'System32\taskkill.exe') /PID $process.ProcessId /T /F | Out-Null
+    }
+    Write-Host 'Python の依存をロックファイルに合わせます。'
+    Push-Location $repoRoot
+    try { & node (Join-Path $repoRoot 'scripts\api.mjs') compile }
+    finally { Pop-Location }
+    if ($LASTEXITCODE -ne 0) { throw 'Python の依存の準備に失敗しました。上の出力を確認してください。DB は変更していません。' }
+  }
+
   $python = Join-Path $backendRoot '.venv\Scripts\python.exe'
   if (-not (Test-Path -LiteralPath $python -PathType Leaf)) {
     throw 'Python の実行環境がありません。先に setup.bat を実行してください。DB は変更していません。'
@@ -61,7 +47,6 @@ try {
   $arguments = @('-m', 'kusakari_canvas_api.reset_database')
   if ($DryRun) { $arguments += '--dry-run' }
   if ($NoBackup) { $arguments += '--no-backup' }
-  if ($PSBoundParameters.ContainsKey('ConfirmText')) { $arguments += @('--confirm-text', $ConfirmText) }
 
   Push-Location $backendRoot
   try { & $python @arguments }
@@ -70,11 +55,5 @@ try {
 } catch {
   Write-Host $_.Exception.Message
   $exitCode = 1
-}
-
-# 管理者として起動し直したウィンドウは、終わるとすぐ閉じる。結果を読めるように待つ。
-if ($RequestedBy -and $env:KUSAKARI_CANVAS_NO_PAUSE -ne '1') {
-  Write-Host ''
-  $null = Read-Host '結果を確認したら Enter キーを押してください（このウィンドウを閉じます）'
 }
 exit $exitCode
