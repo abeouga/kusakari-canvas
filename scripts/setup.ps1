@@ -14,6 +14,7 @@ if ($env:OS -ne 'Windows_NT') {
 }
 
 . (Join-Path $PSScriptRoot 'paths.ps1')
+. (Join-Path $PSScriptRoot 'uv-tools.ps1')
 $repoRoot = Get-KusakariCanvasRepoRoot -StartPath $PSScriptRoot
 $canvasHome = Get-KusakariCanvasHome -RepoRoot $repoRoot
 $env:KUSAKARI_CANVAS_HOME = $canvasHome
@@ -117,20 +118,11 @@ function Get-NodeArchive {
 }
 
 function Get-UvInstallation {
-  $command = Get-Command uv.exe -ErrorAction SilentlyContinue | Select-Object -First 1
   $localPath = Join-Path $uvTools 'uv.exe'
-  $candidates = @()
-  if ($null -ne $command) { $candidates += $command.Source }
-  if (Test-Path -LiteralPath $localPath -PathType Leaf) { $candidates += $localPath }
-  foreach ($candidate in $candidates) {
-    if ([string]::IsNullOrWhiteSpace($candidate)) { continue }
-    $versionText = (& $candidate --version 2>$null | Select-Object -First 1)
-    if ($versionText -match 'uv\s+(\d+\.\d+\.\d+)') {
-      if ([version]$Matches[1] -ge [version]'0.8.0') {
-        if ($candidate -eq $localPath) { Add-PathFirst -Path $uvTools }
-        return $candidate
-      }
-    }
+  $found = Find-KusakariCanvasUv -CanvasHome $canvasHome
+  if ($null -ne $found) {
+    Add-PathFirst -Path (Split-Path -Parent $found)
+    return $found
   }
 
   Write-Host '利用可能なuv 0.8以降が見つからないため、公式リリースをチェックサム検証付きで取得します。'

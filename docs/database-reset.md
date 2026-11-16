@@ -23,6 +23,15 @@ EC の店舗側アカウントの作り直し（abeouga/kusakari-ec#103）では
 - 代わりにすること：このフォルダーの `start.bat`（`start.ps1`）を止め、Python の依存をロックファイルに合わせる。ほかのプロセスの接続は、作り直す前に切る（`KILL`）。バックアップに失敗したら、表示してバックアップなしで続ける
 - 残したもの：消す DB の名前を `kusakari_canvas` と `kusakari_canvas_e2e`（この名前で始まる DB）に限ること（設定の書き間違いでほかの DB を消さないため）、画像を S3 に保存する設定の環境を対象外にすること（作り直しても画像が残るため）
 
+### 2026-11-16 の修正：uv を setup.bat と同じ方法で探す（issue #80）
+
+ほかの PC で `DB-reset.bat` が `spawn uv ENOENT` で止まった。依存の準備を `node scripts/api.mjs compile` で行っていたため。`api.mjs` が uv を探すのは、環境変数 `KUSAKARI_CANVAS_UV`、Canvas のデータフォルダーの `tools\uv\uv.exe`、PATH の3か所だけ。`start.bat` は先に `setup.ps1` を通り、見つけた uv を PATH の先頭に足すので動く。`DB-reset.bat` は `setup.ps1` を通らない。そのため、setup が使った uv がデータフォルダーになく、エクスプローラーから起動したウィンドウの PATH にもないと、uv が見つからなかった。
+
+- 決定：uv の探し方を `scripts/uv-tools.ps1` の `Find-KusakariCanvasUv` にまとめ、`setup.ps1` と `reset-database.ps1` の両方で使う。探す場所は、`KUSAKARI_CANVAS_UV`、今の PATH、データフォルダーの `tools\uv`、Windows に保存されたユーザーとシステムの PATH、uv の公式インストーラーと winget の既定の場所（`%USERPROFILE%\.local\bin`、`%USERPROFILE%\.cargo\bin`、`%LOCALAPPDATA%\Microsoft\WinGet\Links`）。0.8 以降の uv だけを使う
+- 依存の準備は、見つけた uv で `uv sync --project backend --locked` を直接実行する。Node.js は使わない
+- 見つからないときは「先に setup.bat を実行してください」と表示して、DB に触れずに止まる。uv の取得（ダウンロード）は、今までどおり `setup.ps1` だけが行う
+- 採用しなかった案：`DB-reset.bat` から `setup.ps1` を丸ごと実行する（Node.js と npm の依存や DB のセットアップまで動き、時間がかかる）。`api.mjs` の探し方を増やす（setup と探し方が2つに分かれたままになる）
+
 ### 実行のしかた
 
 1. `DB-reset.bat` を実行する
