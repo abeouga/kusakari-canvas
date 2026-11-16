@@ -28,10 +28,14 @@ try {
       Write-Host "このフォルダーの Kusakari Canvas（PID $($process.ProcessId)）を止めます。"
       & (Join-Path $env:SystemRoot 'System32\taskkill.exe') /PID $process.ProcessId /T /F | Out-Null
     }
-    Write-Host 'Python の依存をロックファイルに合わせます。'
-    Push-Location $repoRoot
-    try { & node (Join-Path $repoRoot 'scripts\api.mjs') compile }
-    finally { Pop-Location }
+    # uv は setup.bat と同じ方法で探す。この準備に Node.js は使わない（issue #80）。
+    . (Join-Path $PSScriptRoot 'uv-tools.ps1')
+    $uv = Find-KusakariCanvasUv -CanvasHome (Get-KusakariCanvasHome -RepoRoot $repoRoot)
+    if ($null -eq $uv) {
+      throw 'uv（0.8 以降）が見つかりません。先に setup.bat を実行してください。DB は変更していません。'
+    }
+    Write-Host "Python の依存をロックファイルに合わせます（uv: $uv）。"
+    & $uv sync --project $backendRoot --locked
     if ($LASTEXITCODE -ne 0) { throw 'Python の依存の準備に失敗しました。上の出力を確認してください。DB は変更していません。' }
   }
 
