@@ -1,6 +1,0 @@
-{
-  "result": "passed",
-  "waitingForInputOnFailure": true,
-  "exitAfterInput": 1,
-  "failure": "Missing executable in isolated launcher copy"
-}

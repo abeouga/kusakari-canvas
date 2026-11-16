@@ -7,14 +7,14 @@ CanvasはKusakari EC内の購入支援機能です。旧画面は庭一覧と編
 ## Decision
 
 - ECのロゴ画像・Georgiaのブランド表記・配色・ナビゲーションをCanvasにも適用します。Canvasの表示はナビゲーションのリンクにまとめ、ロゴ横には重複表示しません。
-- Canvas内は `SiteHeader` を一覧・読み込み中・編集画面で共用します。庭名・保存・庭一覧への操作は編集バーに分けます。
+- Canvas内は `SiteHeader` を一覧・読み込み中・編集画面で共用します。庭名・保存状態・庭一覧への操作は編集画面の作業面の上の行に分けます。
 - ECの `packages/site-header` にヘッダーとCSSの正本をまとめます。ECはnpm workspace、Canvasは `vendor` の同じnpmパッケージを使用します。Canvasの `site-header.css` は外枠のみを扱い、ヘッダーの見た目を個別定義しません。
 - 独立起動とフォルダ移動を維持するため、ECの兄弟フォルダへの直接importは行いません。Canvas単体のnpm install・ビルドに必要なパッケージはCanvasのvendorに保持します。
 - 「ひと鉢からはじまる、緑のある暮らし。」の帯も共通部品に含めます。ボタンとリンクの行高・余白も共通CSSで明示します。
-- リンクは既存の `VITE_KUSAKARI_EC_URL` を基準に生成します。ECの店舗・説明・注文履歴ダイアログは許可した `panel=stores|guide|orders` のみを受け付けます。
+- リンクは既存の `VITE_KUSAKARI_EC_URL` を基準に生成します。ECの店舗・説明・ログインのダイアログは `panel=stores|guide|login` で開きます。注文履歴はECの `/purchases` へのリンクです。
 - ヘッダーのリンクは編集画面の未保存確認を通します。保存中・配置物のドラッグ中は移動を止めます。
 - CanvasはECカートを取得し、サイドバーと同じキャッシュから実際の件数を表示します。リンクはEC /cartへの移動です。
-- 共通ヘッダー0.1.4のログインリンクはECの `/?panel=login` を開きます。Canvasでは認証・登録を実装せず、編集画面では既存の未保存確認を経由します。
+- ログインリンクはECの `/?panel=login` を開きます。Canvasでは認証・登録を実装せず、編集画面では未保存確認を経由します。ログイン済みのとき（`authenticated`）はログインボタンを出さず、アカウントへのリンクを出します。「出店者」「管理者画面」のリンクはECのアカウント種別で出し分けます（[EC連携](../ec-integration.md)）。
 - Viteの依存事前変換では共通ヘッダーを除外し、依存する `lucide-react` を明示的に対象へ含めます。アイコンの再エクスポートから未使用の個別ファイルまで読み込まれ、ブラウザで遮断される問題を防ぎます。
 
 ## Alternatives
@@ -42,4 +42,4 @@ CanvasはKusakari EC内の購入支援機能です。旧画面は庭一覧と編
 - `shared-package-header-browser.json` はパッケージのソース・CSSのハッシュ一致、実ブラウザの計算済みスタイル、上部の帯、各画面幅の表示を記録します。
 - `artifacts/e2e/check-icon-delivery.mjs` はEC・Canvas一覧・編集画面を実ブラウザで開き、個別の `fingerprint.js` を遮断する障害注入を行います。最適化されたLucideの配信、個別アイコンへの要求が0件、ヘッダーアイコン、木50本の読み込み、390px幅の横はみ出しを確認し、`icon-delivery-browser.json` と画面画像へ記録します。
 
-共通ヘッダー0.1.5ではcartTextを追加。既定は「カート」、Canvasは「ECでカートを確認」とします。
+Canvasは共通ヘッダー0.1.13（`vendor/kusakari-site-header-0.1.13.tgz`）を使います。カートのリンクの文言は既定の「カート」です。版ごとの変更はECの `packages/site-header/README.md` にあります。

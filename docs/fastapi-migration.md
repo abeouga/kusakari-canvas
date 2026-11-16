@@ -12,7 +12,7 @@ Python 3.12、FastAPI、Pydantic v2、同期SQLAlchemy 2、PyMySQL、Alembic、P
 
 URL/JSON/ステータス/日本語エラーを維持する。Pydanticの形式エラーは400 INVALID_REQUEST、ドメインエラーは既存code、DB整合性競合は409 STORAGE_CONFLICT。未知項目も拒否する。`photo`省略/nullは写真なし。旧Java APIの誤再利用防止には当時`X-Greenly-Backend: fastapi`を使い、現行は`X-Kusakari-Canvas-Backend: fastapi`を使う。
 
-dev/e2eだけで固定ownerをサーバー決定し、127.0.0.1へbindする。現行の環境変数は`KUSAKARI_CANVAS_PROFILE`、`KUSAKARI_CANVAS_HOST`、`KUSAKARI_CANVAS_PORT`、`KUSAKARI_CANVAS_DB_*`、`KUSAKARI_CANVAS_E2E_DB_*`。devは`.env`、e2eは`.env.e2e`だけを読み、プロセス環境変数を優先する。devは`kusakari_canvas`、e2eは`kusakari_canvas_e2e`から始まる専用DBを使う。DB資格情報はWebプロセスへ渡さない。
+移行時はdev/e2eで固定ownerをサーバー決定していた。現在の所有者はECのCognitoセッションの会員IDで、固定ownerは明示した隔離E2Eだけで使う（[ECのCognitoログインとの共用](cognito-auth.md)）。APIは127.0.0.1へbindする。現行の環境変数は`KUSAKARI_CANVAS_PROFILE`、`KUSAKARI_CANVAS_HOST`、`KUSAKARI_CANVAS_PORT`、`KUSAKARI_CANVAS_DB_*`、`KUSAKARI_CANVAS_E2E_DB_*`。devは`.env`、e2eは`.env.e2e`だけを読み、プロセス環境変数を優先する。devは`kusakari_canvas`、e2eは`kusakari_canvas_e2e`から始まる専用DBを使う。DB資格情報はWebプロセスへ渡さない。
 
 ## Migration
 
@@ -28,21 +28,10 @@ dev/e2eだけで固定ownerをサーバー決定し、127.0.0.1へbindする。�
 
 ## Alternatives / Consequences
 
-Flyway実行を残すとJava依存が必要になるため採用しない。async ORM/driverは今回のローカルAPIの移行に必要な変更ではないため、同期処理を選ぶ。認証・公開運用への移行は含めない。旧Javaソースの作業状態は削除前にGit外へ退避し、無関係なフロント/オーバーレイ変更を保つ。
+Flyway実行を残すとJava依存が必要になるため採用しない。async ORM/driverは今回のローカルAPIの移行に必要な変更ではないため、同期処理を選ぶ。認証・公開運用への移行はこの移行に含めず、認証は後に別の変更で加えた。旧Javaソースの作業状態は削除前にGit外へ退避し、無関係なフロント/オーバーレイ変更を保つ。
 
 ## Verification
 
 Chromiumの実ポインターE2Eを主要な受入検証とし、実FastAPI・専用MySQLを使う。API/DB独立検証は、通常のブラウザーE2Eで同時PUTの行ロック、途中の整合性違反による全rollback、owner分離、既存Flyway DB採用/新規DB作成を確実に再現できないため追加する。単純な実装の写しとなるユニットテストは追加しない。
 
 `npm run verify:api`は専用DBへ実HTTPを送り、固有名の一時DBで移行経路を検証する。自身が作成した庭・一時DBだけを削除する。レポート/ログは`artifacts/fastapi`、ブラウザーの保存JSON・スクリーンショットは`artifacts/e2e`へ保存する。実利用者データや資格情報は成果物へ含めない。
-
-## 旧実装の検証履歴（2026-10-01）
-
-- Python/JavaScript lint、TypeScript型チェック、Python compile、フロントエンド本番ビルド成功。
-- 開発DBのFlyway V1/V2をバックアップ後にAlembic 0002へ採用。assets 4行、gardens 2行、placed_objects 6行、Flyway履歴2行の移行前後SHA256が一致。既存庭2件の写真・配置・DOUBLE座標を実APIの応答と照合し、一致を確認。`artifacts/fastapi/development-data-preservation.json`。
-- 独立した実MySQL 8.0.45でAPI検証成功。同時更新200/409、保存途中の整合性違反による全rollback、owner分離、PNG/JPEG往復、各入力拒否、削除cascadeを確認。新規DB、Flyway V1/V2の移行と再起動、構造不一致・失敗履歴の変更前拒否も成功。`artifacts/fastapi/backend-verification.json`。
-- 隔離MySQLおよび既存サービスの専用`greenly_e2e` DBの双方でChromium全9件成功。写真・四隅・6点輪郭・配置・保存復元・3D切替を含む。成果物は`artifacts/e2e`とPlaywright HTMLレポート。これは旧Greenly実装の記録で、現行設定の検証結果ではありません。
-- root start.ps1によるAPI/Web起動、Web経由APIのFastAPI識別、停止後8080/5173の待受0件を確認。`artifacts/fastapi/launcher-verification.json`。
-- 旧Javaソース・Maven関連・既存の未コミット変更はリポジトリ外へ退避。開発DBのSQLバックアップはユーザー領域のKusakari Canvas backupsに保存。Python/MySQLの資格情報はローカル環境設定だけで管理。
-
-Webビルドのチャンクサイズ警告およびThree.jsのClock非推奨警告は残る。全E2Eは成功している。公開運用向け認証は今回の移行範囲に含まれない。

@@ -42,3 +42,7 @@ test-results/
 # SysOverRayの.NETビルド途中生成物。配布物の sysover-ray2/app/ は管理対象のまま。
 sysover-ray2/**/bin/
 sysover-ray2/**/obj/
+
+# SysOverRay の検証スクリプトの出力。検証の記録は kusakari-document か PR 本文に書く
+/sysover-ray2/verification/*.json
+/sysover-ray2/verification/*.png
