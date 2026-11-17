@@ -1,39 +1,24 @@
 # EC連携
 
-Context: 2026-10-11の機能要件61項目に基づき、ECの一部としてCanvasを扱います。
+## Context
 
-Decision: 商品・価格・在庫・カート・注文はECが管理します。Canvasは庭の配置に連動する買い物リストを表示し、ECで購入する商品を選んでカートに追加します。配置の確定後は庭を自動保存します。現行のAPI・画面・検証方法は [庭の買い物リスト](garden-shopping-lists.md) に記載します。
+2026-10-11の機能要件61項目に基づき、ECの一部としてCanvasを扱います。全要件の対応表は隣接ECプロジェクトの `docs/functional-requirements.md` にあります。
 
-Alternatives: Three.jsオブジェクトや写真をECへ渡す方法、Canvas側で価格・在庫を保存する方法は採用しません。
+## Decision
 
-Consequences: ECとCanvasを両方起動してください。通常は5186/5173です。Canvasのルート.envにVITE_KUSAKARI_EC_URLを設定できます。4種類の対応商品はECのFlyway V3で追加します。数量は配置個数であり面積ベースBOMではありません。
+- 商品・価格・在庫・カート・注文はECが管理します。Canvasは庭の配置に連動する買い物リストを表示し、ECの商品一覧から商品を配置します。カートへの追加はECの画面で利用者が選んで行います（[庭の買い物リスト](garden-shopping-lists.md)）。
+- Canvasの画面はECのAPIへ `VITE_KUSAKARI_EC_URL` を基準に credentials=include で接続します。ECの許可Originは `KUSAKARI_EC_CANVAS_ORIGIN`（通常 http://127.0.0.1:5173）です。ローカルでは同一ホスト127.0.0.1・異なるポートでECのCookieを共有するため、localhostと127.0.0.1を混在させません。
+- 庭の複製は `POST /api/gardens/{id}/duplicate` の1回で行います（[庭の複製](garden-duplication.md)）。
+- 完成イメージは画像生成APIと保存履歴を使います（[完成イメージとAI画像生成](image-studio.md)）。計測は写真投影と実寸設定に基づく推定です。
+- ECへ移動するときは、進行中の保存と追加の編集を保存してから移動します。輪郭の描画中やカメラ設定中など保存できない状態では、保存せずに移動するかを確認します。保存に失敗した場合は編集内容を保持して画面に留まります。
 
-旧条件別サンプルの植物候補は現在提供しません。完成イメージは既存の画像生成APIと保存履歴を使用します。計測は既存の写真投影と実寸設定に基づく推定です。
+## Alternatives
 
-庭複製は既存create/get/save APIを利用し、庭と配置物のIDを新しくします。保存途中に失敗した場合は新しく作られた空の庭を一覧に残して明示し、元の庭を変更しません。
+Three.jsオブジェクトや写真をECへ渡す方法、Canvas側で価格・在庫を保存する方法、Canvas専用カートやCookieをJavaScriptでコピーする方法は採用しません。
 
-未保存の庭からECへ進む場合は保存して進む/保存せず進む/取消を選べます。描画中の輪郭やカメラ設定は確定してから保存します。保存に失敗した場合は編集内容を保持して画面に留まります。
+## Consequences
 
-全要件の対応表は隣接ECプロジェクトのdocs/functional-requirements.mdにあります。
-
-2026-10-11: ECのファビコン画像（kusakari_ico.png）をタブとヘッダーに使用します。ECとCanvasのロゴ画像を統一します。768px以下では庭一覧・編集画面を縦に並べます。
-
-
-## 2026-10-13: Canvas内の商品候補・カート（旧仕様）
-
-以下は変更履歴です。2026-10-16に庭別の買い物リストへ置換済みで、Canvasからのカート更新は現在提供しません。
-
-Context: 庭を編集中に候補商品を選び、同じECカートを操作できるようにする。
-
-Decision: Canvasは `VITE_KUSAKARI_EC_URL` の `/api/cart`、`/api/materials/quote`、`/api/cart/items/{productId}` にcredentials=includeで接続する。受取店舗はECカートのstoreIdを使用する。素材の種類・個数・店舗を候補クエリのキーにし、座標・回転・倍率の変更では再取得しない。未対応素材や99個超過は素材ごとに表示する。追加は現数量への加算、更新は指定数量、削除は0としてrevision付きで送る。更新競合・通信失敗では最新カートを取得し、操作を自動再送しない。
-
-共通ヘッダーと右サイドバーは同じTanStack Queryキャッシュを参照する。タブ切替・ウィンドウへの復帰でECカートを再取得する。庭の配置変更からカートを自動更新しない。商品価格・在庫・カートはECの正本を使用し、Canvas DBには保存しない。
-
-ECの許可Originは `KUSAKARI_EC_CANVAS_ORIGIN`（通常http://127.0.0.1:5173、統合E2Eでは15173）で設定する。EC ViteはAPIのCORS処理をバックエンドへ委ねる。ローカルでは同一ホスト127.0.0.1・異なるポートでHttpOnly/SameSite=Strict/path=/apiの既存Cookieを共有する。localhostと127.0.0.1を混在させない。公開環境では既定の同一サイト構成に合わせてOrigin・Cookieを構成する。
-
-Alternatives: Canvas専用カートの作成やCookieをJavaScriptでコピーする方法は採用しない。
-
-Consequences（現在）: EC停止時は認証を確認できず保存できません。編集中の内容を保持し、サイドバーで再試行できる。注文手続きとヘッダーの「ECでカートを確認」は未保存確認を経由してEC /cartへ移動する。
+ECとCanvasを両方起動してください。通常は5186/5173です。固定アセット4種類に対応する商品（材料コード `plant.oak`・`plant.boxwood`・`garden.brick`・`garden.bench`）はECのサンプルデータ（Flyway V2）にあります。数量は配置個数であり面積ベースBOMではありません。条件別の植物候補は提供しません。
 
 ## 2026-10-20 商品の引き継ぎと認証
 
@@ -98,10 +83,3 @@ Alternatives:
 - 照会に失敗したら全部外す、または照会できない配置を外す案は採用しない。EC の障害で利用者の庭が消えるため。
 
 Consequences: 外した配置は戻さない（店舗の再開・組織の再開後も、配置し直す必要がある）。照会は配置した商品が変わるたびに取り直すが、外すのは庭を開いたときの1回だけ（編集中に店舗が停止しても、次に開くまで残る）。自動保存が止まる状態（輪郭が未確定、範囲外の配置がある）では、外した結果はその状態が解消してから保存される。E2E は `e2e/unavailable-placements.spec.ts`（削除・在庫0・非公開・店舗停止・照会の遮断）。
-
-### 検証用スクリプトの EC v3 への追従
-
-EC v3 で `carts.store_id`・`cart_details`・`inventory.store_id`・`products.active` がなくなり、カートは会員ごとの1つになった。
-
-- 直したもの：`backend/verification/deployment_preservation.py`（カートの増加の確認から `store_id` と `cart_details` を外した。`digest_database` は他のスクリプトから使われている）、`verify_database_tls.py`・`verify_linux_containers.py`（商品一覧を店舗1の指定なしで取る。店舗1が無い DB でも動く）。
-- **EC v3 では使えないものは削除した**（2026-11-14、ユーザー判断）：2026-10 時点の特定のデータに対する1回限りの作業の記録で、package.json・E2E から呼ばれておらず、EC の開発用 DB を読むため試験用 DB でも使えなかった。`retire_product_catalog.py`（`products.active`・`carts.store_id`・`cart_details` と2026-10 時点の45商品が前提）、`retire_legacy_oak.py`、`verify_catalog_archive.py`、`ai_product_test_data.py`。他のスクリプトが使っていた `load`・`save` は `backend/verification/evidence_files.py` に移した。過去の作業の内容は Git の履歴に残る。

@@ -1,6 +1,24 @@
 # 植物モデル構成規則 v5（茎・枝・葉の調整と種類の追加）
 
-v1〜v4 の経緯は [modular-plant-models.md](modular-plant-models.md)、[plant-library-v2.md](plant-library-v2.md)、[plant-naturalness-v4.md](plant-naturalness-v4.md) を参照。Issue: abeouga/kusakari-canvas#35
+v1 から続く構成の基本は下の「構成の基本（v1 からの契約）」にまとめた。v2〜v4 の検証の記録は [plant-library-v2](https://github.com/abeouga/kusakari-document/blob/main/開発の記録/kusakari-canvas/植物モデル/2026-10-17_plant-library-v2.md)、[plant-naturalness-v4](https://github.com/abeouga/kusakari-document/blob/main/開発の記録/kusakari-canvas/植物モデル/2026-10-18_plant-naturalness-v4.md) を参照。Issue: abeouga/kusakari-canvas#35
+
+## 構成の基本（v1 からの契約）
+
+ECの商品には園芸情報があるが、植物の部品構成と商品を結び付けるデータがなかった。完成した植物モデルを選ぶ方式ではなく、植物の特徴から共通の GLB 部品を組み合わせる。v1 で決めた次のことは、v5 でも変わらない。
+
+- `frontend/public/models/plant-parts/v1/`〜`v4/` の GLB は事前制作済みの部品。`scripts/generate-plant-parts*.mjs` は開発者用のオフライン制作ツールで、アプリから実行しない。
+- カタログ JSON と GLB に `attachment-base` / `attachment-tip` を定義する。単位 m、+Y が上。茎は根元(0,0,0)、先端(0,1,0)。枝の根元を親の接続位置に合わせ、葉の葉柄と花の根元も同じ接続点に合わせる。
+- 同じ特徴と seed から同じ部品 ID・位置・四元数・倍率・色を返す。メッシュや完成 GLB を実行時に生成しない。
+- Canvas `GET /api/model-parts` は部品カタログ、`POST /api/model-assemblies/resolve` は特徴から構成マニフェストを返す。出品フォームのプレビューと EC の商品保存は同じ解決処理を使う。
+- EC は `plantModelProfile` とサーバーが確定した `modelComposition` を商品に保存する。EC から Canvas API へは `KUSAKARI_CANVAS_API_URL` で接続する。構成解決に失敗した場合、モデル設定付きの商品保存は失敗し、商品更新をロールバックする。
+- 高さは商品の `heightCm` を使い、構成プロフィールと一致することをサーバーで検証する。指定の高さと幅に合う外形の調整倍率 `fitScale` も保存する。全体に同じ変換をかけ、部品の接続を維持する。
+- 庭の植物は予約アセット `plant_modular` を使い、商品 ID・商品名・材料コード・構成 JSON を配置に保存する。読み込み時は保存された部品構成を描画する。商品更新後も既存の庭は以前の構成を保持する。
+- 既存の固定 GLB の配置は変更しない。追加フィールドのない旧庭 JSON も保存・復元できる。
+- 部品カタログの版と構成規則の版は保存済みデータの契約。規則や部品を変えるときは版とファイル URL を追加し、旧版を残す。
+
+採用しなかった案：完成 GLB を選ぶ方式は、出品者が植物の特徴だけを入力する要件に合わない。表示のたびに特徴から計算する方式は、後日の規則の変更で保存済みの庭の形が変わるため採用しない。
+
+出品時は EC と Canvas API の両方が必要。表示時は事前制作 GLB を保存済みの変換でインスタンス描画する。個別の植物の正確な植物学的復元ではない。
 
 ## Context
 

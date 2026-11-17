@@ -1,7 +1,8 @@
 """Verify output preservation and failures that cannot be prescribed to a live model.
 
 These controlled PNGs check the image boundary; they do not replace real API E2E.
-See docs/ai-image-generation.md for the independent-verification rationale.
+See https://github.com/abeouga/kusakari-document/blob/main/開発の記録/kusakari-canvas/AI画像生成/2026-10-19_ai-image-generation.md
+for the independent-verification rationale. The current spec is docs/image-studio.md.
 """
 
 import base64
