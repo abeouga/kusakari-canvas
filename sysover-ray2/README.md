@@ -63,4 +63,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\verification\verify-la
 
 後者は実API・Web・Web経由API、起動プロセスの置換、停止後のLISTEN消失を確認します。検証後はオーバーレイとKusakari Canvasを起動状態にします。開いているオーバーレイの停止・再起動ボタンをUI Automationで操作する確認は `verification\verify-ui-controls.ps1` です。
 
-どのスクリプトも結果のJSONと画面画像を `verification\` に書き出します。これらはGitに入れません。検証の記録は [kusakari-document の 開発環境とDB](https://github.com/abeouga/kusakari-document/tree/main/kusakari-canvas/開発環境とDB) か PR 本文に書きます。
+どのスクリプトも結果のJSONと画面画像を `verification\` に書き出します。これらはGitに入れません。検証の記録は [kusakari-document の 開発環境とDB](https://github.com/abeouga/kusakari-document/tree/main/開発の記録/kusakari-canvas/開発環境とDB) か PR 本文に書きます。

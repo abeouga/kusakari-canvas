@@ -1,6 +1,6 @@
 """Controlled geometry checks, NOT AI output quality.
 
-Rationale: https://github.com/abeouga/kusakari-document/blob/main/kusakari-canvas/AI画像生成/2026-10-19_before-after-resolution.md
+Rationale: https://github.com/abeouga/kusakari-document/blob/main/開発の記録/kusakari-canvas/AI画像生成/2026-10-19_before-after-resolution.md
 """
 import argparse
 import base64

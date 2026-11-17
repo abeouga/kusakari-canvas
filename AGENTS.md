@@ -29,7 +29,7 @@
 - DB変更はAlembicマイグレーションで行い、起動時に既存データを消しません。旧Flyway DBの採用は構造照合とバックアップ後に行います。アセットseedは繰り返し実行しても既存の意味を変更しません。
 - 外部入力をすべて検証します。エラー応答にスタックトレース、機密値、不要なリクエスト本文を含めません。
 - 重要な形式・永続化・認証境界の変更は `docs/` にContext/Decision/Alternatives/Consequencesを記録します。
-- 検証ログ・調査記録・日付ごとの経緯は `docs/` に置かず、kusakari-document（https://github.com/abeouga/kusakari-document の `kusakari-canvas/` 以下）かPR本文に書きます。`docs/` には今の仕様とADRだけを置きます。
+- 検証ログ・調査記録・日付ごとの経緯は `docs/` に置かず、kusakari-document（https://github.com/abeouga/kusakari-document の `開発の記録/kusakari-canvas/` 以下）かPR本文に書きます。`docs/` には今の仕様とADRだけを置きます。
 - 秘密情報、機械固有設定、実利用者データをGitやログ、テスト成果物に含めません。
 - 明示依頼なしにcommit、push、破壊的Git操作、実データ削除をしません。
 

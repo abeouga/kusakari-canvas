@@ -1,6 +1,6 @@
 # 植物モデル構成規則 v5（茎・枝・葉の調整と種類の追加）
 
-v1 から続く構成の基本は下の「構成の基本（v1 からの契約）」にまとめた。v2〜v4 の検証の記録は [plant-library-v2](https://github.com/abeouga/kusakari-document/blob/main/kusakari-canvas/植物モデル/2026-10-17_plant-library-v2.md)、[plant-naturalness-v4](https://github.com/abeouga/kusakari-document/blob/main/kusakari-canvas/植物モデル/2026-10-18_plant-naturalness-v4.md) を参照。Issue: abeouga/kusakari-canvas#35
+v1 から続く構成の基本は下の「構成の基本（v1 からの契約）」にまとめた。v2〜v4 の検証の記録は [plant-library-v2](https://github.com/abeouga/kusakari-document/blob/main/開発の記録/kusakari-canvas/植物モデル/2026-10-17_plant-library-v2.md)、[plant-naturalness-v4](https://github.com/abeouga/kusakari-document/blob/main/開発の記録/kusakari-canvas/植物モデル/2026-10-18_plant-naturalness-v4.md) を参照。Issue: abeouga/kusakari-canvas#35
 
 ## 構成の基本（v1 からの契約）
 

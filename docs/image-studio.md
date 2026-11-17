@@ -1,6 +1,6 @@
 # 完成イメージとAI画像生成
 
-AI画像生成の現在の仕様です。評価・試行の記録は [kusakari-document の AI画像生成](https://github.com/abeouga/kusakari-document/tree/main/kusakari-canvas/AI画像生成) にあります。
+AI画像生成の現在の仕様です。評価・試行の記録は [kusakari-document の AI画像生成](https://github.com/abeouga/kusakari-document/tree/main/開発の記録/kusakari-canvas/AI画像生成) にあります。
 
 ## Context
 
