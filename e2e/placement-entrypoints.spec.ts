@@ -5,6 +5,7 @@ import { api } from './api-url';
 import { syntheticPhoto, createScene, openScene, readGarden, shrub } from './occlusion-helpers';
 import { createPhotoCamera } from '../frontend/src/three/photoCamera.js';
 import { createTestProduct, showProductsTab } from './catalog-fixture';
+import { rectangleCalibration } from './rectangle-calibration.js';
 
 const directory='artifacts/e2e/placement-bounds';
 for (const mode of ['photo','3d']) test(`pointer drag and product drop reject the cutout (${mode})`, async ({page,request})=>{
@@ -81,9 +82,7 @@ for (const mode of ['rectangle','legacy','calibrated']) test(`API validates boun
       const p=new Vector3(x,0,z).project(camera);return {x:(p.x+1)/2,y:(1-p.y)/2};
     });
     photo.boundary=photo.corners;
-    const calibration=await request.post(`${api}/photo-calibration`,{data:{imageWidth:1000,imageHeight:750,
-      points:photo.corners,referenceWidth:10,referenceDepth:8}});
-    expect(calibration.status()).toBe(200); photo.calibration=await calibration.json();
+    photo.calibration=rectangleCalibration(photo.corners,10,8);
   }
   const initial=await request.post(`${api}/gardens`,{data:{name:`E2E placement ${mode}`,width:10,depth:8}});
   let garden=await initial.json();

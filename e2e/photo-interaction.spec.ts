@@ -7,6 +7,7 @@ import { syntheticPhoto, createScene, openScene, readGarden, shrub, capture } fr
 import type { GardenDocument } from '../frontend/src/types/garden';
 import { moveSelectedObject, showTopView } from './transform-helpers';
 import { showProductsTab } from './catalog-fixture';
+import { rectangleCalibration } from './rectangle-calibration.js';
 
 async function point(page: Page, garden: GardenDocument, x: number, y: number, z: number) {
   const camera = createPhotoCamera(garden.photo!, garden.width, garden.depth)!;
@@ -68,11 +69,7 @@ for (const calibrated of [false, true]) {
         return { x: (p.x + 1) / 2, y: (1 - p.y) / 2 };
       });
       photo.boundary = photo.corners;
-      const response = await request.post(`${api}/photo-calibration`, { data: {
-        imageWidth: 1200, imageHeight: 800, points: photo.corners, referenceWidth: 20, referenceDepth: 16,
-      } });
-      expect(response.ok(), await response.text()).toBeTruthy();
-      photo.calibration = await response.json();
+      photo.calibration = rectangleCalibration(photo.corners, 20, 16);
     }
     let garden = await createScene(request, [], photo, [shrub(0, 0), shrub(-3, 1, 0.7)]);
     // The API may return objects in UUID order; explicitly identify the subject.

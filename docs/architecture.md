@@ -28,7 +28,6 @@
 
 その他:
 
-- 写真: `POST /api/photo-calibration`（[写真のカメラ校正](photo-camera-calibration.md)）
 - サムネイル: `GET/POST /api/gardens/{id}/thumbnail`（[サムネイルの容量](thumbnail-upload-budget.md)）
 - 買い物リスト: `GET /api/shopping-lists`、`GET /api/gardens/{id}/shopping-list`（[庭の買い物リスト](garden-shopping-lists.md)）
 - 植物モデル: `GET /api/model-parts`、`POST /api/model-assemblies/resolve`

@@ -26,7 +26,6 @@ from .ai_schemas import (
 )
 from .ai_service import generate_image
 from .auth import AuthBoundary
-from .calibration import solve_calibration
 from .config import Settings
 from .database import create_database_engine
 from .errors import ApiError
@@ -36,12 +35,10 @@ from .migrations import HEAD, current_revision, validate_schema
 from .plants import PlantComposition, PlantProfile, assemble, part_catalog
 from .schemas import (
     AssetResponse,
-    CalibrationRequest,
     CreateGardenRequest,
     GardenDocument,
     GardenDocumentRequest,
     GardenSummary,
-    PhotoCalibration,
 )
 from .thumbnails import thumbnail_router
 
@@ -169,10 +166,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @router.post("/api/ai/product-references", response_model=list[AiCandidate])
     def automatic_references(request: ProductReferencesRequest):
         return product_references(ai_settings, request.productIds)
-
-    @router.post("/api/photo-calibration", response_model=PhotoCalibration)
-    def calibrate(request: CalibrationRequest):
-        return solve_calibration(request)
 
     @router.get("/api/assets", response_model=list[AssetResponse])
     def assets(db: Db):

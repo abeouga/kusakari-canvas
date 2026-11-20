@@ -6,6 +6,7 @@ import { PerspectiveCamera, Vector3 } from 'three';
 import { api } from './api-url.js';
 import { createPhotoCamera } from '../frontend/src/three/photoCamera.js';
 import type { GardenDocument, GardenPhoto, ImagePoint } from '../frontend/src/types/garden.js';
+import { rectangleCalibration } from './rectangle-calibration.js';
 
 // 既知のカメラで10×8mの長方形を撮った模擬写真。輪郭と辺の実寸だけからこのカメラを再現できることを確認する。
 const directory = resolve('artifacts/e2e');
@@ -69,11 +70,7 @@ for (const mode of ['legacy', 'fixed-projection', 'calibrated']) {
       let width = 12, depth = 10;
       if (mode === 'fixed-projection') { photo.projectionSize = { width: 10, depth: 8 }; width = 14; depth = 12; }
       if (mode === 'calibrated') {
-        const response = await request.post(`${api}/photo-calibration`, { data: {
-          imageWidth: 1000, imageHeight: 750, points: outline, referenceWidth: 10, referenceDepth: 8,
-        } });
-        expect(response.status()).toBe(200);
-        photo.calibration = await response.json();
+        photo.calibration = rectangleCalibration(outline, 10, 8);
         photo.corners = outline;
         width = 10; depth = 8;
       }
