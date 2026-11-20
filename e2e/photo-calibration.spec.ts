@@ -140,8 +140,8 @@ test('O. 基準長方形のカメラで保存された庭の高さ投影・写�
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   expect(await (await request.get(`${api}/gardens/${initial.id}`)).json()).toEqual(saved);
   await page.screenshot({ path: resolve(artifacts, 'camera-calibrated-measurement.png'), fullPage: true });
-  await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
-  if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+  await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
+  if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
   await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
   const completionImage = page.getByAltText('現在の庭の完成イメージ');
   await expect(completionImage).toBeVisible();

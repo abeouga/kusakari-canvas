@@ -71,7 +71,7 @@ test('editor controls preserve state and the merged canvas toolbar fits narrow s
     await mkdir('artifacts/e2e', { recursive: true });
     await writeFile('artifacts/e2e/editor-toolbar-reloaded.json', JSON.stringify(saved, null, 2));
     await page.screenshot({ path: 'artifacts/e2e/editor-toolbar-reloaded.png' });
-    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
 
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
     await expect(page.getByRole('dialog', { name: '庭の完成イメージ' }).locator('img')).toBeVisible();

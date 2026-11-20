@@ -86,7 +86,7 @@ test('one closed button nests history, supports keyboard and outside dismissal, 
   page.on('request', outgoing => { if (/\/api\/gardens\/[^/]+\/image-history/.test(outgoing.url())) historyReads++; });
   await openScene(page, garden);
   const toggle = page.getByTestId('completion-menu-toggle');
-  await expect(toggle).toHaveText('AI生成');
+  await expect(toggle).toHaveText('完成イメージ');
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByTestId('completion-launcher').getByRole('button')).toHaveCount(1);
   for (const width of [1528, 1000, 768, 390, 320]) {
@@ -110,7 +110,7 @@ test('one closed button nests history, supports keyboard and outside dismissal, 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await toggle.click();
   await page.screenshot({ path: `${evidence}/nested-menu.png` });
-  if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+  if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
 
   await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
   await expect(page.getByTestId('before-image')).toBeVisible();

@@ -51,9 +51,9 @@ export function CompletionMenu({ photoMode, disabled, capturing, error, toggleRe
     </section>}
     {!open && error && <p className="completion-launcher-error" role="alert">{error}</p>}
     <button ref={toggleRef} type="button" className="completion-launch" data-testid="completion-menu-toggle"
-      aria-label={photoMode ? 'AI生成メニュー' : '完成イメージメニュー'} aria-expanded={open} aria-controls={panelId}
+      aria-label="完成イメージメニュー" aria-expanded={open} aria-controls={panelId}
       disabled={disabled || capturing} onClick={() => setOpen(!open)}>
-      <UiIcon name={photoMode ? 'sparkles' : 'camera'}/><span>{capturing ? '準備中…' : photoMode ? 'AI生成' : '完成イメージ'}</span>
+      <UiIcon name={photoMode ? 'sparkles' : 'camera'}/><span>{capturing ? '準備中…' : '完成イメージ'}</span>
       <UiIcon name="chevron" size={14}/>
     </button>
   </div>;
