@@ -12,7 +12,7 @@ const canvas = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_C
 const evidence = 'artifacts/e2e/shopping-lists';
 type Garden = GardenDocument;
 type Product = { id: string; name: string; modelComposition: PlantComposition; [key: string]: unknown };
-type Line = { key: string; products: { id: string; active: boolean }[] };
+type Line = { key: string; products: { id: string }[] };
 const profile = { plantType: 'flower', heightCm: 55, widthCm: 65, crownShape: 'round', branchCount: 6,
   branchAngle: 45, trunkThicknessCm: 0.6, leafShape: 'narrow', leafSizeCm: 8, leafDensity: 'medium',
   leafColor: '#4f793b', flowerEnabled: true, flowerShape: 'five', flowerSizeCm: 8, flowerColor: '#9062ba', seed: 12345 };
@@ -157,8 +157,7 @@ test('partial transfer, duplicate requests, cart limits, stale gardens and inval
     const cart = await request.get(`${ec}/api/cart`).then(r => r.json());
     const detail = await request.get(`${ec}/api/shopping-lists/${garden.id}`).then(r => r.json());
     expect(detail.items).toHaveLength(2);
-    // The deleted canvas-bench stays a candidate of the bench line but cannot be bought, so the purchasable one is chosen.
-    const selected = detail.items.map((line: Line) => ({ key: line.key, productId: line.products.find(p => p.active)!.id }));
+    const selected = detail.items.map((line: Line) => ({ key: line.key, productId: line.products[0].id }));
     const input = { cartRevision: cart.revision, gardenRevision: saved.revision, listRevision: detail.listRevision, items: selected };
     expect((await seller.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1, expectedStock: body.stock } })).ok()).toBeTruthy();
     const url = `${ec}/api/cart/shopping-lists/${garden.id}/items`;
@@ -180,7 +179,8 @@ test('partial transfer, duplicate requests, cart limits, stale gardens and inval
     const current = await newer.json();
     const currentList = await request.get(`${ec}/api/shopping-lists/${garden.id}`).then(r => r.json());
     const benchLine = currentList.items.find((line: Line) => line.key === 'asset:bench_wood');
-    expect(benchLine.products.filter((candidate: Line['products'][number]) => candidate.active).map((candidate: { id: string }) => candidate.id)).toEqual([bench.id]);
+    // The deleted canvas-bench is not offered as a candidate of the bench line (kusakari-ec leaves out deleted products).
+    expect(benchLine.products.map((candidate: { id: string }) => candidate.id)).toEqual([bench.id]);
     const full = await request.put(`${ec}/api/cart/items/${bench.id}`, { data: { revision: result.cart.revision, quantity: 99 } });
     expect(full.ok()).toBeTruthy();
     const limit = await request.post(url, { data: { gardenRevision: current.revision, cartRevision: (await full.json()).revision,
@@ -318,8 +318,8 @@ test('EC shows partial-add reasons and the shopping list fits a mobile screen', 
     expect(response.ok()).toBeTruthy();
     await page.goto(`${ec}/cart?garden=${garden.id}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('checkbox')).toHaveCount(2);
-    // The bench line also lists the deleted canvas-bench, so its purchase product is chosen explicitly.
-    await page.getByRole('combobox', { name: 'ベンチの購入商品', exact: true }).selectOption(bench.id);
+    // The bench line has only the test product (the deleted canvas-bench is not offered), so there is nothing to choose.
+    await expect(page.getByRole('combobox', { name: 'ベンチの購入商品', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'すべて選択', exact: true }).click();
     await expect(page.getByRole('checkbox', { name: product.name + 'を選択', exact: true })).toBeChecked();
     expect((await seller.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1, expectedStock: body.stock } })).ok()).toBeTruthy();
