@@ -30,6 +30,8 @@ test('seller features create six plant compositions; catalog and shopping-list d
   sellerPage.on('pageerror', (error) => errors.push(error.message));
   await mkdir(evidence, { recursive: true });
   const products: TestProduct[] = [];
+  // 3Dモデルのない商品。一覧の初期データの商品はすべて3Dモデルを持つので、この検証のために作る。
+  let unsupportedId: string | undefined;
   let garden: GardenDocument | undefined;
   let failure: unknown;
   try {
@@ -75,6 +77,16 @@ test('seller features create six plant compositions; catalog and shopping-list d
     }
     const catalog = await sellerPage.request.get(`${ec}/api/products?storeId=1`).then((response) => response.json());
     for (const product of products) expect(catalog.find((item: TestProduct) => item.id === product.id).modelComposition).toEqual(product.modelComposition);
+    const unsupportedResponse = await seller.post(`${ec}/api/products`, { data: {
+      storeId: 1, sku: `NO-MODEL-${randomUUID().slice(0, 8)}`, name: `3Dモデルなし-${randomUUID().slice(0, 4)}`,
+      latinName: '', category: '草花', description: '3Dモデルのない商品の表示を検証します。', sizeLabel: '5号鉢', care: '',
+      priceYen: 980, stock: 20, imageUrl: '/images/lavender.png', badge: '', nurseryName: '', nurseryAddress: '',
+      sunlight: '未設定', useCase: '', careLevel: 1, minTemperatureC: null, heatTolerant: false, droughtTolerant: false,
+      ageYears: null, heightCm: null, potDiameterCm: null, familyName: '', images: [] } });
+    expect(unsupportedResponse.status(), await unsupportedResponse.text()).toBe(200);
+    const unsupportedProduct = await unsupportedResponse.json();
+    unsupportedId = unsupportedProduct.id;
+    expect(unsupportedProduct.modelComposition).toBeNull();
     const created = await page.request.post(`${api}/gardens`, { data: { name: `組立配置-${randomUUID().slice(0, 8)}`, width: 10, depth: 8 } });
     expect(created.status()).toBe(201);
     // 庭写真が未アップロードの庭には配置できないため、先に確定済みの写真を保存します（#15）。
@@ -82,7 +94,8 @@ test('seller features create six plant compositions; catalog and shopping-list d
     await page.goto(`/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await showProductsTab(page);
-    const unsupported = page.getByTestId('browse-olive');
+    const unsupported = page.getByTestId(`browse-${unsupportedId}`);
+    await unsupported.scrollIntoViewIfNeeded();
     await expect(unsupported).toContainText('3Dモデル未設定');
     await expect(unsupported).toHaveAttribute('draggable', 'false');
     await expect(page.locator('#catalog-panel')).toHaveCount(0);
@@ -194,6 +207,7 @@ test('seller features create six plant compositions; catalog and shopping-list d
   } finally {
     const cleanupErrors: string[] = [];
     const deletions: [typeof request, string][] = products.map((product) => [seller, `${ec}/api/products/${product.id}`]);
+    if (unsupportedId) deletions.push([seller, `${ec}/api/products/${unsupportedId}`]);
     if (garden) deletions.unshift([request, `${api}/gardens/${garden.id}`]);
     for (const [client, url] of deletions) {
       try { await client.delete(url, { timeout: 5000 }); }

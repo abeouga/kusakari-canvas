@@ -93,10 +93,12 @@ export async function signInTestAccounts() {
   process.env.KUSAKARI_E2E_SELLER_ID = await signIn(sellerEmail, sellerStatePath);
   prepareMember(sellerId(), 'SELLER');
   // Products created at store 1 by earlier runs are marked deleted, as a seller's delete does, so the catalog
-  // that every editor load fetches does not grow with each run. Seed products have short ids and are kept;
-  // products registered through the API have UUID ids.
+  // that every editor load fetches does not grow with each run. Products registered through the API have UUID ids.
+  // EC's seed products are kept: the V2 ones have short ids, and the 31 products EC's V7 moves to store 1 have
+  // UUID ids with product numbers starting PLANT-V2- or DEMO- (abeouga/kusakari-ec#223), which no E2E uses.
   ecSql(`UPDATE inventory i JOIN products p ON p.id=i.product_id SET i.publication_status='DELETED'
-    WHERE p.store_id=1 AND p.id REGEXP '^[0-9a-f]{8}-[0-9a-f]{4}-' AND i.publication_status<>'DELETED';`);
+    WHERE p.store_id=1 AND p.id REGEXP '^[0-9a-f]{8}-[0-9a-f]{4}-' AND p.sku NOT LIKE 'PLANT-V2-%'
+    AND p.sku NOT LIKE 'DEMO-%' AND i.publication_status<>'DELETED';`);
 }
 
 // Ends the sessions so cookies left in failure traces cannot be reused.
