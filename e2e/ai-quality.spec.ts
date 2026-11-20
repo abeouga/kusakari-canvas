@@ -6,7 +6,8 @@ import { verifyProviderEvidence } from './ai-quality-evidence.js';
 import { verifyFixedInputs } from './ai-quality-fixed-inputs.js';
 import { capture, createScene, openScene, readGarden, removeScenes } from './occlusion-helpers.js';
 import { downloadImage, imageBytes, measureOutput, placementAssumption, qualityObjects,
-  qualityPhoto, saveCapture, saveJson, saveRequest, uploadReferences,
+  qualityPhoto, saveCapture, saveJson, saveRequest, uploadReferences, createReferenceProducts,
+  type ReferenceProducts,
   type QualityCase, type QualityPayload } from './ai-quality-helpers.js';
 
 const cases: QualityCase[] = ['single', 'multiple', 'overlap'];
@@ -38,6 +39,7 @@ for (const name of cases) {
       if (outgoing.method() === 'POST' && outgoing.url().endsWith('/ai-image')) generationRequests++;
     });
     const start = Date.now();
+    let products: ReferenceProducts | undefined;
     try {
       expect(!wantsLive || live, 'Paid quality evaluation requires both KUSAKARI_CANVAS_AI_QUALITY_LIVE=1 and KUSAKARI_CANVAS_AI_LIVE=1.').toBe(true);
       if (live) expect(process.env.KUSAKARI_CANVAS_AI_EVIDENCE_DIR).toBeTruthy();
@@ -49,6 +51,8 @@ for (const name of cases) {
         expect(baseline.photo).toEqual(photo);
         objects = baseline.objects;
       }
+      // Only the paid run selects products, and the products must exist before the scene loads its candidates.
+      if (live) products = await createReferenceProducts();
       const garden = await createScene(request, ids, photo, objects);
       await openScene(page, garden);
       const captured = await capture(page);
@@ -88,7 +92,7 @@ for (const name of cases) {
       const status = await statusResponse.json();
       expect(status.configured).toBe(true);
       expect(status.quality).toBe(process.env.KUSAKARI_CANVAS_AI_EVAL_QUALITY ?? 'medium');
-      await uploadReferences(page, garden);
+      await uploadReferences(page, garden, products!);
       if (baselineRun && process.env.KUSAKARI_CANVAS_AI_EVAL_QUALITY) {
         await page.route('**/ai-image', async (route) => {
           try {
@@ -203,6 +207,7 @@ for (const name of cases) {
       throw error;
     } finally {
       await removeScenes(request, ids);
+      await products?.remove();
     }
   });
 }

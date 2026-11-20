@@ -4,7 +4,8 @@ import { resolve } from 'node:path';
 import { expect, test } from './test.js';
 import { api } from './api-url.js';
 import { capture, createScene, openScene, readGarden, removeScenes, shrub } from './occlusion-helpers.js';
-import { qualityPhoto, saveCapture, saveRequest, uploadReferences } from './ai-quality-helpers.js';
+import { createReferenceProducts, qualityPhoto, saveCapture, saveRequest, uploadReferences,
+  type ReferenceProducts } from './ai-quality-helpers.js';
 import { verifyProviderEvidence } from './ai-quality-evidence.js';
 
 function fault(action: 'install' | 'remove', gardenId: string) {
@@ -34,13 +35,15 @@ test('live output survives actual DB save failure and retries persistence withou
       savedMethods.push(outgoing.postDataJSON().generationMethod);
     }
   });
+  let products: ReferenceProducts | undefined;
   try {
+    products = await createReferenceProducts();
     const photo = await qualityPhoto(page);
     const garden = await createScene(request, ids, photo, [shrub(0, 0)]);
     await openScene(page, garden);
     const before = await capture(page);
     await saveCapture(artifacts, garden, before);
-    await uploadReferences(page, garden);
+    await uploadReferences(page, garden, products);
     fault('install', garden.id);
     injectedId = garden.id;
     const pending = page.waitForRequest((outgoing) => outgoing.method() === 'POST' && outgoing.url().endsWith('/ai-image'));
@@ -108,5 +111,6 @@ test('live output survives actual DB save failure and retries persistence withou
   } finally {
     if (injectedId) fault('remove', injectedId);
     await removeScenes(request, ids);
+    await products?.remove();
   }
 });

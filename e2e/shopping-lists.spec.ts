@@ -2,11 +2,10 @@ import { test, expect, type APIRequestContext, type Page } from './test.js';
 import { seedGardenPhoto } from './garden-photo';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { spawnSync } from 'node:child_process';
-import { resolve } from 'node:path';
 import type { GardenDocument, PlantComposition } from '../frontend/src/types/garden';
 import { showProductsTab } from './catalog-fixture';
 import { sellerRequest } from './seller-session.js';
+import { linkLegacyMaterial } from './legacy-material';
 
 const ec = (process.env.KUSAKARI_EC_E2E_WEB_URL || 'http://127.0.0.1:15286');
 const canvas = (process.env.KUSAKARI_CANVAS_E2E_API_URL ? process.env.KUSAKARI_CANVAS_E2E_API_URL + '/api' : 'http://127.0.0.1:18081/api');
@@ -18,13 +17,13 @@ const profile = { plantType: 'flower', heightCm: 55, widthCm: 65, crownShape: 'r
   branchAngle: 45, trunkThicknessCm: 0.6, leafShape: 'narrow', leafSizeCm: 8, leafDensity: 'medium',
   leafColor: '#4f793b', flowerEnabled: true, flowerShape: 'five', flowerSizeCm: 8, flowerColor: '#9062ba', seed: 12345 };
 
-async function createProduct(request: APIRequestContext) {
+async function createProduct(request: APIRequestContext, stock = 20) {
   const seller = await sellerRequest();
   const products = await request.get(`${ec}/api/products?storeId=1`).then(r => r.json());
   const excluded = new Set(['id', 'unit', 'source', 'sourceUpdatedAt', 'publishedAt', 'active', 'publicationStatus', 'modelComposition', 'canvasMaterialCode', 'sellerStoreId', 'sellerStoreName']);
   const input = Object.fromEntries(Object.entries(products[0]).filter(([key]) => !excluded.has(key)));
   const body = { ...input, storeId: 1, name: 'リスト用草花-' + randomUUID().slice(0, 8),
-    sku: 'SL-' + randomUUID().slice(0, 12), stock: 20, heightCm: 55, plantModelProfile: profile };
+    sku: 'SL-' + randomUUID().slice(0, 12), stock, heightCm: 55, plantModelProfile: profile };
   const response = await seller.post(`${ec}/api/products`, { data: body });
   expect(response.status()).toBe(200);
   return { product: await response.json() as Product, body };
@@ -53,18 +52,20 @@ function object(assetId: string, index = 0, product?: Product) {
     ...(product ? { productId: product.id, productName: product.name, materialCode: `product.${product.id}`, modelComposition: product.modelComposition } : {}) };
 }
 
-function legacyCandidate(productId: string, remove = false) {
-  if (!/^[a-f0-9-]{36}$/.test(productId)) throw new Error('Only a newly-created test product is allowed');
-  const statement = remove
-    ? `DELETE FROM material_products WHERE material_code='garden.bench' AND product_id='${productId}';`
-    : `INSERT INTO material_products(material_code,product_id) VALUES('garden.bench','${productId}');`;
-  const result = spawnSync(process.execPath, ['--input-type=module', '-e',
-    "import { sql } from './e2e/database.js'; sql(process.argv[1]);", statement], {
-    // The same EC checkout the suite starts (KUSAKARI_EC_DIRECTORY), so the fixture reaches that checkout's E2E database.
-    cwd: resolve(process.env.KUSAKARI_EC_DIRECTORY || '../kusakari-ec'), encoding: 'utf8',
-  });
-  if (result.status !== 0) throw new Error('Dedicated legacy candidate fixture failed: ' + result.stderr);
+// 昔の配置（bench_wood）の買い物リストの行で買う商品。kusakari-ec#223 で canvas-bench が削除済みになったので、
+// テストで作った商品を garden.bench に結び付ける。
+async function benchProduct(request: APIRequestContext, stock = 20) {
+  const { product } = await createProduct(request, stock);
+  linkLegacyMaterial('garden.bench', product.id);
+  return product;
 }
+async function removeBenchProduct(seller: APIRequestContext, product: Product | undefined) {
+  if (!product) return;
+  linkLegacyMaterial('garden.bench', product.id, true);
+  await seller.delete(`${ec}/api/products/${product.id}`);
+}
+// 31商品（kusakari-ec#223 の V7）のうち、ドラッグで置く商品。
+const marguerite = { id: '068d60e6-a1eb-41ac-8dd4-8bae8ea91f31', name: 'マーガレット（白花）' };
 
 test('two gardens have separate live lists; selection adds to the single EC cart and survives reload', async ({ page, context, request, seller }) => {
   await mkdir(evidence, { recursive: true });
@@ -145,6 +146,8 @@ test('two gardens have separate live lists; selection adds to the single EC cart
 
 test('partial transfer, duplicate requests, cart limits, stale gardens and invalid selections use real transactions', async ({ request, seller }) => {
   const { product, body } = await createProduct(request);
+  // The bench line is filled up to 99 in the cart below, so its product has the stock for it.
+  const bench = await benchProduct(request, 120);
   const garden = await createGarden(request, 'A');
   try {
     const response = await request.put(`${canvas}/gardens/${garden.id}`, { data: { ...garden,
@@ -175,12 +178,14 @@ test('partial transfer, duplicate requests, cart limits, stale gardens and inval
     expect((await request.post(url, { data: { ...input, cartRevision: result.cart.revision } })).status()).toBe(409);
     const current = await newer.json();
     const currentList = await request.get(`${ec}/api/shopping-lists/${garden.id}`).then(r => r.json());
-    const bench = currentList.items.find((line: Line) => line.key === 'asset:bench_wood');
-    const full = await request.put(`${ec}/api/cart/items/${bench.products[0].id}`, { data: { revision: result.cart.revision, quantity: 99 } });
+    const benchLine = currentList.items.find((line: Line) => line.key === 'asset:bench_wood');
+    // The deleted canvas-bench is not offered as a candidate of the bench line (kusakari-ec leaves out deleted products).
+    expect(benchLine.products.map((candidate: { id: string }) => candidate.id)).toEqual([bench.id]);
+    const full = await request.put(`${ec}/api/cart/items/${bench.id}`, { data: { revision: result.cart.revision, quantity: 99 } });
     expect(full.ok()).toBeTruthy();
     const limit = await request.post(url, { data: { gardenRevision: current.revision, cartRevision: (await full.json()).revision,
       listRevision: currentList.listRevision,
-      items: [{ key: bench.key, productId: bench.products[0].id }] } }).then(r => r.json());
+      items: [{ key: benchLine.key, productId: bench.id }] } }).then(r => r.json());
     expect(limit.added).toHaveLength(0);
     expect(limit.skipped[0].code).toBe('QUANTITY_LIMIT');
     expect((await seller.delete(`${ec}/api/products/${product.id}`)).ok()).toBeTruthy();
@@ -198,6 +203,9 @@ test('partial transfer, duplicate requests, cart limits, stale gardens and inval
   } finally {
     await request.delete(`${canvas}/gardens/${garden.id}`);
     await seller.delete(`${ec}/api/products/${product.id}`);
+    const cart = await request.get(`${ec}/api/cart`).then(r => r.json());
+    await request.put(`${ec}/api/cart/items/${bench.id}`, { data: { revision: cart.revision, quantity: 0 } });
+    await removeBenchProduct(seller, bench);
   }
 });
 
@@ -207,12 +215,12 @@ test('autosave failure retains placements, blocks EC navigation and supports ret
     await page.goto(`/gardens/${garden.id}`, { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await showProductsTab(page);
-    await page.getByLabel('商品を検索', { exact: true }).fill('ベンチ');
+    await page.getByLabel('商品を検索', { exact: true }).fill(marguerite.name);
     await page.route('**/api/gardens/' + garden.id, async route => {
       if (route.request().method() === 'PUT') await route.abort('failed');
       else await route.continue();
     });
-    await drag(page, page.getByTestId('browse-canvas-bench'));
+    await drag(page, page.getByTestId(`browse-${marguerite.id}`));
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     await expect(page.getByTestId('save-status')).toHaveText('保存できませんでした');
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
@@ -247,12 +255,12 @@ test('autosave revision conflict preserves the local placement and stops repeate
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     await showProductsTab(page);
-    await page.getByLabel('商品を検索', { exact: true }).fill('ベンチ');
+    await page.getByLabel('商品を検索', { exact: true }).fill(marguerite.name);
     const changed = await request.put(`${canvas}/gardens/${garden.id}`, { data: { ...garden, name: garden.name + ' 別画面更新' } });
     expect(changed.ok()).toBeTruthy();
     let attempts = 0;
     page.on('request', r => { if (r.method() === 'PUT' && r.url().endsWith('/api/gardens/' + garden.id)) attempts++; });
-    await drag(page, page.getByTestId('browse-canvas-bench'));
+    await drag(page, page.getByTestId(`browse-${marguerite.id}`));
     await expect(page.getByTestId('save-status')).toHaveText('保存できませんでした');
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 1');
     await page.waitForTimeout(1600);
@@ -270,6 +278,7 @@ test('autosave revision conflict preserves the local placement and stops repeate
 
 test('a full cart skips a new product without changing its existing fifty product lines', async ({ request, seller }) => {
   const { product, body } = await createProduct(request);
+  const bench = await benchProduct(request);
   const garden = await createGarden(request, 'A');
   const ids = [product.id];
   try {
@@ -287,7 +296,7 @@ test('a full cart skips a new product without changing its existing fifty produc
     }
     const list = await request.get(`${ec}/api/shopping-lists/${garden.id}`).then(r => r.json());
     const result = await request.post(`${ec}/api/cart/shopping-lists/${garden.id}/items`, {
-      data: { gardenRevision: saved.revision, cartRevision: cart.revision, listRevision: list.listRevision, items: [{ key: 'asset:bench_wood', productId: 'canvas-bench' }] },
+      data: { gardenRevision: saved.revision, cartRevision: cart.revision, listRevision: list.listRevision, items: [{ key: 'asset:bench_wood', productId: bench.id }] },
     }).then(r => r.json());
     expect(result.added).toHaveLength(0);
     expect(result.skipped[0].code).toBe('CART_LIMIT');
@@ -295,11 +304,13 @@ test('a full cart skips a new product without changing its existing fifty produc
   } finally {
     await request.delete(`${canvas}/gardens/${garden.id}`);
     for (const id of ids) await seller.delete(`${ec}/api/products/${id}`);
+    await removeBenchProduct(seller, bench);
   }
 });
 
 test('EC shows partial-add reasons and the shopping list fits a mobile screen', async ({ page, request, seller }) => {
   const { product, body } = await createProduct(request);
+  const bench = await benchProduct(request);
   const garden = await createGarden(request, 'A');
   try {
     const response = await request.put(`${canvas}/gardens/${garden.id}`, { data: { ...garden,
@@ -307,6 +318,8 @@ test('EC shows partial-add reasons and the shopping list fits a mobile screen', 
     expect(response.ok()).toBeTruthy();
     await page.goto(`${ec}/cart?garden=${garden.id}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('checkbox')).toHaveCount(2);
+    // The bench line has only the test product (the deleted canvas-bench is not offered), so there is nothing to choose.
+    await expect(page.getByRole('combobox', { name: 'ベンチの購入商品', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'すべて選択', exact: true }).click();
     await expect(page.getByRole('checkbox', { name: product.name + 'を選択', exact: true })).toBeChecked();
     expect((await seller.put(`${ec}/api/products/${product.id}`, { data: { ...body, stock: 1, expectedStock: body.stock } })).ok()).toBeTruthy();
@@ -316,7 +329,7 @@ test('EC shows partial-add reasons and the shopping list fits a mobile screen', 
     await expect(page.locator('.garden-transfer-result')).toContainText('在庫が不足');
     const cart = await page.request.get(`${ec}/api/cart`).then(r => r.json());
     expect(cart.items).toHaveLength(1);
-    expect(cart.items[0].product.id).toBe('canvas-bench');
+    expect(cart.items[0].product.id).toBe(bench.id);
     await mkdir(evidence, { recursive: true });
     await page.screenshot({ path: `${evidence}/ec-partial-result.png`, fullPage: true });
     await page.getByRole('button', { name: '庭から選び直す', exact: true }).click();
@@ -327,14 +340,17 @@ test('EC shows partial-add reasons and the shopping list fits a mobile screen', 
   } finally {
     await request.delete(`${canvas}/gardens/${garden.id}`);
     await seller.delete(`${ec}/api/products/${product.id}`);
+    await removeBenchProduct(seller, bench);
   }
 });
 
 test('legacy placements with multiple candidates require an explicit purchase product and checkbox', async ({ page, request, seller }) => {
+  // Two test products are linked to the legacy bench, so the buyer has to choose one.
+  const other = await benchProduct(request);
   const { product } = await createProduct(request);
   const garden = await createGarden(request, 'A');
   try {
-    legacyCandidate(product.id);
+    linkLegacyMaterial('garden.bench', product.id);
     expect((await request.put(`${canvas}/gardens/${garden.id}`, { data: { ...garden, objects: [object('bench_wood')] } })).ok()).toBeTruthy();
     await page.goto(`${ec}/cart?garden=${garden.id}`, { waitUntil: 'domcontentloaded' });
     const check = page.getByRole('checkbox');
@@ -350,8 +366,9 @@ test('legacy placements with multiple candidates require an explicit purchase pr
     expect(cart.items[0].product.id).toBe(product.id);
     expect(cart.items[0].quantity).toBe(1);
   } finally {
-    legacyCandidate(product.id, true);
+    linkLegacyMaterial('garden.bench', product.id, true);
     await request.delete(`${canvas}/gardens/${garden.id}`);
     await seller.delete(`${ec}/api/products/${product.id}`);
+    await removeBenchProduct(seller, other);
   }
 });

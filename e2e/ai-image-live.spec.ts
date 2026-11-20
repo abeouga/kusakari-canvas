@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { expect, test } from './test.js';
 import { api } from './api-url.js';
 import { artifacts, capture, createScene, openScene, readGarden, removeScenes, shrub, syntheticPhoto } from './occlusion-helpers.js';
+import { createReferenceProducts, type ReferenceProducts } from './ai-quality-helpers.js';
 
 test('live OpenAI edit returns a full-frame result after a real EC product selection', async ({ page, request }) => {
   test.skip(process.env.KUSAKARI_CANVAS_AI_LIVE !== '1', 'Only an explicitly enabled paid live run may call OpenAI.');
@@ -12,16 +13,18 @@ test('live OpenAI edit returns a full-frame result after a real EC product selec
   page.on('request', (outgoing) => {
     if (outgoing.method() === 'POST' && outgoing.url().endsWith('/ai-image')) generationRequests++;
   });
+  let products: ReferenceProducts | undefined;
   try {
     const status = await (await request.get(`${api}/ai/status`)).json();
     expect(status.configured).toBe(true);
+    products = await createReferenceProducts();
     const photo = await syntheticPhoto(page, 1201, 801);
     const plant = shrub(0.3, -1.8, 1.2);
     const bench = { ...shrub(0, 1, 2), assetId: 'bench_wood' };
     const garden = await createScene(request, ids, photo, [plant, bench]);
     await openScene(page, garden);
     const before = await capture(page);
-    await page.getByRole('combobox', { name: '低木に対応する商品', exact: true }).selectOption('canvas-boxwood');
+    await page.getByRole('combobox', { name: '低木に対応する商品', exact: true }).selectOption(products.shrub_boxwood);
     const reference = await page.evaluate(() => {
       const canvas = document.createElement('canvas');
       canvas.width = 256;
@@ -158,5 +161,8 @@ test('live OpenAI edit returns a full-frame result after a real EC product selec
     await expect(page.getByTestId('comparison-before')).toHaveAttribute('src', before.before);
     await writeFile(resolve(artifacts, 'ai-live-reloaded-garden.json'), JSON.stringify(garden, null, 2));
     await page.screenshot({ path: resolve(artifacts, 'ai-live-reloaded.png'), fullPage: true });
-  } finally { await removeScenes(request, ids); }
+  } finally {
+    await removeScenes(request, ids);
+    await products?.remove();
+  }
 });
