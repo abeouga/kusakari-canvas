@@ -302,13 +302,13 @@ for (const variant of variants) {
       if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
       await expect(page.getByAltText('現在の庭の完成イメージ')).toBeVisible();
-      await expect(page.getByRole('dialog', { name: '庭の完成イメージ' })).toContainText('Before画像');
-      const downloadEvent = page.waitForEvent('download');
-      await page.getByTestId('generation-details').locator('summary').click();
-      await page.getByRole('link', { name: 'Before画像をPNGで保存', exact: true }).click();
-      const download = await downloadEvent;
-      expect(download.suggestedFilename()).toBe('kusakari-before.png');
-      await download.saveAs(resolve(artifactDirectory, `before-${variant.name}.png`));
+      const dialog = page.getByRole('dialog', { name: '新しく生成' });
+      await expect(dialog.locator('.ai-preview-badge')).toHaveText('Before');
+      // 生成前の保存ボタンは無い（#89）ので、表示中の Before 画像を証跡として保存する。
+      await expect(dialog.getByRole('link', { name: /保存/ })).toHaveCount(0);
+      const beforeSource = (await page.getByTestId('before-image').getAttribute('src'))!;
+      expect(beforeSource).toMatch(/^data:image\/png;base64,/);
+      await writeFile(resolve(artifactDirectory, `before-${variant.name}.png`), Buffer.from(beforeSource.split(',')[1], 'base64'));
       await page.screenshot({ path: resolve(artifactDirectory, `before-${variant.name}-reloaded.png`), fullPage: true });
     } finally {
       expect((await request.delete(`${api}/gardens/${initial.id}`)).status()).toBe(204);
@@ -337,7 +337,7 @@ test('loading and failed real models block capture and retry produces a complete
     if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
     await expect(page.getByTestId('completion-launcher').getByRole('alert')).toContainText('読み込めないモデル');
-    await expect(page.getByRole('dialog', { name: '庭の完成イメージ' })).toHaveCount(0);
+    await expect(page.getByRole('dialog', { name: '新しく生成' })).toHaveCount(0);
     await page.unroute('**/models/tree-oak.glb');
     await page.getByRole('button', { name: 'モデルを再試行', exact: true }).click();
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 2 / 2');

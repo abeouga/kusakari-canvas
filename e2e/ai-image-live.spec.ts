@@ -54,7 +54,7 @@ test('live OpenAI edit returns a full-frame result after a real EC product selec
     const payload = outgoing.postDataJSON();
     await expect(page.getByRole('button', { name: 'AI画像を生成中…', exact: true })).toBeDisabled();
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog', { name: '庭の完成イメージ' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: '新しく生成' })).toBeVisible();
     const response = await outgoing.response();
     const data = await response!.json();
     await mkdir(artifacts, { recursive: true });

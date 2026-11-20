@@ -94,8 +94,7 @@ test('linked products are automatic, grouped by product, archived-readable and p
     const section = page.getByRole('region', { name: 'AI完成イメージ生成' });
     await expect(section.locator('fieldset')).toHaveCount(0);
     await expect(section.getByRole('combobox')).toHaveCount(0);
-    await expect(page.getByTestId('ai-input-count')).toContainText('入力画像 3 / 16枚・植物参考 2枚');
-    await expect(page.getByTestId('generation-details')).not.toHaveAttribute('open');
+    await expect(page.getByTestId('generation-details')).toHaveCount(0);
     for (const item of products) {
       await expect(section.getByText(item.name, { exact: true })).toHaveCount(0);
     }
@@ -194,7 +193,7 @@ test('a saved unlinked legacy tree has a clear replacement notice, without a pro
     await openScene(page, garden);
     await capture(page);
     const section = page.getByRole('region', { name: 'AI完成イメージ生成' });
-    await expect(section.getByRole('alert')).toContainText('商品に紐づいていない旧モデル（木）');
+    await expect(section.getByRole('alert')).toHaveText('「木」は Canvasに対応していません');
     await expect(section.getByRole('combobox')).toHaveCount(0);
     await expect(section.getByRole('button', { name: 'AIで生成' })).toBeDisabled();
     expect(await readGarden(request, garden.id)).toEqual(garden);

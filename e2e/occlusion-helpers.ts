@@ -65,7 +65,7 @@ export async function capture(page: Page): Promise<Capture> {
   if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
 
   await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: '庭の完成イメージ' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: '新しく生成' })).toBeVisible();
   const before = page.getByTestId('before-image');
   await expect(before).toBeVisible();
   const source = await before.getAttribute('src');

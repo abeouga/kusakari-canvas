@@ -116,7 +116,7 @@ for (const name of cases) {
       expect(payload.document).toEqual(garden);
       expect(imageBytes(payload.beforeDataUrl).equals(imageBytes(captured.before))).toBe(true);
       await page.keyboard.press('Escape');
-      await expect(page.getByRole('dialog', { name: '庭の完成イメージ', exact: true })).toBeVisible();
+      await expect(page.getByRole('dialog', { name: '新しく生成', exact: true })).toBeVisible();
       const response = await outgoing.response();
       expect(response).not.toBeNull();
       const generationElapsedMs = Date.now() - generationStart;
