@@ -109,7 +109,16 @@ test('A. 庭作成からGLB配置・変形・保存・再読み込みまで', as
   const deleteButton = card.getByRole('button', { name: `${name}のオプション` });
   await deleteButton.click();
   await card.getByRole('button', { name: '削除', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'この庭を削除しますか？' })).toContainText(name);
+  const deleteDialog = page.getByRole('dialog', { name: 'この庭を削除しますか？' });
+  await expect(deleteDialog).toContainText(name);
+  // 説明文のある2行の見出しでも、閉じる×はダイアログの上と右から同じ距離の右上に置く（#93）。
+  const dialogBox = (await deleteDialog.boundingBox())!;
+  const closeBox = (await deleteDialog.getByRole('button', { name: '閉じる' }).boundingBox())!;
+  const topGap = closeBox.y - dialogBox.y;
+  const rightGap = dialogBox.x + dialogBox.width - (closeBox.x + closeBox.width);
+  expect(Math.abs(topGap - rightGap)).toBeLessThanOrEqual(2);
+  expect(topGap).toBeLessThanOrEqual(24);
+  await page.screenshot({ path: test.info().outputPath('garden-delete-dialog.png') });
   await page.getByRole('button', { name: '取消', exact: true }).click();
   await expect(card.locator('.garden-card-open')).toBeVisible();
   expect((await request.get(`${apiBase}/gardens/${id}`)).status()).toBe(200);
