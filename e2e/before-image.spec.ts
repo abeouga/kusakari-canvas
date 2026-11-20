@@ -81,7 +81,7 @@ async function preparePhoto(page: Page, request: APIRequestContext, initial: Gar
 }
 
 async function captureImage(page: Page) {
-  if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+  if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
 
   await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
   const image = page.getByAltText('現在の庭の完成イメージ');
@@ -264,7 +264,7 @@ for (const variant of variants) {
             return Reflect.apply(drawImage, this, [source, ...values]);
           };
         });
-        if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+        if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
         await expect(page.getByTestId('completion-launcher').getByRole('alert')).toContainText('E2E capture copy failure');
         expect(await canvasDimensions(page)).toEqual(dimensions);
@@ -292,7 +292,7 @@ for (const variant of variants) {
       await mkdir(artifactDirectory, { recursive: true });
       await writeFile(resolve(artifactDirectory, `before-${variant.name}.json`), JSON.stringify(garden, null, 2));
       await writeFile(resolve(artifactDirectory, `before-${variant.name}-metrics.json`), JSON.stringify({ ...measurements, reloadComparison }, null, 2));
-      if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+      if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
       await expect(page.getByAltText('現在の庭の完成イメージ')).toBeVisible();
       const dialog = page.getByRole('dialog', { name: '新しく生成' });
@@ -322,12 +322,12 @@ test('loading and failed real models block capture and retry produces a complete
     await preparePhoto(page, request, initial);
     await expect(page.getByTestId('model-loaded')).toHaveText('読み込み済み: 1 / 2');
     await page.getByRole('checkbox', { name: '配置', exact: true }).uncheck();
-    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
     await expect(page.getByTestId('completion-launcher').getByRole('alert')).toContainText('モデルを読み込み中');
     releaseModelRequest();
     await expect(page.getByRole('button', { name: 'モデルを再試行', exact: true })).toBeVisible();
-    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
     await expect(page.getByTestId('completion-launcher').getByRole('alert')).toContainText('読み込めないモデル');
     await expect(page.getByRole('dialog', { name: '新しく生成' })).toHaveCount(0);
