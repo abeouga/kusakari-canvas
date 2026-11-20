@@ -18,11 +18,16 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
   const count = commerce.rows.reduce((total, row) => total + row.quantity, 0);
   // EC で追加しただけの商品も行になるので、行が1つも無いときだけ空とする。
   const empty = commerce.rows.length === 0;
-  // 反映済みのふだんの状態は出さず、保存が済んでいないときだけ知らせる。
+  // 最後に保存が済んだときの配置。配置の操作だけが objects を新しい配列にするので、
+  // 写真・輪郭・名前・寸法だけの変更では参照が変わらない（#92）。
+  const [savedObjects, setSavedObjects] = useState(document.objects);
+  if (!isDirty && !isSaving && savedObjects !== document.objects) setSavedObjects(document.objects);
+  const objectsChanged = savedObjects !== document.objects;
+  // 反映済みのふだんの状態は出さず、配置が変わって保存が済んでいないときだけ知らせる。
   let status = '';
-  if (isDirty) status = 'ECへ未反映';
-  if (isSaving) status = 'ECへ反映中…';
-  if (saveError) status = 'ECへ未反映：保存を再試行してください。';
+  if (objectsChanged && isDirty) status = 'ECへ未反映';
+  if (objectsChanged && isSaving) status = 'ECへ反映中…';
+  if (objectsChanged && saveError) status = 'ECへ未反映：保存を再試行してください。';
   function tabKey(event) {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();

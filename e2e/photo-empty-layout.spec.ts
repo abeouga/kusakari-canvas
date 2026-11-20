@@ -43,6 +43,9 @@ test('写真アップロード枠が左右の余白を保ち、クリックで�
   await fileChooser.setFiles({ name: 'garden-layout.png', mimeType: 'image/png', buffer: Buffer.from(dataUrl.split(',')[1], 'base64') });
   await expect(page.locator('.photo-stage image')).toBeVisible();
   await expect(upload).toHaveCount(0);
+  // 写真と輪郭は EC に送る配置を変えないので、描いている間も反映の状態を出さない（#92）。
+  const syncStatus = page.getByTestId('shopping-sync-status');
+  await expect(syncStatus).toHaveCount(0);
   // Upload starts a boundary draft; autosave waits until the user closes it.
   for (const [x, y] of [[80, 520], [720, 520], [640, 300], [160, 300]]) {
     const point = await page.locator('.photo-stage').evaluate((element, coordinates) => {
@@ -53,7 +56,9 @@ test('写真アップロード枠が左右の余白を保ち、クリックで�
   }
   await page.getByRole('button', { name: '始点につないで輪郭を確定' }).click();
   await expect(page.getByTestId('photo-ground')).toBeVisible();
+  await expect(syncStatus).toHaveCount(0);
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+  await expect(syncStatus).toHaveCount(0);
   await expect.poll(async () => {
     const snapshot = await (await request.get(`${api}/gardens/${garden.id}`)).json();
     return snapshot.photo?.dataUrl;
