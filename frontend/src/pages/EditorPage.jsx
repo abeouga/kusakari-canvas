@@ -49,7 +49,6 @@ export function EditorPage({ gardenId }) {
     const isSaving = useEditorStore((state) => state.isSaving);
     const isTransformDragging = useEditorStore((state) => state.isTransformDragging);
     const photoBoundaryDraft = useEditorStore((state) => state.photoBoundaryDraft);
-    const isCalibrating = useEditorStore((state) => state.isCalibrating);
     const hasBoundaryDraft = photoBoundaryDraft !== null;
     const saveError = useEditorStore((state) => state.saveError);
     const failedModelIds = useEditorStore((state) => state.failedModelIds);
@@ -73,7 +72,7 @@ export function EditorPage({ gardenId }) {
     const [leaveDestination, setLeaveDestination] = useState(canvasUrl('/'));
     const allowNavigation = useRef(false);
     const captureRef = useRef(null);
-    useGardenThumbnail(document, !isDirty && !isSaving && !isTransformDragging && !isCalibrating
+    useGardenThumbnail(document, !isDirty && !isSaving && !isTransformDragging
         && !hasBoundaryDraft && loadedModelIds.length === document?.objects.length, viewMode === 'photo', captureRef);
     useEffect(() => {
         if (gardenQuery.data) {
@@ -85,7 +84,7 @@ export function EditorPage({ gardenId }) {
         }
     }, [gardenQuery.data]);
     useEffect(() => {
-        if (!isDirty && !hasBoundaryDraft && !isCalibrating)
+        if (!isDirty && !hasBoundaryDraft)
             return;
         const confirmUnload = (event) => {
             if (allowNavigation.current)
@@ -95,12 +94,10 @@ export function EditorPage({ gardenId }) {
         };
         window.addEventListener('beforeunload', confirmUnload);
         return () => window.removeEventListener('beforeunload', confirmUnload);
-    }, [isDirty, hasBoundaryDraft, isCalibrating]);
+    }, [isDirty, hasBoundaryDraft]);
     useEffect(() => {
         function handleDeleteKey(event) {
             const target = event.target;
-            if (useEditorStore.getState().isCalibrating)
-                return;
             if (target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)))
                 return;
             if (event.key === 'Escape' && useEditorStore.getState().selectedAssetId) {
@@ -119,12 +116,12 @@ export function EditorPage({ gardenId }) {
     const [sessionExpired, setSessionExpired] = useState(false);
     useEffect(() => setUnauthorizedHandler(() => {
         const state = useEditorStore.getState();
-        if (!state.isDirty && state.photoBoundaryDraft === null && !state.isCalibrating) return false;
+        if (!state.isDirty && state.photoBoundaryDraft === null) return false;
         setSessionExpired(true);
         return true;
     }), []);
     const { save, flush } = useGardenAutosave(gardenId, document, isDirty, isSaving, isTransformDragging,
-        isCalibrating, hasBoundaryDraft, saveError ?? (sessionExpired ? 'session-expired' : null));
+        hasBoundaryDraft, saveError ?? (sessionExpired ? 'session-expired' : null));
     function retryAfterLogin() {
         setSessionExpired(false);
         void save();
@@ -142,9 +139,9 @@ export function EditorPage({ gardenId }) {
         // 輪郭が未確定の写真は保存できないため、写真を保存せずに戻るかを確認します。
         const photo = state.document?.photo;
         const unsavablePhoto = state.isDirty && photo && (!validSurface(photo) || calibratedBoundaryError(photo, state.document.width, state.document.depth));
-        if (state.photoBoundaryDraft !== null || state.isCalibrating || unsavablePhoto) {
+        if (state.photoBoundaryDraft !== null || unsavablePhoto) {
             setLeaveDestination(url);
-            setLeaveOpen(state.photoBoundaryDraft === null && !state.isCalibrating ? 'photo' : 'draft');
+            setLeaveOpen(state.photoBoundaryDraft === null ? 'photo' : 'draft');
             return;
         }
         navigationLocked.current = true;
@@ -190,10 +187,10 @@ export function EditorPage({ gardenId }) {
     const assetMap = new Map(assets.map((asset) => [asset.id, asset]));
     const selectedObject = document.objects.find((object) => object.id === selectedObjectId) ?? null;
     const outside = outsideObjects(document);
-    const statusText = isSaving ? '保存中…' : isCalibrating ? 'カメラを設定中' : hasBoundaryDraft ? '輪郭を描画中' : outside.length ? '施工範囲の修正が必要' : saveError ? '保存できませんでした' : isDirty ? '自動保存待ち' : '保存済み';
-    const savePending = outside.length > 0 || isDirty || isSaving || isCalibrating || hasBoundaryDraft;
-    const isEditingDisabled = navigating || isTransformDragging || isCalibrating;
-    const photoReady = !hasBoundaryDraft && !isCalibrating && (!document.photo || (validSurface(document.photo) && !calibratedBoundaryError(document.photo, document.width, document.depth)));
+    const statusText = isSaving ? '保存中…' : hasBoundaryDraft ? '輪郭を描画中' : outside.length ? '施工範囲の修正が必要' : saveError ? '保存できませんでした' : isDirty ? '自動保存待ち' : '保存済み';
+    const savePending = outside.length > 0 || isDirty || isSaving || hasBoundaryDraft;
+    const isEditingDisabled = navigating || isTransformDragging;
+    const photoReady = !hasBoundaryDraft && (!document.photo || (validSurface(document.photo) && !calibratedBoundaryError(document.photo, document.width, document.depth)));
     const renderOverlay = (leading) => <ObjectToolbar leading={leading} selectedObject={selectedObject} tool={tool} photoMode={viewMode === 'photo'} disabled={isEditingDisabled || hasBoundaryDraft} onSetTool={setTool} onDelete={deleteSelected}/>;
     return (<div className="editor-shell canvas-shell">
       <SiteHeader onNavigate={requestNavigation} disabled={navigating || isTransformDragging}/>
@@ -215,7 +212,7 @@ export function EditorPage({ gardenId }) {
           <span>{placementBlockedReason(document)}</span>
           <button type="button" onClick={() => setViewMode('photo')} disabled={isEditingDisabled}>写真をアップロード</button>
         </div>}
-      {!photoReady && !hasBoundaryDraft && !isCalibrating && <div className="editor-alert photo-progress" role="status">写真上の庭の輪郭と実寸範囲が確定すると自動保存され、3D庭を表示できます。</div>}
+      {!photoReady && !hasBoundaryDraft && <div className="editor-alert photo-progress" role="status">写真上の庭の輪郭と実寸範囲が確定すると自動保存され、3D庭を表示できます。</div>}
       {assetQuery.isError && (<div className="editor-alert notice-error" role="alert">
           <span>オブジェクトカタログを読み込めませんでした。</span>
           <button type="button" onClick={() => assetQuery.refetch()}>再試行</button>

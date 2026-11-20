@@ -62,7 +62,7 @@ test('demand renderer: idle, camera, live drag, rotation cancellation, capture a
     await page.mouse.up(); await expect(page.getByTestId('save-status')).toHaveText('保存済み');
     const stored = await request.get(`${api}/gardens/${garden.id}`).then((r) => r.json());
     expect(Math.abs(stored.objects[0].rotation.y)).toBeCloseTo(Math.PI / 2, 1);
-    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
     const image = page.getByRole('dialog', { name: '庭の完成イメージ' }).locator('img');
     await expect(image).toBeVisible();

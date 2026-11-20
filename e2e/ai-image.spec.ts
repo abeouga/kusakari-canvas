@@ -243,8 +243,8 @@ test('coverage copy failure restores rendering and allows a complete retry', asy
         return Reflect.apply(original, this, [source, ...values]);
       };
     });
-    await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
-    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+    await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
+    if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
     await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
     await expect(page.getByTestId('completion-launcher').getByRole('alert')).toContainText('E2E coverage copy failure');
     const retry = await capture(page);

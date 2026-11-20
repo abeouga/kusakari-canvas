@@ -33,10 +33,10 @@ def solve_calibration(request: CalibrationRequest) -> PhotoCalibration:
         a = np.array([h[2, 0] * h[2, 1], h[2, 0] ** 2 - h[2, 1] ** 2])
         b = -np.array([h[:2, 0] @ h[:2, 1], h[:2, 0] @ h[:2, 0] - h[:2, 1] @ h[:2, 1]])
         if float(a @ a) < 1e-12:
-            reject('この角度では画角を自動推定できません。「画角を手動指定」を使用してください。')
+            reject('この角度では基準点から画角を推定できません。')
         squared = float(a @ b / (a @ a))
         if squared <= 0:
-            reject('画角を推定できません。実際の長方形と寸法を確認するか、画角を手動指定してください。')
+            reject('画角を推定できません。基準点と実寸を確認してください。')
         focal = math.sqrt(squared)
     fov = math.degrees(2 * math.atan(cy / focal))
     if not 15 <= fov <= 110:

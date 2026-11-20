@@ -23,13 +23,13 @@ export function groundSummary(document) {
       return {
         area: null,
         perimeter: null,
-        label: "計測できません。カメラ設定を確認してください",
+        label: "計測できません。写真上の輪郭を確認してください",
       };
     sum += a.x * b.z - b.x * a.z;
     perimeter += length;
   }
   let label = "カメラ未設定・土台寸法からの概算";
-  if (photo.calibration) label = "写真の基準実寸とカメラ設定に基づく推定";
+  if (photo.calibration) label = "写真の基準長方形の実寸から求めたパースに基づく推定";
   if (photo.calibration?.method === 'edges') label = "写真上の辺の実寸から求めたパースに基づく推定";
   return { area: Math.abs(sum) / 2, perimeter, label };
 }

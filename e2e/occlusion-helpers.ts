@@ -61,8 +61,8 @@ export async function openScene(page: Page, garden: GardenDocument) {
 }
 
 export async function capture(page: Page): Promise<Capture> {
-  await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
-  if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^(AI生成|完成イメージ)メニュー$/ }).click();
+  await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
+  if (!await page.getByRole('button', { name: '完成イメージを確認', exact: true }).isVisible()) await page.getByRole('button', { name: /^完成イメージメニュー$/ }).click();
 
   await page.getByRole('button', { name: '完成イメージを確認', exact: true }).click();
   await expect(page.getByRole('dialog', { name: '新しく生成' })).toBeVisible();

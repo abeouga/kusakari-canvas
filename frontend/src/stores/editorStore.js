@@ -13,11 +13,12 @@ export const useEditorStore = create((set, get) => ({
     isDirty: false,
     isSaving: false,
     isTransformDragging: false,
-    isCalibrating: false,
-    setCalibrating: (isCalibrating) => set({ isCalibrating }),
     photoBoundaryDraft: null,
     saveError: null,
     editError: null,
+    // 写真に重なる右上のツールバーと右下の生成ボタンを小さくする表示の状態。庭のデータには含めない（#58）。
+    toolsMinimized: false,
+    setToolsMinimized: (toolsMinimized) => set({ toolsMinimized }),
     cameraCommand: { view: 'home', sequence: 0 },
     loadedModelIds: [],
     failedModelIds: [],
@@ -32,7 +33,6 @@ export const useEditorStore = create((set, get) => ({
             isDirty: false,
             isSaving: false,
             isTransformDragging: false,
-            isCalibrating: false,
             photoBoundaryDraft: null,
             saveError: null,
             editError: null,
@@ -42,7 +42,7 @@ export const useEditorStore = create((set, get) => ({
     },
     resizeGarden: (width, depth) => {
         const state = get();
-        if (!state.document || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null)
+        if (!state.document || state.isTransformDragging || state.photoBoundaryDraft !== null)
             return false;
         if (dimensionError(state.document, width, depth))
             return false;
@@ -54,7 +54,7 @@ export const useEditorStore = create((set, get) => ({
     renameGarden: (name) => {
         const state = get();
         const trimmed = name.trim();
-        if (!state.document || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null)
+        if (!state.document || state.isTransformDragging || state.photoBoundaryDraft !== null)
             return false;
         if (!trimmed || trimmed.length > MAX_GARDEN_NAME_LENGTH)
             return false;
@@ -64,8 +64,8 @@ export const useEditorStore = create((set, get) => ({
     },
     setPhotoEdgeLength: (index, length) => {
         const state = get();
-        if (!state.document?.photo || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null)
-            return 'カメラ設定・輪郭編集・配置物の移動が終わってから変更してください。';
+        if (!state.document?.photo || state.isTransformDragging || state.photoBoundaryDraft !== null)
+            return '輪郭編集・配置物の移動が終わってから変更してください。';
         const result = applyEdgeLength(state.document, index, length);
         if (result.error)
             return result.error;
@@ -77,9 +77,6 @@ export const useEditorStore = create((set, get) => ({
         const state = get();
         if (!state.document)
             return;
-        // 基準長方形でカメラを設定し直した場合、辺の入力値はそのカメラと一致しないため破棄します。
-        if (photo?.edgeLengths && photo.calibration && photo.calibration.method !== 'edges' && photo.calibration !== state.document.photo?.calibration)
-            photo = { ...photo, edgeLengths: undefined };
         if (photo && photo.boundary !== state.document.photo?.boundary)
             photo = withEdgeLengthsForBoundary(photo);
         set({ document: { ...state.document, photo }, isDirty: true, saveError: null,
@@ -89,7 +86,7 @@ export const useEditorStore = create((set, get) => ({
     moveBoundaryVertex: (index, point) => {
         const state = get();
         const photo = state.document?.photo;
-        if (!photo || !photo.boundary[index] || state.photoBoundaryDraft !== null || state.isCalibrating || state.isTransformDragging)
+        if (!photo || !photo.boundary[index] || state.photoBoundaryDraft !== null || state.isTransformDragging)
             return '操作を完了してから輪郭を修正してください。';
         const boundary = [...photo.boundary];
         boundary[index] = point;

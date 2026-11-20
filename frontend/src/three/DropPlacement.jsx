@@ -18,7 +18,7 @@ export function DropPlacement({ document, assets, disabled }) {
       if (!event.dataTransfer.types.includes(productDragType)) return;
       event.preventDefault();
       const state = useEditorStore.getState();
-      if (disabled || state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null) return;
+      if (disabled || state.isTransformDragging || state.photoBoundaryDraft !== null) return;
       const asset = assets.find((item) => item.id === event.dataTransfer.getData(productDragType));
       if (!asset) return;
       const blocked = placementBlockedReason(document);

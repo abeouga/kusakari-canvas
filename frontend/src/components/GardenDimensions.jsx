@@ -33,7 +33,6 @@ export function GardenDimensions({ document, disabled }) {
         <label htmlFor="ground-depth">奥行き (m)<input id="ground-depth" type="number" min="1" max="50" step="any" value={depth} disabled={disabled} required onChange={(e) => { setDepth(e.target.value); setError(''); }}/></label>
       </div>
       <p className="form-hint">各辺1〜50m。中心を基準に変更します。木の位置・大きさは維持します。</p>
-      {document.photo && <p className="form-hint">写真の基準長方形の実寸は「写真のカメラを設定」で変更します。</p>}
       {error && <p className="notice notice-error" role="alert">{error}</p>}
       <div className="object-actions">
         <button className="button button-primary" type="submit" disabled={disabled || !changed}>土台に適用</button>
