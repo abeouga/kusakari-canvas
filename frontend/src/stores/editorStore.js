@@ -16,6 +16,9 @@ export const useEditorStore = create((set, get) => ({
     photoBoundaryDraft: null,
     saveError: null,
     editError: null,
+    // 写真に重なる右上のツールバーと右下の生成ボタンを小さくする表示の状態。庭のデータには含めない（#58）。
+    toolsMinimized: false,
+    setToolsMinimized: (toolsMinimized) => set({ toolsMinimized }),
     cameraCommand: { view: 'home', sequence: 0 },
     loadedModelIds: [],
     failedModelIds: [],

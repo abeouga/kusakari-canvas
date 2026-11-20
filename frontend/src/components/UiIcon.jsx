@@ -1,6 +1,6 @@
 import {
     ArrowDownToLine, ArrowLeft, ArrowRight, Box, Camera, Check, ChevronDown, Clock, Copy, Download, Eye, Grid3x3, History, House,
-    Image, ImageOff, ImageUp, Info, Layers, Leaf, MousePointer2, Move, PanelRight, Pencil, PencilRuler, PenLine, Pentagon, Plus, RotateCw,
+    Image, ImageOff, ImageUp, Info, Layers, Leaf, Maximize2, Minimize2, MousePointer2, Move, PanelRight, Pencil, PencilRuler, PenLine, Pentagon, Plus, RotateCw,
     Ruler, Scaling, Search, SlidersHorizontal, Sparkles, Square, Trash2, TreeDeciduous, TriangleAlert, Undo2, X,
 } from 'lucide-react';
 
@@ -11,7 +11,7 @@ const icons = {
     rotate: RotateCw, scale: Scaling, check: Check, clock: Clock, alert: TriangleAlert, arrow: ArrowRight, sparkles: Sparkles,
     history: History, settings: SlidersHorizontal, download: Download, place: MousePointer2, outline: PencilRuler,
     redraw: PenLine, 'photo-change': ImageUp, 'photo-remove': ImageOff, layers: Layers, ground: Square, grid: Grid3x3,
-    tree: TreeDeciduous, edit: Pencil, view: Eye, search: Search, info: Info, undo: Undo2,
+    tree: TreeDeciduous, edit: Pencil, view: Eye, search: Search, info: Info, undo: Undo2, minimize: Minimize2, maximize: Maximize2,
 };
 export function UiIcon({ name, size = 18 }) {
     const Icon = icons[name];

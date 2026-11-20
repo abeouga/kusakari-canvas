@@ -85,3 +85,41 @@ test('editor controls preserve state and the merged canvas toolbar fits narrow s
     expect((await request.delete(`${api}/gardens/${garden.id}`)).status()).toBe(204);
   }
 });
+
+test('tools minimize to one button and the launcher to an icon so they cover less of the photo (#58)', async ({ page, request }) => {
+  const garden = await (await request.post(`${api}/gardens`, { data: { name: `E2E minimize tools ${Date.now()}` } })).json();
+  try {
+    await seedGardenPhoto(page, garden.id);
+    await page.goto(`/gardens/${garden.id}`);
+    await expect(page.getByTestId('save-status')).toHaveText('保存済み');
+    const toolbar = page.getByTestId('object-toolbar');
+    const launcher = page.getByTestId('completion-menu-toggle');
+    await expect(toolbar.getByRole('button', { name: '写真を変更' })).toBeVisible();
+    await expect(launcher).toHaveText('完成イメージ');
+    const expanded = { toolbar: (await toolbar.boundingBox())!, launcher: (await launcher.boundingBox())! };
+    await page.screenshot({ path: test.info().outputPath('tools-expanded.png') });
+
+    await toolbar.getByRole('button', { name: 'ツールを最小化' }).click();
+    await expect(toolbar.getByRole('button')).toHaveCount(1);
+    await expect(toolbar.getByRole('button', { name: 'ツールを表示' })).toHaveAttribute('aria-expanded', 'false');
+    await expect(launcher).toHaveText('');
+    await expect(launcher).toHaveAccessibleName('完成イメージメニュー');
+    const minimized = { toolbar: (await toolbar.boundingBox())!, launcher: (await launcher.boundingBox())! };
+    expect(minimized.toolbar.width).toBeLessThan(expanded.toolbar.width / 3);
+    expect(minimized.launcher.width).toBeLessThan(expanded.launcher.width / 2);
+    // 右上と右下の位置は変えず、小さくなるだけにする。
+    expect(Math.abs(minimized.toolbar.x + minimized.toolbar.width - expanded.toolbar.x - expanded.toolbar.width)).toBeLessThan(2);
+    expect(Math.abs(minimized.launcher.x + minimized.launcher.width - expanded.launcher.x - expanded.launcher.width)).toBeLessThan(2);
+    await page.screenshot({ path: test.info().outputPath('tools-minimized.png') });
+    // 最小化していても、生成のメニューは開ける。
+    await launcher.click();
+    await expect(page.getByRole('button', { name: '完成イメージを確認', exact: true })).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await toolbar.getByRole('button', { name: 'ツールを表示' }).click();
+    await expect(toolbar.getByRole('button', { name: '写真を変更' })).toBeVisible();
+    await expect(launcher).toHaveText('完成イメージ');
+  } finally {
+    expect((await request.delete(`${api}/gardens/${garden.id}`)).status()).toBe(204);
+  }
+});
