@@ -242,7 +242,7 @@ test('J. 未完成・交差輪郭を拒否し、戻す・始点確定・取消�
   await expect(page.locator('.photo-stage circle[fill="#fff"]')).toHaveCount(0);
   await expect(page.locator('.photo-stage circle[fill="#ffbd68"]')).toHaveCount(0);
   await expect(finish).toHaveCount(0);
-  await expect(page.locator('.photo-hint')).toContainText('0/64点');
+  await expect(page.getByTestId('drawing-count')).toHaveText('0/64');
   await clickImage(page, ...outline[0] as [number, number]);
   await expect(page.getByTestId('photo-vertex-1')).toBeVisible();
   expect(await gardenJson(request, id)).toEqual(saved);

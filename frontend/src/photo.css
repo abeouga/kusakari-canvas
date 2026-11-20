@@ -1,9 +1,6 @@
 .photo-workspace { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; background: #e7ebe4; overflow: hidden; }
 .photo-guidance { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-height: 33px; padding: 5px 20px; background: #f4f6ef; color: #687b5b; font-size: 11px; border-bottom: 1px solid #e1e7dc; flex-shrink: 0; }
-.photo-guidance.is-drawing { background: #f7f1e4; color: #896c38; }
 .photo-guidance .button { min-height: 28px; padding: 4px 10px; font-size: 11px; }
-.photo-guidance.is-drawing .button:first-of-type { margin-left: auto; }
-.drawing-count { font-weight: 600; }
 .photo-workspace > .notice-error { padding: 7px 20px; background: #fdf5ee; flex-shrink: 0; }
 .photo-vertex-error { position: absolute; z-index: 3; left: 12px; bottom: 12px; max-width: min(560px, calc(100% - 180px)); margin: 0; padding: 7px 12px; border-radius: 6px; background: #fdf5ee; box-shadow: 0 1px 4px #22332626; font-size: 12px; pointer-events: none; }
 .photo-stage-shell { flex: 1; position: relative; min-height: 0; overflow: hidden; }
@@ -38,6 +35,22 @@
 .display-toggles label:has(input:not(:checked)) { color: #a3ae9b; }
 .display-toggles label:has(input:disabled) { opacity: .45; }
 .toolbar-text-button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 4px 10px; border: 1px solid #cfdacb; border-radius: 6px; background: #fff; color: #244d3d; font-size: 12px; white-space: nowrap; }
+.toolbar-text-button:hover:not(:disabled) { background: #f0f4ec; }
+.toolbar-text-button:disabled { opacity: .45; cursor: default; }
+.toolbar-text-button:focus-visible { outline: 2px solid #225f51; outline-offset: 1px; }
+/* 輪郭の描画中のツール。操作の説明は i のホバーとフォーカスでだけ出す（#91）。 */
+/* 描画中は写真の端まで点を置けるよう、写真をツールバーの下に下げ、ツールバーで写真の角を覆わない。 */
+.photo-stage-shell.is-drawing { padding-top: 50px; }
+.photo-stage-shell.is-drawing .object-toolbar { top: 4px; }
+/* 説明はツールバーの右端にそろえ、写真の右端からはみ出さないようにする。 */
+.drawing-tools { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.drawing-info { display: inline-flex; }
+.drawing-info button { display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: #5f7255; cursor: help; }
+.drawing-info button:hover, .drawing-info button:focus-visible { background: #f0f4ec; color: #244d3d; }
+.drawing-info button:focus-visible { outline: 2px solid #225f51; outline-offset: 1px; }
+.drawing-tooltip { position: absolute; z-index: 20; top: calc(100% + 10px); right: 0; display: none; width: min(260px, calc(100vw - 48px)); padding: 8px 10px; border-radius: 6px; background: #263b2e; color: #fff; font-size: 12px; line-height: 1.6; box-shadow: 0 3px 12px #20352033; }
+.drawing-info:hover .drawing-tooltip, .drawing-info:focus-within .drawing-tooltip { display: block; }
+.drawing-count { min-width: 38px; color: #8a6a2f; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: center; }
 .object-toolbar:has(.toolbar-icons) .object-delete { margin-left: 5px; border-left: 1px solid #e3e9de; border-radius: 0 6px 6px 0; }
 .mode-badge { min-width: 30px; padding: 1px 6px; border-radius: 9px; background: #f7ecd6; color: #8a6a2f; font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .mode-badge.is-complete { background: #dcefe0; color: #225f51; }

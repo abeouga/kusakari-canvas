@@ -196,8 +196,19 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
     }
     const summary = editMode ? groundSummary(document) : null;
     // 写真の操作は表示領域の右上のツールバーに置き、写真の上の帯を設けません。
-    // 輪郭の描画中は写真の隅を覆わないよう、ツールバーを出しません（戻す・取消は描画中の帯にあります）。
-    const photoTools = photo && !drawingBoundary && <>
+    // 輪郭の描画中も帯は出さず、同じツールバーに説明の i・点の数・戻す・取消だけを置きます（#91）。
+    const drawingTools = drawingBoundary && <div className="drawing-tools" role="group" aria-label="庭の領域の描画">
+      <span className="drawing-info">
+        <button type="button" aria-label="描画の操作説明" aria-describedby="drawing-help"><UiIcon name="info" size={16}/></button>
+        <span id="drawing-help" role="tooltip" className="drawing-tooltip">頂点を順にクリックします。3点以上置いて始点をクリックすると輪郭が確定します（最大64点）。</span>
+      </span>
+      <span className="drawing-count" data-testid="drawing-count" aria-label={`${draft.length}点（最大64点）`}>{draft.length}/64</span>
+      <button type="button" className="toolbar-text-button" aria-label="最後の点を戻す" title="最後の点を戻す" disabled={disabled || draft.length === 0}
+        onClick={() => { useEditorStore.getState().setPhotoBoundaryDraft(draft.slice(0, -1)); setError(''); }}><UiIcon name="undo" size={15}/>戻す</button>
+      <button type="button" className="toolbar-text-button" aria-label="輪郭の描画を取消" title="輪郭の描画を取消" disabled={disabled}
+        onClick={() => { useEditorStore.getState().setPhotoBoundaryDraft(null); setPointer(null); setError(''); }}><UiIcon name="close" size={15}/>取消</button>
+    </div>;
+    const photoTools = photo && (drawingBoundary ? drawingTools : <>
       {boundaryValid && <div className="photo-mode" role="group" aria-label="写真の操作">
         <button type="button" aria-pressed={!editingEdges} aria-label="配置モード" title="配置" onClick={() => setMode(false)}><UiIcon name="place" size={15}/><span className="toolbar-label">配置</span></button>
         <button type="button" aria-pressed={editingEdges} aria-label="輪郭と寸法" title="輪郭と寸法" onClick={() => setMode(true)}><UiIcon name="outline" size={15}/><span className="toolbar-label">輪郭と寸法</span><span className={`mode-badge${enteredCount === edgeCount ? ' is-complete' : ''}`}>{enteredCount}/{edgeCount}</span></button>
@@ -213,7 +224,7 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
         <label title="グリッド"><input type="checkbox" aria-label="グリッド" checked={gridVisible} onChange={(event) => setGridVisible(event.target.checked)}/><UiIcon name="grid" size={16}/></label>
         <label title="配置物"><input type="checkbox" aria-label="配置" disabled={disabled} checked={objectsVisible} onChange={(event) => setObjectsVisible(event.target.checked)}/><UiIcon name="tree" size={16}/></label>
       </div>
-    </>;
+    </>);
     const pixels = (p) => ({ x: p.x * photo.imageWidth, y: p.y * photo.imageHeight });
     const projected = (p) => pixels(project(p));
     const boundaryPoints = draft ?? photo?.boundary ?? [];
@@ -245,11 +256,6 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
       <span className="photo-empty-hint">クリックして選択、またはここにドラッグ＆ドロップ</span>
       <span className="upload-format">JPEG / PNG · 5MBまで</span>
     </button> : <>
-      {drawingBoundary && <div className="photo-guidance photo-hint is-drawing" aria-live="polite">
-        <span className="drawing-count">{draft.length}/64点</span><span>頂点を順にクリック。3点以上で始点につなぐと確定します。</span>
-        {draft.length > 0 && <button type="button" className="button button-secondary" disabled={disabled} onClick={() => { useEditorStore.getState().setPhotoBoundaryDraft(draft.slice(0, -1)); setError(''); }}>最後の点を戻す</button>}
-        <button type="button" className="button button-secondary" disabled={disabled} onClick={() => { useEditorStore.getState().setPhotoBoundaryDraft(null); setPointer(null); setError(''); }}>輪郭の描画を取消</button>
-      </div>}
       {editMode && <div className="photo-guidance edge-toolbar" role="toolbar" aria-label="輪郭と寸法の編集">
         <span className="edge-progress" data-testid="edge-progress"><strong>{enteredCount}/{edgeCount}辺</strong>入力済み</span>
         <span className="edge-perspective">パース：{perspective}</span>
@@ -257,7 +263,7 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
         <button type="button" className="button button-secondary" disabled={disabled} onClick={startBoundary}><UiIcon name="redraw" size={14}/>庭の領域を書き直す</button>
         <button type="button" className="button button-primary" onClick={() => setMode(false)}><UiIcon name="check" size={14}/>完了</button>
       </div>}
-      <div className="photo-stage-shell">
+      <div className={`photo-stage-shell${drawingBoundary ? ' is-drawing' : ''}`}>
       {renderOverlay(photoTools)}
       {/* Over the photo, so a rejected vertex move does not shift the photo under the pointer. */}
       {vertexError && editMode && <p role="alert" className="notice-error photo-vertex-error" data-testid="vertex-error">{vertexError}</p>}
