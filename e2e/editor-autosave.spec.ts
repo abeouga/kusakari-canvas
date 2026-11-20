@@ -124,8 +124,11 @@ test('merged toolbar fits 7 widths in both views and move and delete edits autos
   await expect(page.getByTestId('save-status')).toHaveText('保存済み');
   await page.keyboard.press('Escape');
   await page.getByRole('tab', { name: /買い物リスト/ }).click();
-  await expect(page.getByRole('button', { name: 'リストを確認', exact: true })).toHaveCount(1);
-  await expect(page.getByRole('tabpanel', { name: /買い物リスト/ }).getByRole('button', { name: 'リストを確認', exact: true })).toBeVisible();
+  // 植物が1つも無い庭では、空の表示だけを出し、ECへ進むボタンを出さない（#88）。
+  const list = page.getByRole('tabpanel', { name: /買い物リスト/ });
+  await expect(list.getByTestId('shopping-list-empty')).toHaveText('植物が設置されていません');
+  await expect(list.getByTestId('shopping-sync-status')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'リストを確認', exact: true })).toHaveCount(0);
   await reloadedEvidence(page, request, garden.id, 'transform');
   await page.getByRole('button', { name: '← 庭一覧', exact: true }).click();
   await expect(page).toHaveURL((process.env.KUSAKARI_CANVAS_E2E_WEB_PORT ? 'http://127.0.0.1:' + process.env.KUSAKARI_CANVAS_E2E_WEB_PORT + '/' : 'http://127.0.0.1:15173/'));
