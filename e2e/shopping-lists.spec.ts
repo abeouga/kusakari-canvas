@@ -228,6 +228,8 @@ test('autosave failure retains placements, blocks EC navigation and supports ret
     await page.getByRole('button', { name: '3D庭', exact: true }).click();
     await saved(page, 1);
     await page.getByRole('tab', { name: /買い物リスト/ }).click();
+    await expect(page.getByTestId('shopping-list-empty')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'リストを確認', exact: true })).toHaveCount(1);
     await page.getByRole('button', { name: 'リストを確認', exact: true }).click();
     await expect(page).toHaveURL(`${ec}/cart?garden=${garden.id}`);
     await expect(page.getByRole('dialog', { name: '庭に設置したものから追加', exact: true })).toBeVisible();

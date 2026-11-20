@@ -58,9 +58,6 @@ test('live output survives actual DB save failure and retries persistence withou
     await expect(page.getByTestId('comparison-after')).toHaveAttribute('src', /^data:image\/png;base64,/);
     const afterDataUrl = (await page.getByTestId('comparison-after').getAttribute('src'))!;
     await verifyProviderEvidence(artifacts, historyId, afterDataUrl);
-    await page.getByTestId('generation-details').locator('summary').first().click();
-    await expect(page.getByTestId('generation-method-details')).toHaveAttribute('data-generation-method', 'full_frame_v3');
-    await expect(page.getByTestId('generation-method-details')).toContainText('AI生成画像を全体採用');
     await mkdir(artifacts, { recursive: true });
     const pendingDownload = page.waitForEvent('download');
     await result.getByRole('link', { name: 'After画像をPNGで保存', exact: true }).click();

@@ -16,7 +16,10 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
   const isSaving = useEditorStore((state) => state.isSaving);
   const saveError = useEditorStore((state) => state.saveError);
   const count = commerce.rows.reduce((total, row) => total + row.quantity, 0);
-  let status = 'ECへの反映済み';
+  // EC で追加しただけの商品も行になるので、行が1つも無いときだけ空とする。
+  const empty = commerce.rows.length === 0;
+  // 反映済みのふだんの状態は出さず、保存が済んでいないときだけ知らせる。
+  let status = '';
   if (isDirty) status = 'ECへ未反映';
   if (isSaving) status = 'ECへ反映中…';
   if (saveError) status = 'ECへ未反映：保存を再試行してください。';
@@ -43,13 +46,15 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
         <PlacedObjects document={document} assets={assets} selectedObject={selectedObject} disabled={disabled} references={commerce.referenceMap} onSelectObject={onSelectObject}/>
       </section>
       <section id="commerce-list" role="tabpanel" aria-labelledby="commerce-tab-list" hidden={tab !== 'list'}>
-        <h3>{document.name}の買い物リスト</h3>
-        <p role="status" data-testid="shopping-sync-status">{status}</p>
+        {status && <p role="status" data-testid="shopping-sync-status">{status}</p>}
         {commerce.saved.isError && <div className="notice notice-error" role="alert">
           <p>ECで追加した商品を取得できません。{commerce.saved.error.message}</p>
           <button type="button" className="button button-secondary" disabled={commerce.saved.isFetching} onClick={() => commerce.saved.refetch()}>ECで追加した商品を再取得</button>
         </div>}
-        {commerce.rows.length === 0 && <p>庭に商品を配置するか、ECで買い物リストに追加すると、このリストに表示されます。</p>}
+        {empty && <div className="shopping-list-empty" data-testid="shopping-list-empty">
+          <UiIcon name="info" size={48}/>
+          <p>植物が設置されていません</p>
+        </div>}
         {commerce.rows.map((row) => {
           const object = document.objects.find((o) => row.productId ? o.productId === row.productId : !o.productId && o.assetId === row.assetId);
           const product = commerce.products.data?.find((p) => p.id === row.productId);
@@ -76,8 +81,8 @@ export function CommercePanel({ document, assets, selectedObject, disabled, comm
             </div>
           </article>;
         })}
-        <button className="button button-primary shopping-list-link" type="button" disabled={disabled}
-          onClick={() => onNavigate(new URL('/cart?garden=' + encodeURIComponent(document.id), ecUrl).href)}>リストを確認<UiIcon name="arrow" size={15}/></button>
+        {!empty && <button className="button button-primary shopping-list-link" type="button" disabled={disabled}
+          onClick={() => onNavigate(new URL('/cart?garden=' + encodeURIComponent(document.id), ecUrl).href)}>リストを確認<UiIcon name="arrow" size={15}/></button>}
       </section>
     </div>
   </aside>;

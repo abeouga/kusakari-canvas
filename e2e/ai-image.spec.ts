@@ -118,8 +118,6 @@ test('AI generation uses real EC selection, captures plant/furniture coverage, a
     await page.getByTestId('object-row-0').click();
     await page.getByRole('checkbox', { name: '配置', exact: true }).uncheck();
     const baseline = await capture(page);
-    await expect(page.getByTestId('ai-result-guidance')).toContainText('庭全体のAfter画像を生成');
-    await expect(page.getByTestId('ai-result-guidance')).toContainText('背景や家具も含め');
     await expect(page.getByRole('combobox', { name: '低木に対応する商品', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'AIで生成', exact: true }).click();
     await expect(page.getByRole('region', { name: 'AI完成イメージ生成' }).getByRole('alert')).toContainText('参考写真を追加');

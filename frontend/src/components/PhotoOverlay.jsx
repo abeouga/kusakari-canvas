@@ -241,8 +241,7 @@ export function PhotoOverlay({ document, assets, selectedAssetId, disabled, retr
     {!photo && renderOverlay(null)}
     {!photo ? <button type="button" className="photo-empty" disabled={disabled} onClick={() => fileInput.current?.click()}>
       <span className="upload-symbol"><UiIcon name="photo" size={32}/></span>
-      <strong>庭の写真から設計する</strong>
-      <span>庭の写真を選択してください。</span>
+      <strong>庭の写真をアップロードする</strong>
       <span className="photo-empty-hint">クリックして選択、またはここにドラッグ＆ドロップ</span>
       <span className="upload-format">JPEG / PNG · 5MBまで</span>
     </button> : <>

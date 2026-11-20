@@ -52,7 +52,7 @@ export function CompletionImageAction({ garden, assets, photoMode, captureRef, d
     {!drawingBoundary && <CompletionMenu photoMode={photoMode} disabled={disabled} capturing={capturing} error={error} toggleRef={toggleRef}
       onCapture={capture} onHistory={() => setHistoryOpen(true)}/>}
     {historyOpen && <GenerationHistory gardenId={garden.id} onClose={() => setHistoryOpen(false)} returnFocus={toggleRef}/>}
-    {image && <Dialog title="庭の完成イメージ" className="completion-image-dialog" busy={aiBusy} onClose={closeImage} returnFocus={toggleRef}>
+    {image && <Dialog title={image.hasPhoto ? '新しく生成' : '庭の完成イメージ'} className="completion-image-dialog" busy={aiBusy} onClose={closeImage} returnFocus={toggleRef}>
       {!image.hasPhoto && <>
         <div className="ai-preview-surface"><img className="ai-preview-image" src={image.dataUrl} alt="現在の庭の完成イメージ" data-testid="preview-image"/></div>
         <div className="ai-studio-actions"><span>現在の視点の3Dプレビュー</span><a className="button button-primary" href={image.dataUrl} download="kusakari-canvas.png"><UiIcon name="download"/>画像を保存</a></div>
@@ -69,6 +69,6 @@ export function CompletionImageAction({ garden, assets, photoMode, captureRef, d
         setDiscardOpen(false);
         setImage(null);
       }}>破棄して閉じる</button>
-    </>}><p>After画像は生成履歴に保存されていません。閉じるとこの画像を失います。履歴へ再保存するか、PNGで保存してください。</p></Dialog>}
+    </>}><p>After画像は生成履歴に保存されていません。閉じるとこの画像を失います。履歴へ再保存するか、「画像を保存」で保存してください。</p></Dialog>}
   </>;
 }

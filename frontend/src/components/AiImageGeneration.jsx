@@ -5,10 +5,14 @@ import { imageHistoryApi } from '../api/imageHistory';
 import { plantReferenceRows, readAiReferencePhoto, requiredReferencePhotoMessage } from '../domain/aiReferencePhoto';
 import { AiPlantReference } from './AiPlantReference';
 import { BeforeAfterComparison } from './BeforeAfterComparison';
-import { GenerationMethodDetails } from './GenerationMethodDetails';
 import { Dialog } from './Dialog';
 import { UiIcon } from './UiIcon';
 import '../ai-image.css';
+
+// 商品に紐づいていない旧モデルは、名前を挙げて Canvas で生成に使えないことだけを伝える（#89）。
+function unsupportedMessage(plants) {
+  return `${plants.map((plant) => `「${plant.name}」`).join('')}は Canvasに対応していません`;
+}
 
 export function AiImageGeneration({ image, onBusyChange, onUnsavedChange }) {
   const queryClient = useQueryClient();
@@ -73,7 +77,7 @@ export function AiImageGeneration({ image, onBusyChange, onUnsavedChange }) {
 
   function generationRequest() {
     if (plants.length === 0) throw new Error('商品一覧から植物を配置してから撮影してください。');
-    if (unlinked.length) throw new Error('商品に紐づいていない旧モデルがあります。商品一覧から配置し直してください。');
+    if (unlinked.length) throw new Error(unsupportedMessage(unlinked));
     if (inputImageCount > 16) throw new Error('入力画像が16枚を超えています。配置を見直して撮影し直してください。画像は自動省略しません。');
     if (!image.coverageDataUrl) throw new Error('配置範囲の画像がありません。完成イメージを撮影し直してください。');
     if (!candidates.data || candidates.isError) throw new Error('配置商品の自動取得に失敗しています。接続状態を確認して再取得してください。');
@@ -195,10 +199,10 @@ export function AiImageGeneration({ image, onBusyChange, onUnsavedChange }) {
       </div>}
     </section> : <div className="ai-preview-surface">
       <img className="ai-preview-image" src={image.dataUrl} alt="現在の庭の完成イメージ" data-testid="before-image"/>
-      <span className="ai-preview-badge">生成前</span>
+      <span className="ai-preview-badge">Before</span>
       {pending && <div className="ai-generating-state" role="status"><span className="ai-progress-ring" aria-hidden="true"/>完成イメージを生成中…</div>}
     </div>}
-    {unlinked.length > 0 && <p className="notice-error" role="alert">商品に紐づいていない旧モデル（{unlinked.map((plant) => plant.name).join('、')}）があります。商品一覧から配置し直してください。</p>}
+    {unlinked.length > 0 && <p className="notice-error" role="alert">{unsupportedMessage(unlinked)}</p>}
     {plants.length === 0 && <p className="notice-error">植物を配置すると生成できます。</p>}
     {inputImageCount > 16 && <p className="notice-error">画像が16枚を超えています。配置を減らしてください。</p>}
     {candidates.isError && <div className="notice-error ai-reference-error" role="alert">
@@ -214,7 +218,7 @@ export function AiImageGeneration({ image, onBusyChange, onUnsavedChange }) {
     {error && <p className="notice-error" role="alert">{error}</p>}
     <div className="ai-studio-actions">
       <div className="ai-action-copy">
-        <span>{pending ? 'この画面のままお待ちください' : candidates.isFetching ? '植物の参考画像を準備中…' : result ? '別の仕上がりを試す' : '配置した植物を、自然な仕上がりに'}</span>
+        <span>{pending ? 'この画面のままお待ちください' : candidates.isFetching ? '植物の参考画像を準備中…' : result ? '別の仕上がりを試す' : ''}</span>
       </div>
       <button type="button" className="button button-primary ai-generate-button" aria-label="AIで生成"
         disabled={formDisabled || candidates.isFetching || candidates.isPending || candidates.isError || !plants.length || !!unlinked.length || inputImageCount > 16}
@@ -223,19 +227,6 @@ export function AiImageGeneration({ image, onBusyChange, onUnsavedChange }) {
     {status.data?.configured === false && <p className="ai-config-notice">AI画像生成の接続設定が未完了です。</p>}
     {status.isError && <p className="ai-config-notice">接続設定を確認できませんでした。</p>}
     {uploading && <p role="status">写真を確認中…</p>}
-    <details className="ai-studio-details" data-testid="generation-details">
-      <summary>詳細</summary>
-      <div className="ai-studio-details-body">
-        <p data-testid="ai-result-guidance">庭全体のAfter画像を生成します。背景や家具も含め、構図と配置を確認してください。</p>
-        <p data-testid="ai-input-count">入力画像 {inputImageCount} / 16枚・植物参考 {plants.length}枚</p>
-        {status.data && <p>モデル：{status.data.model}／品質：{status.data.quality}</p>}
-        {result && <>
-          <p>生成画像：{result.width} × {result.height} px</p>
-          <GenerationMethodDetails generationMethod={result.generationMethod} width={image.width} height={image.height}/>
-        </>}
-        <a href={image.dataUrl} download="kusakari-before.png">Before画像をPNGで保存</a>
-      </div>
-    </details>
     {discardOpen && <Dialog title="未保存の画像を破棄" busy={busy} onClose={() => setDiscardOpen(false)} footer={<>
       <button type="button" className="button button-secondary" data-dialog-autofocus disabled={busy} onClick={() => setDiscardOpen(false)}>画像を保持する</button>
       <button type="button" className="button button-danger" disabled={busy} onClick={discardResult}>破棄する</button>
