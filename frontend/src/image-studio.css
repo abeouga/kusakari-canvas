@@ -13,6 +13,8 @@
 .completion-launcher .completion-launch:hover:not(:disabled) { background: #183e2e; }
 .completion-launch > svg:last-child { transform: rotate(180deg); }
 .completion-launch[aria-expanded='true'] > svg:last-child { transform: none; }
+.completion-launcher.is-minimized .completion-launch { width: 44px; padding: 0; }
+.completion-launcher.is-minimized .completion-launch > svg:last-child { transform: none; }
 .completion-menu {
   position: absolute; right: 0; bottom: calc(100% + 10px); width: 232px; max-width: calc(100vw - 54px);
   padding: 8px; border: 1px solid #dce5dc; border-radius: 16px; background: #fffffff9;

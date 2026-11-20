@@ -1,8 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { useEditorStore } from '../stores/editorStore';
 import { UiIcon } from './UiIcon';
 
 export function CompletionMenu({ photoMode, disabled, capturing, error, toggleRef, onCapture, onHistory }) {
   const [open, setOpen] = useState(false);
+  // ツールを最小化している間は、文字を消してアイコンだけの丸いボタンにする（#58）。
+  const minimized = useEditorStore((state) => state.toolsMinimized);
   const rootRef = useRef(null);
   const panelRef = useRef(null);
   const panelId = useId();
@@ -33,7 +36,7 @@ export function CompletionMenu({ photoMode, disabled, capturing, error, toggleRe
     action();
   }
 
-  return <div ref={rootRef} className="completion-launcher" data-testid="completion-launcher"
+  return <div ref={rootRef} className={`completion-launcher${minimized ? ' is-minimized' : ''}`} data-testid="completion-launcher"
     onKeyDown={(event) => event.stopPropagation()} onBlur={(event) => {
       if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) setOpen(false);
     }}>
@@ -53,8 +56,8 @@ export function CompletionMenu({ photoMode, disabled, capturing, error, toggleRe
     <button ref={toggleRef} type="button" className="completion-launch" data-testid="completion-menu-toggle"
       aria-label="完成イメージメニュー" aria-expanded={open} aria-controls={panelId}
       disabled={disabled || capturing} onClick={() => setOpen(!open)}>
-      <UiIcon name={photoMode ? 'sparkles' : 'camera'}/><span>{capturing ? '準備中…' : '完成イメージ'}</span>
-      <UiIcon name="chevron" size={14}/>
+      <UiIcon name={photoMode ? 'sparkles' : 'camera'}/>{!minimized && <><span>{capturing ? '準備中…' : '完成イメージ'}</span>
+      <UiIcon name="chevron" size={14}/></>}
     </button>
   </div>;
 }

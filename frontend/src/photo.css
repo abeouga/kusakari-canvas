@@ -95,3 +95,8 @@
   .object-toolbar:has(.toolbar-icons) .object-delete { padding: 7px 6px; }
   .edge-toolbar .button-secondary { margin-left: 0; }
 }
+/* ツールの最小化と表示のボタン（#58）。最小化中はこのボタンだけの小さなツールバーになる。 */
+.toolbar-minimize { display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: #5f7255; cursor: pointer; }
+.toolbar-minimize:hover, .toolbar-minimize:focus-visible { background: #f0f4ec; color: #244d3d; }
+.toolbar-minimize:focus-visible { outline: 2px solid #225f51; outline-offset: 1px; }
+.object-toolbar:not(.is-minimized) .toolbar-minimize { margin-left: 2px; border-left: 1px solid #e3e9de; border-radius: 0 5px 5px 0; }
