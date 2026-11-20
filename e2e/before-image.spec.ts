@@ -6,6 +6,7 @@ import { PerspectiveCamera, Vector3 } from 'three';
 import { api } from './api-url.js';
 import type { GardenDocument } from '../frontend/src/types/garden.js';
 import { showProductsTab } from './catalog-fixture';
+import { rectangleCalibration } from './rectangle-calibration.js';
 
 const artifactDirectory = resolve('artifacts/e2e');
 const variants = [
@@ -60,15 +61,7 @@ async function preparePhoto(page: Page, request: APIRequestContext, initial: Gar
     dataUrl, imageWidth: variant.width, imageHeight: variant.height, corners, boundary: corners,
   };
   if (variant.calibrated) {
-    const calibration = await request.post(`${api}/photo-calibration`, {
-      data: {
-        imageWidth: variant.width, imageHeight: variant.height, points: corners,
-        referenceWidth: 10, referenceDepth: 8,
-        focalLengthPx: variant.height / (2 * Math.tan(50 * Math.PI / 360)),
-      },
-    });
-    expect(calibration.status()).toBe(200);
-    photo.calibration = await calibration.json();
+    photo.calibration = rectangleCalibration(corners, 10, 8, variant.height / (2 * Math.tan(50 * Math.PI / 360)));
   }
   const objects = [
     { id: randomUUID(), assetId: 'tree_oak', position: { x: -3, y: 0, z: 2.5 },

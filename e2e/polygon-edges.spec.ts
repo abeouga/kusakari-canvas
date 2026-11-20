@@ -68,11 +68,6 @@ for (const fixedProjection of [false, true]) {
       await page.screenshot({ path: resolve(directory, 'edge-measurement-1024-' + mode + '.png'), fullPage: true });
       await popup.getByRole('button', { name: '辺の計測を閉じる' }).click();
       await expect(page.getByTestId('photo-edge-4')).toBeFocused();
-      const camera = page.getByRole('button', { name: '写真のカメラを設定' });
-      await camera.click();
-      await page.getByLabel('基準の幅（m）').fill('3');
-      await page.keyboard.press('Escape');
-      await expect(camera).toBeFocused();
       await expect(page.getByTestId('photo-ground')).toHaveAttribute('points', outline!);
       await expect(page.getByTestId('save-status')).toHaveText('保存済み');
       await page.setViewportSize({ width: 1440, height: 960 });

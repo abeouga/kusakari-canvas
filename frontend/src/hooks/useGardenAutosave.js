@@ -8,7 +8,7 @@ import { validSurface } from '../domain/photoProjection';
 import { calibratedBoundaryError } from '../domain/calibratedProjection';
 
 function saveBlocker(state) {
-  if (state.isTransformDragging || state.isCalibrating || state.photoBoundaryDraft !== null) return '編集中の操作を確定してください。';
+  if (state.isTransformDragging || state.photoBoundaryDraft !== null) return '編集中の操作を確定してください。';
   const garden = state.document;
   if (garden && outsideObjects(garden).length) return '施工範囲外の配置を移動または削除すると自動保存されます。';
   if (!garden?.photo) return null;
@@ -16,7 +16,7 @@ function saveBlocker(state) {
   return calibratedBoundaryError(garden.photo, garden.width, garden.depth);
 }
 
-export function useGardenAutosave(gardenId, document, dirty, saving, dragging, calibrating, boundaryDraft, error) {
+export function useGardenAutosave(gardenId, document, dirty, saving, dragging, boundaryDraft, error) {
   const queryClient = useQueryClient();
   const inFlight = useRef(null);
   const save = useCallback(() => {
@@ -69,7 +69,7 @@ export function useGardenAutosave(gardenId, document, dirty, saving, dragging, c
     if (!document || document.id !== gardenId || !dirty || saving || error || saveBlocker(state)) return;
     const timer = window.setTimeout(() => { void save(); }, 500);
     return () => window.clearTimeout(timer);
-  }, [gardenId, document, dirty, saving, dragging, calibrating, boundaryDraft, error, save]);
+  }, [gardenId, document, dirty, saving, dragging, boundaryDraft, error, save]);
 
   const flush = useCallback(async () => {
     // Navigation waits for the active request and any newer draft; requests never overlap.

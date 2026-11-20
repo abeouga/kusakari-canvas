@@ -169,7 +169,7 @@ export function applyEdgeLength(document, edgeIndex, requestedLength) {
   const photo = document.photo;
   const currentLength = edgeLength(document, edgeIndex);
   if (!Number.isFinite(currentLength) || currentLength <= 0.000001) {
-    return { error: 'この辺を計測できません。写真のカメラ設定を確認してください。' };
+    return { error: 'この辺を計測できません。写真上の輪郭を確認してください。' };
   }
   if (!Number.isFinite(requestedLength) || requestedLength <= 0) {
     return { error: '辺の長さは0より大きい数値で入力してください。' };

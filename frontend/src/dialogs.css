@@ -8,7 +8,6 @@
 .dialog-body { padding: 24px; overflow-y: auto; min-height: 0; font-size: 12px; line-height: 1.7; }
 .dialog-body > p { color: #677b5b; }
 .dialog-footer { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 18px 24px; border-top: 1px solid var(--line); background: #fafbf8; flex-shrink: 0; }
-.dialog-footer-note { margin-right: auto; color: #6a7f5c; font-size: 11px; }
 .confirmation-target { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid #e3eadc; border-radius: 6px; background: #f7f9f3; margin-bottom: 14px; overflow-wrap: anywhere; }
 .confirmation-target > svg { flex-shrink: 0; color: #799668; }
 .confirmation-target > strong { font-size: 14px; font-weight: 500; }
@@ -16,39 +15,4 @@
 .dimensions-preview { display: block; width: 100%; height: 132px; margin: 0 0 24px; padding: 14px; background: #f3f6ee; border: 1px solid #e5ecd9; border-radius: 7px; }
 .dimensions-preview text { font-size: 12px; fill: #566e44; }
 .garden-dimensions .object-actions { flex-direction: row-reverse; }
-.calibration-dialog { width: min(1250px, calc(100vw - 64px)); }
-.calibration-dialog .dialog-body { padding: 0; }
-.calibration-editor fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
-.calibration-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; }
-.calibration-image-area { display: flex; flex-direction: column; background: #edf1e8; min-width: 0; }
-.reference-order { list-style: none; display: flex; justify-content: center; gap: 22px; margin: 0; padding: 18px 20px; border-bottom: 1px solid #dde6d5; }
-.reference-order li { display: flex; align-items: center; gap: 7px; color: #9aa990; font-size: 11px; white-space: nowrap; }
-.reference-order li > span { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid #d5e1c9; border-radius: 50%; font-size: 10px; }
-.reference-order .is-current { color: #385c26; font-weight: 600; }
-.reference-order .is-current > span { background: #476c33; border-color: #476c33; color: #fff; }
-.reference-order .is-done > span { background: #dce8d2; border-color: #dce8d2; color: #5e8246; }
-.calibration-image-frame { flex: 1; min-height: 250px; display: flex; align-items: center; padding: 16px; }
-.calibration-stage { display: block; width: 100%; height: min(48vh, 470px); cursor: crosshair; }
-.calibration-image-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 11px 15px; border-top: 1px solid #dfe8d5; }
-.calibration-image-actions > span { font-size: 11px; color: #698257; margin-right: auto; }
-.calibration-image-actions button { font-size: 10px; }
-.calibration-settings { border-left: 1px solid #e1e8da; padding: 22px; }
-.calibration-settings section + section { border-top: 1px solid #e6eddf; padding-top: 18px; margin-top: 18px; }
-.step-label { font-size: 10px; color: #8da17f; letter-spacing: .5px; }
-.calibration-settings h3 { font-size: 14px; margin: 5px 0 8px; }
-.calibration-settings p { font-size: 12px; color: #647a57; line-height: 1.8; }
-.calibration-settings details { margin-top: 9px; font-size: 10px; color: #6f875f; }
-.calibration-settings summary { cursor: pointer; }
-.calibration-settings details p { margin-top: 8px; }
-.calibration-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 12px; }
-.calibration-fields label { display: grid; gap: 5px; font-size: 11px; }
-.calibration-settings .check-label { font-size: 11px; }
-.fov-field { display: grid; grid-template-columns: 1fr 86px; align-items: center; gap: 6px; font-size: 11px; margin-top: 10px; }
-.calculate-camera { width: 100%; margin: 10px 0 16px; }
-.replace-boundary { align-items: start; }
-.replace-boundary input { margin-top: 3px; }
-.calibration-result { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #eef5e7; color: #507239; border: 1px solid #dce9cf; border-radius: 6px; margin-bottom: 16px; font-size: 11px; }
-.calibration-result small { display: block; font-size: 10px; color: #839d6f; }
-.calibration-settings p.notice-error { color: var(--danger); margin-top: 10px; }
-@media (max-width: 1000px) { .calibration-dialog { width: calc(100vw - 32px); } .calibration-layout { grid-template-columns: minmax(0, 1fr) 260px; } .calibration-settings { padding: 18px; } .reference-order { gap: 10px; padding: 16px 8px; } .dialog-footer-note { display: none; } }
 .removed-placements { margin: 0; padding-left: 1.2em; line-height: 1.7; }

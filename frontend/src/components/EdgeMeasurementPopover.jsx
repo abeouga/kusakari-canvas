@@ -19,7 +19,7 @@ export function EdgeMeasurementPopover({ document, selection, onClose, onNavigat
   const [error, setError] = useState('');
   const [notice, setNotice] = useState(selection.notice ?? '');
   const [position, setPosition] = useState({ left: selection.left, top: selection.top });
-  const locked = useEditorStore((state) => state.isCalibrating || state.isTransformDragging || state.photoBoundaryDraft !== null);
+  const locked = useEditorStore((state) => state.isTransformDragging || state.photoBoundaryDraft !== null);
   const measurable = Number.isFinite(length) && length > 0.000001;
   const entries = photo.edgeLengths ?? [];
   const entered = typeof entries[selection.index] === 'number';
@@ -136,7 +136,7 @@ export function EdgeMeasurementPopover({ document, selection, onClose, onNavigat
       {caption && <span>{caption}</span>}
       <output data-testid="edge-measurement" aria-label="辺の計測値">{measurable ? `${length.toFixed(2)} m` : '計測できません'}</output>
     </p>
-    {!measurable && <p className="notice-error">地面上の位置を求められません。カメラ設定を確認してください。</p>}
+    {!measurable && <p className="notice-error">地面上の位置を求められません。写真上の輪郭を確認してください。</p>}
     {error && <p role="alert" className="notice-error">{error}</p>}
     {notice && <p role="status" className="edge-notice">{notice}</p>}
   </section>;

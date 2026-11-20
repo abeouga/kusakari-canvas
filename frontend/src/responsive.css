@@ -22,7 +22,5 @@
   .catalog-heading > span { display: none; }
   .properties-panel { order: 2; border-left: 0; border-top: 1px solid var(--line); max-height: 520px; }
   .photo-toolbar { flex-wrap: wrap; height: auto; }
-  .calibration-layout { grid-template-columns: minmax(0, 1fr); }
-  .calibration-settings { max-height: none; }
   .plan-actions button { flex: 1 1 145px; min-height: 44px; }
 }
