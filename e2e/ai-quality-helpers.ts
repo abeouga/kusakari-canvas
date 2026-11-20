@@ -4,6 +4,9 @@ import { resolve } from 'node:path';
 import { expect, type Page } from '@playwright/test';
 import type { GardenDocument, GardenObject, GardenPhoto } from '../frontend/src/types/garden.js';
 import { shrub, type Capture } from './occlusion-helpers.js';
+import { createTestProduct } from './catalog-fixture';
+import { linkLegacyMaterial } from './legacy-material';
+import { sellerRequest } from './seller-session';
 
 export type QualityCase = 'single' | 'multiple' | 'overlap';
 export type QualityPayload = {
@@ -62,10 +65,33 @@ export async function saveCapture(directory: string, garden: GardenDocument, cap
   await saveJson(directory, 'snapshot.json', garden);
 }
 
-export async function uploadReferences(page: Page, garden: GardenDocument) {
+export type ReferenceProducts = { tree_oak: string; shrub_boxwood: string; remove: () => Promise<void> };
+
+// kusakari-ec#223 で、木・低木に対応する EC の商品（canvas-oak・canvas-boxwood）は削除済みになった。
+// AI の商品照合は、テストで作った商品を素材コード（plant.oak・plant.boxwood）に結び付けて使い、終わったら remove で外す。
+// 画面が商品の候補を読む前（庭を開く前）に呼ぶ。
+export async function createReferenceProducts(): Promise<ReferenceProducts> {
+  const oak = await createTestProduct('AI照合用の木');
+  const boxwood = await createTestProduct('AI照合用の低木');
+  linkLegacyMaterial('plant.oak', oak.id);
+  linkLegacyMaterial('plant.boxwood', boxwood.id);
+  return {
+    tree_oak: oak.id,
+    shrub_boxwood: boxwood.id,
+    remove: async () => {
+      const seller = await sellerRequest();
+      for (const [code, id] of [['plant.oak', oak.id], ['plant.boxwood', boxwood.id]] as const) {
+        linkLegacyMaterial(code, id, true);
+        await seller.delete(`${process.env.KUSAKARI_EC_E2E_WEB_URL}/api/products/${id}`);
+      }
+    },
+  };
+}
+
+export async function uploadReferences(page: Page, garden: GardenDocument, products: ReferenceProducts) {
   const references = [
-    { assetId: 'tree_oak', name: '木', product: 'canvas-oak', filename: 'oak.jpg' },
-    { assetId: 'shrub_boxwood', name: '低木', product: 'canvas-boxwood', filename: 'boxwood.jpg' },
+    { assetId: 'tree_oak', name: '木', product: products.tree_oak, filename: 'oak.jpg' },
+    { assetId: 'shrub_boxwood', name: '低木', product: products.shrub_boxwood, filename: 'boxwood.jpg' },
   ];
   for (const reference of references) {
     if (!garden.objects.some((object) => object.assetId === reference.assetId)) continue;
