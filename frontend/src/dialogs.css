@@ -1,10 +1,12 @@
 .app-dialog { padding: 0; margin: auto; border: 1px solid #dce3d8; border-radius: 12px; width: 440px; max-width: calc(100vw - 48px); max-height: calc(100dvh - 64px); color: var(--ink); background: #fff; box-shadow: 0 22px 80px #18291d33; }
 .app-dialog[open] { display: flex; flex-direction: column; }
 .app-dialog::backdrop { background: #23302666; }
-.dialog-header { display: flex; justify-content: space-between; gap: 20px; padding: 24px 24px 20px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+.dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 24px 24px 20px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
 .dialog-header h2 { font-size: 18px; line-height: 1.5; }
 .dialog-header p { margin-top: 7px; color: #6c7b62; font-size: 12px; line-height: 1.7; }
-.dialog-header > .icon-button { flex-shrink: 0; margin: -4px -5px 0 0; }
+/* 閉じる×は見出しの行数に関係なく、ダイアログの上と右から同じ16pxの位置に置く（#93）。 */
+.dialog-header > .icon-button { flex-shrink: 0; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; margin: -8px -8px 0 0; border-radius: 6px; }
+.completion-image-dialog .dialog-header > .icon-button, .generation-history-dialog .dialog-header > .icon-button { margin-block: 0; }
 .dialog-body { padding: 24px; overflow-y: auto; min-height: 0; font-size: 12px; line-height: 1.7; }
 .dialog-body > p { color: #677b5b; }
 .dialog-footer { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 18px 24px; border-top: 1px solid var(--line); background: #fafbf8; flex-shrink: 0; }
