@@ -46,6 +46,24 @@ test('写真アップロード枠が左右の余白を保ち、クリックで�
   // 写真と輪郭は EC に送る配置を変えないので、描いている間も反映の状態を出さない（#92）。
   const syncStatus = page.getByTestId('shopping-sync-status');
   await expect(syncStatus).toHaveCount(0);
+  // 描画中は帯を出さず、写真の上のツールバーに i・点の数・戻す・取消を出す。説明は i のホバーでだけ出す（#91）。
+  const drawing = page.getByTestId('object-toolbar').getByRole('group', { name: '庭の領域の描画' });
+  const help = page.getByRole('tooltip');
+  await expect(drawing.getByTestId('drawing-count')).toHaveText('0/64');
+  await expect(drawing.getByRole('button', { name: '最後の点を戻す', exact: true })).toBeDisabled();
+  await expect(drawing.getByRole('button', { name: '輪郭の描画を取消', exact: true })).toBeEnabled();
+  await expect(page.locator('.photo-guidance')).toHaveCount(0);
+  // ツールバーが写真の角を覆うと、その下に点を置けなくなる。
+  const toolbarBox = (await page.getByTestId('object-toolbar').boundingBox())!;
+  const imageBox = (await page.locator('.photo-stage image').boundingBox())!;
+  expect(toolbarBox.y + toolbarBox.height).toBeLessThanOrEqual(imageBox.y);
+  await expect(help).toBeHidden();
+  await drawing.getByRole('button', { name: '描画の操作説明', exact: true }).hover();
+  await expect(help).toBeVisible();
+  await expect(help).toHaveText('頂点を順にクリックします。3点以上置いて始点をクリックすると輪郭が確定します（最大64点）。');
+  await page.screenshot({ path: testInfo.outputPath('drawing-tools-help.png'), fullPage: true });
+  await page.mouse.move(0, 0);
+  await expect(help).toBeHidden();
   // Upload starts a boundary draft; autosave waits until the user closes it.
   for (const [x, y] of [[80, 520], [720, 520], [640, 300], [160, 300]]) {
     const point = await page.locator('.photo-stage').evaluate((element, coordinates) => {
@@ -54,6 +72,8 @@ test('写真アップロード枠が左右の余白を保ち、クリックで�
     }, { x, y });
     await page.mouse.click(point.x, point.y);
   }
+  await expect(drawing.getByTestId('drawing-count')).toHaveText('4/64');
+  await expect(drawing.getByRole('button', { name: '最後の点を戻す', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: '始点につないで輪郭を確定' }).click();
   await expect(page.getByTestId('photo-ground')).toBeVisible();
   await expect(syncStatus).toHaveCount(0);
